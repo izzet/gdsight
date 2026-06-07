@@ -1,0 +1,2 @@
+kvikio 26.04.000 | compat_preferred=False | mode=mixed nreads=2000
+records=44000 total=22.83 GiB time=18.523s throughput=1.233 GiB/s  avg_rec=544.1 KiB

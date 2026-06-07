@@ -138,16 +138,30 @@ pathology) requires a real workload with non-4K / compressed / ragged chunks →
 
 ---
 
-## Steps 3 & 4 — Realistic workload + tool-blindness — NOT YET RUN
+## Steps 3 & 4 — Realistic workload + tool-blindness — ✅ DONE (the money finding)
 
-The brief's Step 3 readers (**kvikio / DALI GDS numpy**) are **not installed** on this image. With a
-real GDS path now live, this is the high-value next task and is finally *meaningful* here (unlike on
-the compat-only nodes, where a vendor reader could only re-demonstrate "all compat"):
-- Install `kvikio` (cuFile-backed) and/or DALI; read a dataset with varied/compressed/non-4K chunks.
-- Measure achieved BW vs the Step-1 ceiling; use `gds_stats`/`cufile.log` to catch a *subset* of reads
-  that silently fell back/amplified → Figure 1 of the proposal.
-- Then point the DFTracer **GOTCHA cuFile tracer** (already prototyped in the DeltaAI run) at it to
-  get per-op cross-layer attribution on a **real GDS node** — the demand-critical core.
+Drove **kvikio** (vendor cuFile reader) over aligned vs **ragged** (compressed-chunk-like) records
+into GPU memory. Full write-up + reproduce: **`results/step3/STEP3-FINDINGS.md`**. Headline:
+
+| mode | throughput | cuFile GDS reads `n` | `posix` |
+|---|---:|---:|---:|
+| aligned | 1.243 GiB/s | 9926 | 0 |
+| ragged  | 1.229 GiB/s | **0** (all bypass GDS) | 0 |
+| mixed   | 1.233 GiB/s | 4956 (only the aligned half) | 0 |
+
+- **Silent per-op GDS bypass:** kvikio routes ragged/unaligned reads through its CPU/POSIX path, not
+  NVMe→GPU DMA. In `mixed` only ~half the reads use GDS — no error, no warning, can't be forced on
+  (`KVIKIO_COMPAT_MODE=OFF` doesn't change it).
+- **Coarse tools are blind:** aggregate throughput is identical (~1.23 GiB/s) across modes; and
+  **`gds_stats` reports `posix=0`** for the all-POSIX ragged run — *actively misleading*, because the
+  bypass happens *above* cuFile (in kvikio) so cuFile never counts it. Only the GDS read *count*
+  silently dropping reveals it.
+- **Validates the architecture:** the loss is decided at the **kvikio↔cuFile boundary** and is
+  invisible to both bandwidth and `gds_stats` → exactly what per-op **GOTCHA/LD_PRELOAD cuFile**
+  interception (the DFTracer prototype) would attribute to the causing op/chunk = **Figure 1**.
+
+**Next refinements:** multi-threaded / file≫RAM run; a real compressed dataset (kvikio numpy / DALI
+`fn.readers.numpy`); then point the DFTracer cuFile GOTCHA tracer at it for per-op attribution.
 
 ---
 

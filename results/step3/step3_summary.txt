@@ -1,0 +1,4 @@
+mode     | GiB/s    | cuFile (live): n / posix / unalign / dr
+aligned  | 1.243    | n=9926 posix=0 unalign=0 dr=0
+ragged   | 1.229    | n=0 posix=0 unalign=0 dr=0
+mixed    | 1.233    | n=4956 posix=0 unalign=0 dr=0
