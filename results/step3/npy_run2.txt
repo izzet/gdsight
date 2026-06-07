@@ -1,0 +1,2 @@
+kvikio 26.04.000 compat_pref=False files=300 threads=8 avg_npy_data_offset=128B (4K-aligned=False)
+reads=22200 total=23.43 GiB time=15.15s throughput=1.547 GiB/s

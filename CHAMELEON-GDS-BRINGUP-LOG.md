@@ -372,8 +372,30 @@ throughput is identical **~1.23 GiB/s** and `gds_stats` shows **`posix=0`** (bli
 Figure-1 result: a real vendor reader silently skips GDS for a subset of ops, invisible to throughput
 AND to `gds_stats`. Write-up: `results/step3/STEP3-FINDINGS.md`; script `step3/step3_ragged.py`.
 Caveat: libcufile **segfaults at process exit** on this stack (kvikio-26 / libcufile-12.6) → counters
-read **live** via `gds_stats -p`. **NEXT:** multi-thread / file≫RAM + real compressed dataset; then
-point the DFTracer **GOTCHA cuFile tracer** at it for per-op attribution.
+read **live** via `gds_stats -p`.
+
+### Step 3 follow-ups #1 / #2 / #3 (2026-06-07 late) — details in `results/step3/STEP3-FINDINGS.md`
+- **#1 cost:** on this single PM983 the bypass is invisible to throughput, CPU, **and** page-cache
+  (`gdsio -x0 ≈ -x1`; kvikio aligned ≈ ragged CPU) — the strongest "coarse tools blind" form.
+- **#2 realism:** real `.npy` data offset = 128 B (unaligned) → kvikio (8 threads) **and** DALI numpy
+  GPU reader **both** bypass GDS for 100% of reads (`n=0`). A ubiquitous format silently defeats GDS.
+- **#3 tracer:** added `external/dftracer` + `external/brahma` submodules + `tools/gds_trace_preload.c`
+  (LD_PRELOAD cuFile+POSIX interposer). **Finding:** `libkvikio` `dlsym`'s cuFile + uses the
+  **async/batch** API (`cuFileReadAsync`/`cuFileBatchIOSubmit`), not `cuFileRead`, so libc LD_PRELOAD
+  is structurally blind → the tracer must be **GOTCHA over the full cuFile API surface** (+ eBPF for
+  reads that never enter cuFile). **Full DFTracer build = next session.**
+- Repo `izzet/gdstrace`: **4 commits, UNPUSHED** (needs your GitHub auth — see push note above).
+
+### ⚠️ CORRECTION (2026-06-07) — Step-3/4 "silent POSIX bypass" finding RETRACTED
+The "silent bypass" / Figure-1 claim was a **measurement error**: I read the cuFile **per-GPU `n=`**
+counter (which is 0 for unaligned reads) instead of `GLOBAL Read: ok` / the **kernel nvidia-fs
+`Reads`/`readMiB`** counters. Ground truth (enabled `rw_stats_enabled=1`, `gdsio -x0` control matched
+exactly): **ALL kvikio reads — aligned, ragged, `.npy` — do real NVMe→GPU DMA** (Δreads
+6000/6019/468, ΔreadMiB 3195/3190/324, matching each workload). **No bypass; GDS works.** Real (modest)
+takeaways: cuFile per-GPU userspace stats are misleading; mild unaligned read-splitting (468 vs ~300);
+**the project's silent-fallback premise is NOT yet demonstrated here.** Corrected in
+`results/step3/STEP3-FINDINGS.md` (original kept, marked SUPERSEDED) + report Step 3&4. (Caught by
+Izzet's skepticism.)
 
 ---
 

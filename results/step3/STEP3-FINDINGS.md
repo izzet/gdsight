@@ -1,4 +1,34 @@
-# Step 3 & 4 — Silent per-op GDS bypass on a vendor reader (kvikio), and why coarse tools miss it
+# Step 3 & 4 — [CORRECTED] kvikio/DALI use TRUE GDS even for unaligned / .npy reads
+
+> ## ⚠️ CORRECTION (2026-06-07) — the "silent POSIX bypass" finding below is RETRACTED
+>
+> The original conclusion in this doc ("a subset of reads silently bypasses GDS to POSIX; `n=0`")
+> was **WRONG — a measurement error.** I had grepped only the cuFile **per-GPU** `Read: n=` counter,
+> which reads 0 for unaligned reads, and never checked `GLOBAL Read: ok` (≈17,000 for *both* aligned
+> and ragged) or the **kernel nvidia-fs `Reads`/`readMiB`** counters.
+>
+> With nvidia-fs IO stats enabled and a `gdsio -x0` positive control (Δreads=2048, ΔreadMiB=2048 for
+> a 2 GiB read — exact), the kernel ground truth is:
+>
+> | workload | kernel Δreads | kernel ΔreadMiB | workload | verdict |
+> |---|---:|---:|---:|---|
+> | gdsio -x0 (control) | 2048 | 2048 | 2 GiB | true GDS |
+> | kvikio **aligned** | 6000 | 3195 | 3.12 GiB | **true GDS** |
+> | kvikio **ragged** | 6019 | 3190 | 3.09 GiB | **true GDS** |
+> | kvikio **.npy** | 468 | 324 | 0.32 GiB | **true GDS** |
+>
+> **All kvikio reads — aligned, ragged, and `.npy` — perform real NVMe→GPU DMA.** There is **no
+> silent POSIX bypass.** DALI's `n=0` was the same artifact. The actual takeaways are far more modest:
+> (1) the cuFile **per-GPU userspace stats are misleading** (`n=0`/`posix=0` while the kernel DMA'd) —
+> a tooling gotcha, not a pathology; (2) mild **read splitting** for unaligned `.npy` (468 kernel
+> reads for ~300 logical reads) — possible small amplification, to be quantified; (3) the project's
+> *silent-fallback* premise was **NOT** demonstrated here — on this stack GDS works for unaligned/.npy.
+>
+> Everything from here down is the **original (incorrect)** writeup, kept for the record. Do not cite it.
+
+---
+
+# [SUPERSEDED] Step 3 & 4 — Silent per-op GDS bypass on a vendor reader (kvikio), and why coarse tools miss it
 
 **Node:** Chameleon A100, true-GDS (image `grc-ub2404-nvk-gds-a100-cu126-v3`). **Date:** 2026-06-07.
 **Reader:** kvikio 26.04 (cuFile/GDS) · **Workload:** `step3/step3_ragged.py` reading many records

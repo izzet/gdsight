@@ -138,30 +138,28 @@ pathology) requires a real workload with non-4K / compressed / ragged chunks →
 
 ---
 
-## Steps 3 & 4 — Realistic workload + tool-blindness — ✅ DONE (the money finding)
+## Steps 3 & 4 — Realistic workload — ⚠️ CORRECTED: GDS works, no bypass found
 
-Drove **kvikio** (vendor cuFile reader) over aligned vs **ragged** (compressed-chunk-like) records
-into GPU memory. Full write-up + reproduce: **`results/step3/STEP3-FINDINGS.md`**. Headline:
+Drove **kvikio** + **DALI** over aligned, ragged, and real `.npy` data. An initial result *appeared*
+to show a **silent POSIX bypass** (cuFile per-GPU `n=0` for unaligned reads) — **that was a
+measurement error and is RETRACTED.** Kernel ground truth (nvidia-fs IO stats `rw_stats_enabled=1`,
+with a `gdsio -x0` positive control that matched exactly) shows **all kvikio reads — aligned, ragged,
+and `.npy` — perform real NVMe→GPU DMA**:
 
-| mode | throughput | cuFile GDS reads `n` | `posix` |
-|---|---:|---:|---:|
-| aligned | 1.243 GiB/s | 9926 | 0 |
-| ragged  | 1.229 GiB/s | **0** (all bypass GDS) | 0 |
-| mixed   | 1.233 GiB/s | 4956 (only the aligned half) | 0 |
+| workload | kernel Δreads | kernel ΔreadMiB | verdict |
+|---|---:|---:|---|
+| gdsio -x0 (control) | 2048 | 2048 (2 GiB) | true GDS |
+| kvikio aligned / ragged / .npy | 6000 / 6019 / 468 | 3195 / 3190 / 324 | **all true GDS** |
 
-- **Silent per-op GDS bypass:** kvikio routes ragged/unaligned reads through its CPU/POSIX path, not
-  NVMe→GPU DMA. In `mixed` only ~half the reads use GDS — no error, no warning, can't be forced on
-  (`KVIKIO_COMPAT_MODE=OFF` doesn't change it).
-- **Coarse tools are blind:** aggregate throughput is identical (~1.23 GiB/s) across modes; and
-  **`gds_stats` reports `posix=0`** for the all-POSIX ragged run — *actively misleading*, because the
-  bypass happens *above* cuFile (in kvikio) so cuFile never counts it. Only the GDS read *count*
-  silently dropping reveals it.
-- **Validates the architecture:** the loss is decided at the **kvikio↔cuFile boundary** and is
-  invisible to both bandwidth and `gds_stats` → exactly what per-op **GOTCHA/LD_PRELOAD cuFile**
-  interception (the DFTracer prototype) would attribute to the causing op/chunk = **Figure 1**.
-
-**Next refinements:** multi-threaded / file≫RAM run; a real compressed dataset (kvikio numpy / DALI
-`fn.readers.numpy`); then point the DFTracer cuFile GOTCHA tracer at it for per-op attribution.
+- **No silent fallback was found** on this stack — GDS engages even for unaligned / `.npy` reads.
+- The cuFile **per-GPU userspace stats are misleading** (`n=0`, `posix=0` while the kernel DMA'd) — a
+  real *tooling* gotcha, not a pathology. Trust the kernel nvidia-fs `Reads`/`readMiB` counters.
+- Mild read splitting for unaligned `.npy` (468 kernel reads vs ~300 logical) — possible small I/O
+  amplification, to be quantified — **not** a bypass.
+- **Implication for the proposal:** the motivating *silent fallback* pathology is **not yet
+  reproduced**; finding a genuine one needs a harder trigger (forced compat, sub-page reads, an
+  unsupported-mount subset, or the kernel-depth/eBPF layer). Full detail + retraction:
+  `results/step3/STEP3-FINDINGS.md`.
 
 ---
 
