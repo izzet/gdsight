@@ -125,3 +125,41 @@ header (`\x93NUMPY` + version + dict), so the array data starts at offset **128 
 **Takeaway:** a practitioner loading `.npy` shards with kvikio *or* DALI believes they're using GDS;
 for the entire dataset they are not — and no bandwidth, CPU, page-cache, or `gds_stats` number tells
 them. Per-op attribution at the cuFile API (task #3) is what surfaces it.
+
+---
+
+## Task #3 — Per-op tracer: which interception layer actually works
+
+Goal: a transparent tracer that attributes, per op, GDS vs POSIX-bypass. Added `external/dftracer`
+and `external/brahma` (the GOTCHA-based interposition substrate) as submodules, and built a focused
+**LD_PRELOAD interposer** (`tools/gds_trace_preload.c`) hooking **both** `cuFileRead` (GDS) and
+`pread64/pread/read` (POSIX) with `/proc/self/fd` file attribution — the same idea as brahma's GOTCHA
+wrappers.
+
+**What it caught, run under the kvikio `.npy` workload:**
+
+| run | `cuFileRead` (GDS) seen | libc POSIX reads seen |
+|---|---:|---:|
+| kvikio `.npy` | **0** | 300 — but these are **Python parsing the npy headers**, not the data reads |
+| kvikio aligned | **0** | 0 |
+
+…yet `gds_stats` independently showed the aligned run did `n=9926` cuFile GDS reads. So **kvikio's
+actual data I/O is invisible to libc-level LD_PRELOAD** — confirmed by the symbols in `libkvikio.so`:
+it **`dlsym`'s cuFile** (so LD_PRELOAD, which only interposes dynamic-linker resolution, never sees
+it) **and uses the async/batch API** (`cuFileReadAsync`, `cuFileBatchIOSubmit`), **not** plain
+`cuFileRead`. The bypassed (`.npy`) reads surface as neither cuFile nor libc `pread64`.
+
+**This is the architectural finding for GDS-Trace:**
+1. The tracer must use **GOTCHA** (binary GOT patching, wraps `dlsym`'d symbols when installed before
+   the reader resolves them) — **LD_PRELOAD alone is insufficient.** This is exactly why DFTracer/
+   brahma use GOTCHA. → fold the hooks into `external/dftracer/src/dftracer/core/brahma/cufile.cpp`.
+2. It must cover the **full cuFile API surface** — sync **and** `*Async` **and** `cuFileBatchIO*` —
+   not just `cuFileRead`. (A `gds_stats`/`cuFileRead`-only view misses real readers like kvikio.)
+3. The truly-bypassed reads (no cuFile call at all) need either reader-API hooks **or** the
+   **kernel/eBPF** layer (the brief's kernel-depth tier) — neither `gds_stats` nor cuFile-API
+   interposition can see an op that never enters cuFile.
+
+**Status:** submodules in place; LD_PRELOAD prototype + interception-layer requirement established.
+Remaining (next session): build DFTracer (cpp-logger + GOTCHA 1.0.5 + brahma v0.0.3 + yaml-cpp via
+`dependency/install_dependency.sh`), add the `*Async`/`BatchIO` cuFile GOTCHA hooks, and verify
+GOTCHA catches kvikio's `dlsym`'d async cuFile calls → the per-op Figure-1 trace.

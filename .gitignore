@@ -17,3 +17,6 @@ results/**/*_gdsstats.txt
 # python envs (the real env is /opt/gds-venv on the image)
 venv/
 .venv/
+
+# compiled tracer artifact (build from tools/gds_trace_preload.c)
+*.so

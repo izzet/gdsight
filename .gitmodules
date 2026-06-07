@@ -1,0 +1,6 @@
+[submodule "external/dftracer"]
+	path = external/dftracer
+	url = https://github.com/izzet/dftracer.git
+[submodule "external/brahma"]
+	path = external/brahma
+	url = https://github.com/izzet/brahma.git
