@@ -1,0 +1,2 @@
+DALI 2.1.0 numpy GPU reader on /mnt/nvme1/gdstrace-smoke/npy
+iters=18083 time=15.0s
