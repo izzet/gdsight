@@ -1,0 +1,12 @@
+--- aligned   randread 4K ---
+IoType: RANDREAD XferType: GPUD Threads: 4 DataSetSize: 4175452/4194304(KiB) IOSize: 4(KiB) Throughput: 0.147762 GiB/sec, Avg_Latency: 103.266082 usecs ops: 1043863 total_time 26.948956 secs
+--- UNaligned randread 4K ---
+IoType: RANDREAD XferType: GPUD Threads: 4 DataSetSize: 4142152/4194304(KiB) IOSize: 4(KiB) Throughput: 0.116994 GiB/sec, Avg_Latency: 130.423278 usecs ops: 1035538 total_time 33.764793 secs
+--- aligned   randread 64K ---
+IoType: RANDREAD XferType: GPUD Threads: 4 DataSetSize: 4158784/4194304(KiB) IOSize: 64(KiB) Throughput: 0.683937 GiB/sec, Avg_Latency: 356.946277 usecs ops: 64981 total_time 5.798962 secs
+--- UNaligned randread 64K ---
+IoType: RANDREAD XferType: GPUD Threads: 4 DataSetSize: 4170240/4194304(KiB) IOSize: 64(KiB) Throughput: 0.628381 GiB/sec, Avg_Latency: 388.417923 usecs ops: 65160 total_time 6.329041 secs
+--- aligned   randread 1M ---
+IoType: RANDREAD XferType: GPUD Threads: 4 DataSetSize: 4191232/4194304(KiB) IOSize: 1024(KiB) Throughput: 2.935931 GiB/sec, Avg_Latency: 1329.648426 usecs ops: 4093 total_time 1.361432 secs
+--- UNaligned randread 1M ---
+IoType: RANDREAD XferType: GPUD Threads: 4 DataSetSize: 4098048/4194304(KiB) IOSize: 1024(KiB) Throughput: 2.735835 GiB/sec, Avg_Latency: 1425.498245 usecs ops: 4002 total_time 1.428523 secs

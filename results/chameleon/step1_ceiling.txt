@@ -1,0 +1,6 @@
+--- seq read -x0 ---
+IoType: READ XferType: GPUD Threads: 4 DataSetSize: 4191232/4194304(KiB) IOSize: 1024(KiB) Throughput: 2.901994 GiB/sec, Avg_Latency: 1345.171009 usecs ops: 4093 total_time 1.377353 secs
+--- seq read -x1 ---
+IoType: READ XferType: CPUONLY Threads: 4 DataSetSize: 4191232/4194304(KiB) IOSize: 1024(KiB) Throughput: 2.930032 GiB/sec, Avg_Latency: 1332.270907 usecs ops: 4093 total_time 1.364173 secs
+--- seq read -x2 ---
+IoType: READ XferType: CPU_GPU Threads: 4 DataSetSize: 4191232/4194304(KiB) IOSize: 1024(KiB) Throughput: 2.939327 GiB/sec, Avg_Latency: 1327.518169 usecs ops: 4093 total_time 1.359859 secs

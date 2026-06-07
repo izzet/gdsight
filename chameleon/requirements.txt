@@ -1,0 +1,9 @@
+# GDS-Trace Python env (kvikio / DALI / cupy) — install into /opt/gds-venv
+# Needs both NVIDIA indexes:
+--extra-index-url https://pypi.nvidia.com
+--extra-index-url https://developer.download.nvidia.com/compute/redist
+# Top-level (pins captured 2026-06-07 on Chameleon A100, CUDA 12.6, Py3.12):
+kvikio-cu12==26.4.0          # cuFile (GDS) bindings — primary Step-3 reader
+cupy-cuda12x==14.1.1         # GPU arrays for kvikio reads
+nvidia-dali-cuda120==2.1.0   # DALI (fn.readers.numpy GDS) — secondary reader
+# Full transitive pin is in requirements.lock.txt (use that for exact reproduction).

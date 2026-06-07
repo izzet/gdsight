@@ -1,0 +1,7 @@
+io      | mode      | Read: n / posix / unalign / dr
+4K      | aligned   | Read: bw=0.146198 util(%)=394 n=524288 posix=0 unalign=0 dr=0
+4K      | unaligned | 
+64K     | aligned   | Read: bw=0.691223 util(%)=398 n=32768 posix=0 unalign=0 dr=0
+64K     | unaligned | Read: bw=0.000393774 util(%)=0 n=12 posix=0 unalign=0 dr=0
+1M      | aligned   | Read: bw=0 util(%)=0 n=2048 posix=0 unalign=0 dr=0
+1M      | unaligned | Read: bw=0 util(%)=0 n=0 posix=0 unalign=0 dr=0
