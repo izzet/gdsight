@@ -405,3 +405,23 @@ the loop). Tool flags per-op pathology -> apply the named fix -> measure:
 Updated results/curated-pathologies.md with the fix-loop table + honest notes. This turns the suite from
 characterization into diagnosis->fix->measured-win, which (per related-work.md) lifts it above the
 stop-at-characterization norm (Recorder/DFTracer/zns-tools) toward Ravi's build-route but tool-guided.
+
+## LBA-matching prototype: deterministic cross-layer attribution by device address (2026-06-08)
+tools/lba_match.py: build file-offset<->LBA map from the file extent map (filefrag; fs on raw nvme1n1,
+device_sector=phys_fs_block*8), then match each NVMe cmd's sector -> the cuFileRead that requested that
+file range. Address-based, so independent of thread/timing.
+VALIDATION (agreement where corr_id assigns): fastsafetensors 1815/1815 = 100%; kvikio all-64K 97.2%
+(2.8% gap = same-range collisions LBA can't disambiguate but corr_id timing can); concurrent 8-thread 93%.
+HONEST KEY FINDING: corr_id is ROBUST across ALL sync cases I can generate -- single 100%, 8-thread x 4000
+concurrent 99.9%, fastsafetensors single/large 99.8%. The per-tid+count fix handles synchronous concurrency
+far better than the historical "36%" implied. The corr_id drop only occurs on the ASYNC / cuFile-internal-
+worker-pool path (kvikio raw_read_async = cuFileReadAsync), which SEGFAULTS under datacrumbs (tracer
+limitation, workloads/async_reader.py) -- so the dramatic "corr_id drops -> LBA recovers" demo is currently
+BLOCKED by the async-tracing crash, not by LBA.
+NET (honest contribution): corr_id (timing/thread heuristic) and LBA (deterministic address) are
+COMPLEMENTARY and MUTUALLY VALIDATING -- corr_id disambiguates same-range reads via timing; LBA
+disambiguates thread-decoupled/async via address; 100% agreement where both apply proves the cheap
+always-on heuristic CORRECT (not just plausible), which heuristic-only tracers can't offer.
+OPERATIONAL BUG: crashed datacrumbs runs leave stale servers; multiple servers collide on the same eBPF
+probes -> empty/corrupt traces. Must `sudo pkill -9 -f datacrumbs` between runs / after a crash.
+workloads/{concurrent_reader,async_reader}.py added.
