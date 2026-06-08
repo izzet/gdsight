@@ -28,6 +28,21 @@ it became (with sizes), the device-command amplification, kvikio's dlsym'd/worke
 DALI's per-read handle-registration + GDS/POSIX mix. `gds_stats` is aggregate cuFile-only; NVTX stops
 at cuFile; Darshan has no cuFile.
 
+## Third layer: nvidia-fs (the middle) — true P2P vs silent bounce, per op
+The brief's pitch is **cuFile ↔ nvidia-fs ↔ NVMe**; the middle layer is now instrumented (custom
+`nvidiafs` plugin, `event_type 6`, kprobes on `nvidia-fs.ko`):
+- **`nvfs_io_start_op`** — per-op driver entry, **1 per `cuFileRead`** → the cuFile↔nvidia-fs bridge.
+- **`nvfs_get_p2p_dma_mapping`** — the op took the **true zero-copy P2P DMA** path (real GDS).
+- **`nvfs_mgroup_pin_shadow_pages`** — the op **staged through a host shadow/bounce buffer** (not
+  zero-copy) — i.e. "GDS configured but silently bouncing", the core correctness pathology.
+
+So GDS-Trace now gives a **per-op verdict: was this read actually zero-copy, or bounced?** Validated
+gdsio `-i1M`: 256 cuFileRead → 256 `nvfs_io_start_op` → 320 `nvfs_get_p2p_dma_mapping`, only 4
+`pin_shadow_pages` → **true P2P**. **Correction to an earlier inference:** kvikio with `BufRegister=0`
+also does true P2P (`p2p_mapping`=3003, `pin_shadow`=1 over 2000 reads) — *no pre-registration ≠
+bounce*; the driver maps GPU pages P2P per op regardless. The nvidia-fs layer is what settles this per
+op (we previously could only guess from the aggregate `BufRegister`/`Active Shadow-Buffer` counters).
+
 ## Cross-check vs ground-truth tools (the rigor) — gdsio `-i 4M -s 256M -x 0`
 **Same run**, three independent measurements:
 | layer | GDS-Trace | kernel `/proc/driver/nvidia-fs/stats` | bpftrace (independent kprobe) |

@@ -167,3 +167,11 @@ amplification (1.06×), ESPN per-read handle-registration (0.115s > 0.053s reads
   `-I/usr/local/cuda-12.6/include` + `-lcufile -lcudart`.
 - batch BPF array-walk: 256-iter cap on the loop (verifier); `CUfileIOParams_t` stride 64B,
   file_offset@+16, size@+32.
+
+## nvidia-fs layer added (2026-06-08) — the missing middle (cuFile↔nvidia-fs↔NVMe complete)
+New custom `nvidiafs` plugin (`event_type 6`) kprobes `nvidia-fs.ko`: `nvfs_io_start_op` (per-op driver
+entry, 1 per cuFileRead = the bridge), `nvfs_get_p2p_dma_mapping` (TRUE zero-copy P2P), 
+`nvfs_mgroup_pin_shadow_pages` (host shadow/bounce). gdsio -i1M: 256 cuFileRead → 256 nvfs_io_start_op
+→ 320 p2p_mapping (4 shadow ≈0) → 324 nvme; DFAnalyzer shows cufile/nvidiafs/block as 3 layers, all
+nested under cuFileRead. Per-op true-P2P-vs-bounce verdict now available. Finding: kvikio BufRegister=0
+still does true P2P (p2p=3003/shadow=1) — no pre-registration ≠ bounce.
