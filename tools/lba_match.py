@@ -47,7 +47,8 @@ def parse_trace(path):
             except Exception:
                 continue
             n, a = e.get("name"), e.get("args", {})
-            if n in ("cuFileRead", "cuFileReadAsync", "cuFileWrite", "cuFileWriteAsync") and "offset" in a:
+            if n in ("cuFileRead", "cuFileReadAsync", "cuFileWrite", "cuFileWriteAsync",
+                     "cuFileBatchIOSubmit") and "offset" in a:
                 cufile.append((int(a.get("corr_id", -1)), int(a["offset"]), int(a["size"])))
             elif n == "nvme_setup_cmd" and "sector" in a:
                 nvme.append((int(a.get("corr_id", -1)), int(a["sector"]), int(a.get("size", 0))))

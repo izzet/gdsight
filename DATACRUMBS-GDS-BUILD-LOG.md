@@ -438,3 +438,20 @@ CONTRIBUTION (method): complementary cross-layer attribution framework -- corr_i
 sync-robust) + LBA (deterministic address, async-robust), each covers the other's failure mode. Per-op
 attribution of ASYNC cuFile I/O below the API (inference-relevant) appears unique. This is the demonstrated
 core design contribution, no longer just "yet another tracer".
+
+## Cross-examined the REAL engine: NVIDIA NIXL (Dynamo transfer library) (2026-06-08)
+Built/ran NIXL GDS backend (nixl-cu12 1.2.0 wheel; default `nixl`=cu13 wheel is incompatible with our 12.6
+driver -> use nixl-cu12; import as nixl_cu12). workloads/nixl_gds_read.py: file->VRAM via NIXL GDS, async.
+Findings:
+- NIXL's default GDS backend uses the cuFile BATCH API (cuFileBatchIOSetUp/Submit/GetStatus; symbol scan);
+  GDS_MT uses cuFileRead/Write. Real engines drive GDS via batch/async, not plain cuFileRead.
+- GDS-Trace observes it END-TO-END: 2000 cuFileBatchIOSubmit -> 2000 nvfs_io (true P2P) -> 2003 NVMe.
+  Per-op attribution: corr_id 99.9%, LBA 97.2%, agreement 97.3% -> real engine attributed, validated 2 ways.
+  -> results/cross-layer-attribution.md (NIXL row + section).
+GOTCHAS (for the partner/repro): (1) nixl-cu12 wheel, not `nixl` (cu13). (2) NIXL resolves cuFile from
+torch's BUNDLED libcufile -> need LD_PRELOAD system libcufile so the cuFile uprobe fires (kernel kprobes
+fire regardless). (3) NIXL GDS batch caps concurrency: --inflight 32 -> NIXL_ERR_BACKEND, <=16 ok (this,
+not a tracer conflict, caused earlier failures). (4) datacrumbs client does NOT conflict with NIXL.
+(5) corr_id collapse is the high-in-flight cuFileReadAsync regime; NIXL's count=1 batches don't trigger it.
+Server-pileup gotcha persists: pkill must use a var-built pattern ("sbin/${p} run") so the literal isn't in
+my own cmdline (else self-kill).

@@ -13,6 +13,20 @@ regimes (A100, CUDA 12.6, nvidia-fs 2.28; `dataset.bin` on raw `nvme1n1`; `tools
 | fastsafetensors shard load | 1 | 1819 | 99.8% | 99.8% |
 | **cuFileReadAsync (200, 32 in flight)** | 200 | 203 | **6.4%** | **98.5%** |
 | **cuFileReadAsync (2000, 32 in flight)** | 2000 | 2003 | **8.5%** | **97.2%** |
+| **NIXL/Dynamo GDS (batch API, inflight 8)** | 2000 | 2003 | 99.9% | 97.2% |
+
+## Validation on a real engine: NVIDIA NIXL (Dynamo)
+We traced **NIXL** — the transfer library under NVIDIA Dynamo disaggregated inference (`external/nixl`,
+`nixl-cu12` wheel) — reading file→GPU (VRAM) through its **GDS backend**. NIXL drives GDS via the cuFile
+**batch API** (`cuFileBatchIOSubmit`; the `GDS_MT` backend uses `cuFileRead`/`Write`), one entry per
+transfer here. GDS-Trace observes it end-to-end: **2000 `cuFileBatchIOSubmit` → 2000 `nvfs_io` (true P2P)
+→ 2003 NVMe**, and attributes per-op **both ways — corr_id 99.9%, LBA 97.2%, agreeing 97.3%**: the tool
+attributes the *real engine's* device traffic per logical transfer, validated two independent ways.
+Notes/gotchas: NIXL resolves cuFile from torch's **bundled** libcufile, so catching the cuFile side needs
+the system-libcufile `LD_PRELOAD`; NIXL's GDS batch backend **caps concurrency** (inflight 32 → `NIXL_ERR_
+BACKEND`, ≤16 ok); and because NIXL submits **count=1 batches** at modest in-flight, corr_id does *not*
+collapse here (the collapse is the high-in-flight `cuFileReadAsync` regime above). Reproduce:
+`workloads/nixl_gds_read.py`.
 
 ## Findings
 - **corr_id** (per-tid + tgid-op-count fallback) is robust for **synchronous** I/O (≥99.8%), including heavy
