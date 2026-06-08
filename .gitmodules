@@ -10,3 +10,6 @@
 [submodule "external/nixl"]
 	path = external/nixl
 	url = https://github.com/ai-dynamo/nixl
+[submodule "external/datacrumbs"]
+	path = external/datacrumbs
+	url = https://github.com/LLNL/datacrumbs

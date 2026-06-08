@@ -57,36 +57,45 @@ A per-op record + the correlation NVIDIA lacks:
 This is precisely the gap every real user hand-codes around (ESPN `cudaEvent`+manual BW; nixlbench
 `std::chrono`; Muradli's hand-timing) and that `gds_stats` (`posix=0`) cannot express.
 
-## 4. Is extending DFTracer the right approach?
-**[DFTracer](https://akougkas.io/assets/pdf/dftracer.pdf)** (Kougkas/Sun lab — *same group as Muradli*)
-is a GOTCHA-based, multi-level (app + POSIX I/O) per-op tracer for dynamic AI workflows, emitting
-timestamped Chrome-trace records with a DFAnalyzer pipeline. Fit assessment:
+## 4. Right host: DataCrumbs (eBPF), not DFTracer+GOTCHA
+Re-evaluated after inspecting **[LLNL/DataCrumbs](https://github.com/LLNL/datacrumbs)** (`external/datacrumbs`)
+— the **eBPF successor to DFTracer from the same authors** (Devarajan/LLNL). It **already unifies the
+layers we would otherwise glue together**, which makes "DFTracer + a separate eBPF correlator"
+redundant:
+- **One eBPF framework, config-driven probe categories** (JSON): `type 0 = syscalls`,
+  **`type 1 = kernel kprobes (bio, ext4, iomap, fscache)`**, **`type 2 = userspace uprobes (libc, MPI,
+  IOR…)`**, + custom. libbpf + **bpftime** (has a CUDA-attach option).
+- **Native cross-layer correlation built in**: every event carries `bpf_ktime_get_ns()` + pid/tid (+ a
+  `pid_map` for durations) — *one clock across userspace and kernel*. Output feeds **DFAnalyzer**.
 
-**Why it's the right host:**
-- Already does **GOTCHA interposition + per-op timestamped records + app-level + POSIX-level** events —
-  adding a **cuFile module** is the "missing cuFile layer" the HPC I/O ecosystem lacks. Architecturally
-  it's a new instrumented interface, exactly DFTracer's extension model.
-- **Same lab** → collaboration/adoption/co-authorship (Muradli, ESPN-adjacent); reuses DFAnalyzer;
-  can emit Darshan/Recorder-compatible records so IOAgent/ION can consume GDS traces.
-- Gives app↔POSIX correlation for free; cuFile sits naturally between them.
+It also **fixes our interposition problem cleanly**:
+1. **cuFile = a uprobe category (config, not code).** An eBPF **uprobe attaches to the symbol *address*
+   in `libcufile.so`**, so it fires for `cuFileRead`/`cuFileReadAsync`/`cuFileBatchIOSubmit`
+   **regardless of `dlsym`/PLT/GOT** — exactly what defeated LD_PRELOAD and complicated GOTCHA. uprobes
+   can also read the call **arguments** (size/offset) from registers. Async/batch = more symbols listed.
+2. **The NVMe/amplification side is already traced** (`type 1`: `bio`, `ext4`, `iomap`). The
+   **cuFile-op → bio-request amplification** (our 2× at 1 MiB) is just correlating a `type 2` cuFile
+   event to the `type 1` `bio` events on the same pid/tid/time window — both already in the stream.
+3. **Catches non-cuFile reader I/O for free** — kvikio's sub-16 KiB POSIX appears as syscall/bio events.
+4. **Survives the CUDA 12.8+ P2PDMA shift** — it traces the **block layer**, not `nvidia-fs.ko`.
 
-**What DFTracer does NOT have and we must build (the real work / novelty):**
-1. **A cuFile GOTCHA module over the *full* API surface** — sync **and** `*Async` **and** `cuFileBatchIO*`
-   (kvikio/ESPN use batch/async, not `cuFileRead`), and it must survive **`dlsym`'d** resolution
-   (we proved **LD_PRELOAD is insufficient**; GOTCHA patches the GOT and *can* catch dlsym'd symbols if
-   wrapped before first use — must verify). Capture path (GDS/compat) per op.
-2. **The cross-layer kernel correlation — the novel part.** DFTracer is userspace (libc POSIX). To tie
-   a cuFile op to its **nvidia-fs/NVMe requests** (amplification, DMA-vs-bounce) needs a **new kernel
-   source**: aggregate proc-stat deltas are *not* per-op → it must be **eBPF on nvidia-fs / NVMe / block
-   (and PCI P2PDMA for CUDA 12.8+)**, joined to the cuFile op by thread/time/offset. This correlation
-   is the research contribution; it does not exist in DFTracer or anywhere else.
-3. **Reader-layer hooks** (kvikio/DALI) to catch sub-cuFile POSIX, or infer it from the block layer.
-4. **NVTX bridge** — emit/ingest NVTX so traces compose with Nsight rather than competing.
+**So we don't combine DFTracer + eBPF — DataCrumbs already *is* the combined, correlated, multi-layer
+eBPF tracer.** Net-new work shrinks to: **(a)** a **cuFile probe category** (+ arg capture: size/offset),
+**(b)** the **cuFile↔bio correlation/attribution analysis** in DFAnalyzer (amplification, GDS-vs-POSIX
+path inferred from "cuFile op present but no DMA in window", where-time-went), **(c)** GPU/app context
+(bpftime CUDA attach or user-stacks) to tie ops to the framework op/tensor.
 
-**Verdict:** Extend DFTracer as the **host/scaffold** (interposition, per-op records, app attribution,
-analysis, lab/ecosystem fit) — but the **cuFile-API GOTCHA module (incl. async/batch/dlsym)** and the
-**eBPF cross-layer correlation to nvidia-fs/NVMe/P2PDMA** are net-new and are where the actual
-contribution lives. DFTracer is the right *vehicle*, not a drop-in solution.
+**When DFTracer/GOTCHA would still be preferable (the only reasons):**
+- **Unprivileged environments** — eBPF needs root/CAP_BPF + a recent kernel; GOTCHA/LD_PRELOAD don't.
+  (We have root on Chameleon; production HPC varies; bpftime's userspace eBPF softens this.)
+- **App/Python-semantic attribution** — DFTracer's in-process hooks map to the framework op/tensor more
+  directly than eBPF (which sees C symbols + stacks).
+
+**Verdict:** Build on **DataCrumbs** as the single host — add a **cuFile uprobe category** + the
+**cuFile↔bio cross-layer correlation** in DFAnalyzer. That delivers the per-op GDS attribution with the
+amplification/path/where-time-went that no NVIDIA tool provides, in one already-correlated framework,
+and is future-proof against the P2PDMA stack shift. Keep DFTracer/GOTCHA only as an unprivileged-mode
+fallback.
 
 ## 5. Caveat that shapes the design
 CUDA **12.8+** lets NVMe use upstream **PCI P2PDMA without `nvidia-fs.ko`** (and WekaFS already bypasses
