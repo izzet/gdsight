@@ -325,3 +325,14 @@ redundant fix-target from the trace alone. Honest scope: automated per-class dia
 revealing an invisible effect; ESPN already found it manually; CLS is obvious to an expert -> tool value
 grows where the wasteful class is NON-OBVIOUS (still to be found). Also re-confirmed /proc/self/io
 read_bytes DOES count GDS reads (300MiB) -> per-process attribution is NOT a gap (iotop sees it).
+
+## Real workload: RAPIDS cuDF read_parquet -- HONEST NEGATIVE (2026-06-08)
+cuDF 26.04 read_parquet (NYC taxi, 2.96M rows x 19 cols x 3 row-groups, 47.6MiB) via cuFile (GDS engages
+even at LIBCUDF_CUFILE_POLICY=OFF; readMiB +48). workloads/cudf_read_parquet.py. GDS-Trace: 58
+per-column-chunk cuFileReads, heterogeneous 17KB-4MB (match parquet column-chunk sizes; >4MB sliced to
+4MiB). Per-op byte-amp: small cols 1.1-1.4x, large ~1.0x; AGGREGATE ~1.0x (48=48 MiB). device-cmd amp
+2.05x (MDTS, bytes conserved). corr_id 94% (cuDF thread-pool -> some concurrent reads -> count>1 ambig).
+CONCLUSION: cuDF Parquet I/O is WELL-ENGINEERED -- no significant byte-amp pathology; small-column reads
+waste a little but negligible aggregate. Tool correctly reports a clean bill of health. Pathology shows
+in naive/hand-rolled code (ESPN-naive), not well-tuned libs -> tool value = diagnosing naive/misconfigured
+GDS. (Rigor: report negatives.) NEXT: elbencho deep-dive (richer benchmark, can stress small-files/dir-trees).
