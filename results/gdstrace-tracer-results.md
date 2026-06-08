@@ -183,6 +183,33 @@ bounced), so this is *pure alignment waste at the device*, not handle churn or s
 actionable — pad rows to a 4 KiB multiple (or coalesce gathers) — and GDS-Trace is what makes the waste
 visible and exact, per op, in the small-read regime GDS is actually deployed in.
 
+### Rigor: is the 2× real, and what's actually novel?
+**Validated four independent ways** (so it's not a tracer artifact or double-count):
+1. **First-principles block-alignment math** per row size — predicted {1024:4.0, 2048:2.0, 3072:2.0,
+   4096:1.0, 6144:1.33, 8192:1.0}× — matches measurement across all six sizes.
+2. **GDS-Trace** (corr_id-clean): 2.000×.
+3. **nvidia-fs `/proc` `readMiB`** (kernel oracle, independent of our kprobe): 47 MiB / 23.4 MiB = 2.0×.
+4. **`/proc/diskstats`** (device counter, independent of *both* our tracer and nvidia-fs): 23.58 / 11.72 = 2.0×.
+
+The **aligned baseline = exactly 1.000×** is the key control: it rules out **readahead** (which would
+inflate aligned reads too) and **double-counting** (which would scale everything, making aligned 2×).
+
+**Honest novelty.** The *effect* is well-known — textbook O_DIRECT / 4 KiB block-alignment (cuFile's API
+requires 4 KiB-aligned offsets), so unaligned reads pulling the superset is *expected*, not a discovery.
+What shipped tooling lacks, shown side-by-side (same 3072 B / 4000-read gather, 11.72 MiB requested):
+
+| tool | reports | sees waste? | per-op / attributed? |
+|---|---|---|---|
+| app throughput / `gds_stats` (cuFile-API) | 11.72 MiB, "GDS ok" | no (requested only) | no |
+| nvidia-fs `/proc readMiB` | 23 MiB device, n=4000 | only via manual diff vs requested | no (aggregate) |
+| `iostat` / `/proc/diskstats` | 23.58 MiB device-wide | only via manual diff | no (not GDS/op-specific) |
+| **GDS-Trace** | per cuFileRead 3072→6144 B = **2.000×** | **yes, directly** | **yes, exact, per op** |
+
+So the contribution is **automatic per-op attribution/visibility of a known-but-silent effect**: today you
+must manually diff a cuFile-level counter against a device-level counter (two layers, two tools) and still
+get only an aggregate ratio — never *which* op/offset. Not a new phenomenon; a diagnosis no shipped tool
+gives per op.
+
 (The other axis — host **CPU** spent building/reaping the N device commands in the `nvfs_io`/
 `nvme_setup_cmd` submission path — is the regime where *command* amplification would cost; on this
 BW-bound drive it's negligible, but it would dominate on faster/IOPS-bound storage.)

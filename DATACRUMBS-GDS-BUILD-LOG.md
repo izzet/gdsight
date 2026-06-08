@@ -264,3 +264,15 @@ BYTE-AMP = 2.000x exact (11.72MiB req -> 23.44MiB device), corr_id attribution 1
 (4096B aligned) = 1.000x. Exactly 2.000x because 3072=0.75*4096 -> half the rows straddle a 4KB block.
 Invisible to gds_stats/throughput. Fix: pad rows to 4KiB multiple / coalesce. Demonstrates byte-amp on a
 genuine workload, not gdsio -U.
+
+## Rigor check on the byte-amp result (2026-06-08)
+Validated the 2x byte-amp 4 independent ways: (1) first-principles 4KiB-block math per row size
+{1024:4,2048:2,3072:2,4096:1,6144:1.33,8192:1}x matches measurement; (2) GDS-Trace corr_id 2.000x;
+(3) nvidia-fs readMiB 47/23.4=2.0x (oracle, independent of our kprobe); (4) /proc/diskstats 23.58/11.72
+=2.0x (independent of tracer AND nvidia-fs). ALIGNED baseline = exactly 1.000x rules out readahead
+(would inflate aligned) AND double-counting (would scale aligned to 2x). HONEST: the effect is textbook
+O_DIRECT/4KiB-alignment (cuFile requires 4KiB-aligned offsets) - NOT a new phenomenon. Contribution =
+automatic PER-OP attribution of a known-but-silent effect. Side-by-side: gds_stats/throughput see
+requested only (blind); nvidia-fs/iostat see device total (aggregate, no per-op); GDS-Trace = per-op
+requested-vs-device exact. To detect it today you manually diff two counters from two layers + never get
+per-op.
