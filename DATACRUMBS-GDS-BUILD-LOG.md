@@ -393,3 +393,15 @@ downward extension of DFTracer/DFAnalyzer into GDS kernel/device layers; (2) too
 accepted shape (Recorder/DFTracer/zns-tools stop there); (3) STRONGEST: don't stop -- close diagnosis->
 fix loop (tool flags per-op pathology -> apply alignment/coalescing/batch -> measured ~2x win), like
 Ravi's build-route but tool-guided. Lifts above "yet another tracer".
+
+## Closed the diagnosis->fix loop for all 3 curated cases (tool-guided wins) (2026-06-08)
+Per the related-work angle (most cross-layer tracers STOP at characterization; differentiate by closing
+the loop). Tool flags per-op pathology -> apply the named fix -> measure:
+- Case 1 (align data to 4KiB): unaligned 0.50 -> aligned 1.15 GiB/s = 2.3x throughput (gdsio -w64 4K).
+- Case 2 (coalesce sub-16KiB to cross GDS threshold): 65536x4KiB POSIX 29 MiB/s (0 GDS ops) -> 4096x64KiB
+  GDS 149 MiB/s (4096 GDS ops) = 5.1x (also fewer/larger ops; assumes batchable items). kvikio.
+- Case 3 (pad 768d rows to 4KiB slots): 6029 -> 4194 B/row device = 1.44x less device BW/row (~1.4x at
+  saturation). embedding_gather --pad (added).
+Updated results/curated-pathologies.md with the fix-loop table + honest notes. This turns the suite from
+characterization into diagnosis->fix->measured-win, which (per related-work.md) lifts it above the
+stop-at-characterization norm (Recorder/DFTracer/zns-tools) toward Ravi's build-route but tool-guided.

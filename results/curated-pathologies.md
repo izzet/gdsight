@@ -45,6 +45,21 @@ hand-fixed exactly this). 4000 interleaved reads from two tables:
 | `gds_stats` / `iostat` | **1.36× aggregate byte-amp** | ❌ *"some waste somewhere"* (can't localize) |
 | **GDS-Trace** | **table B (3072 B) = 2.015×, table A (4096 B) = 1.000×** | ✅ **"table B (768-dim) wastes 2× — fix its layout; A is fine"** |
 
+## Closing the loop: tool-guided fixes → measured wins
+The per-op diagnosis names a *specific* fix in each case; applying it and measuring closes the loop —
+going **beyond the stop-at-characterization norm** of cross-layer tracers (Recorder, DFTracer, zns-tools;
+see `related-work.md`). Each fix is exactly what the per-op output points to (no other tool gives it):
+
+| case | tool-named fix | before | after | win |
+|---|---|---|---|---|
+| **1** unaligned layout | align data to 4 KiB | 0.50 GiB/s | 1.15 GiB/s | **2.3× throughput** |
+| **2** sub-16 KiB silent POSIX | coalesce reads to ≥16 KiB (→ GDS) | 29 MiB/s (POSIX, 0 GDS ops) | 149 MiB/s (4096 GDS ops) | **5.1× throughput** |
+| **3** unaligned 768-dim rows | pad rows to 4 KiB slots | 6029 B/row device | 4194 B/row device | **1.44× less device BW/row** |
+
+Honest notes: Case 2's win also reflects fewer/larger ops from coalescing (assumes the small items are
+batchable/contiguous); Case 3's padding trades unaligned 2× for a padded ~1.37× (1.44× device-BW
+reduction, ~1.4× throughput at saturation), not a perfect 1×.
+
 ## The pattern + honest scope
 In all three, standard tools report an aggregate that is **incomplete or actively misleading** → the wrong
 action (*buy hardware / "it's fine" / optimize blindly*); per-op cross-layer attribution → the **specific,
@@ -52,8 +67,11 @@ correct fix**. The enabler is per-op `corr_id` correlation **below cuFile** — 
 cuFile↔nvidia-fs↔NVMe per op (`gds_stats` is cuFile-aggregate; `iostat`/nvidia-fs are device-aggregate;
 `iotop` is per-process; Nsight stops at the cuFile API).
 
-**Honest limits:** (1) these are curated on a *robust modern stack* — they prove the **capability** and that
-the **gap** exists, not that production deployments hit them at scale; (2) each effect is individually known
-to experts — the contribution is *automatic, per-op attribution* that points to the fix without
-foreknowledge; (3) demand (a real team blocked by one of these, undiagnosable today) still needs a design
-partner to confirm.
+We then **close the loop**: the per-op output names the fix, we apply it, and measure the win (2.3× / 5.1×
+/ 1.44×) — which is what lifts this above the stop-at-characterization tracers.
+
+**Honest limits:** (1) these are curated on a *robust modern stack* — they prove the **capability**, the
+**gap**, and that the **tool-named fix works**, but not that production deployments hit them at scale;
+(2) each effect is individually known to experts — the contribution is *automatic, per-op attribution that
+names the fix without foreknowledge, plus the measured fix*; (3) demand (a real team blocked by one of
+these, undiagnosable today) still needs a design partner to confirm.

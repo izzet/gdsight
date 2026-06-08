@@ -30,12 +30,15 @@ def main():
     ap.add_argument("--nreads", type=int, default=4000)
     ap.add_argument("--device", default="cuda:0")
     ap.add_argument("--seed", type=int, default=1234)
+    ap.add_argument("--pad", action="store_true",
+                    help="THE FIX: store each row in a 4KiB-aligned slot (offsets aligned) -> 1 block/read")
     args = ap.parse_args()
 
     random.seed(args.seed)
     fsz = os.path.getsize(args.path)
-    nrows = fsz // args.rowbytes
-    offsets = [random.randrange(nrows) * args.rowbytes for _ in range(args.nreads)]
+    stride = ((args.rowbytes + 4095) // 4096) * 4096 if args.pad else args.rowbytes  # padded slot if --pad
+    nrows = fsz // stride
+    offsets = [random.randrange(nrows) * stride for _ in range(args.nreads)]
 
     driver = cufile.CuFileDriver()
     buf = torch.empty(args.rowbytes, dtype=torch.uint8, device=args.device)
