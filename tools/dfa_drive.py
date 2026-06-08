@@ -1,0 +1,70 @@
+#!/usr/bin/env python
+"""Drive DFAnalyzer (datacrumbs/stack preset) on a GDS-Trace cross-layer trace and surface the
+per-op cuFile -> NVMe hierarchy (the amplification). Usage: dfa_drive.py <trace_dir> [tmp_dir]"""
+import sys
+import pandas as pd
+from dask.distributed import LocalCluster
+from dftracer.analyzer import init_with_hydra
+
+
+def main():
+    trace_path = sys.argv[1]
+    tmp = sys.argv[2] if len(sys.argv) > 2 else "/tmp/dfa_run"
+    pd.set_option("display.max_columns", None)
+    pd.set_option("display.width", 220)
+
+    cluster = LocalCluster(processes=False, protocol="tcp")
+    overrides = [
+        "analyzer=datacrumbs",
+        "analyzer/preset=stack",
+        "analyzer.checkpoint=False",
+        "cluster=external",
+        "cluster.restart_on_connect=False",
+        f"cluster.scheduler_address={cluster.scheduler_address}",
+        f"hydra.run.dir={tmp}",
+        f"hydra.runtime.output_dir={tmp}",
+        f"trace_path={trace_path}",
+        "view_types=[proc_name,func_name]",
+    ]
+    dfa = init_with_hydra(hydra_overrides=overrides)
+    result = dfa.analyze_trace()
+    print("\n==== LAYERS:", result.layers, " VIEWS:", list(result.flat_views.keys()))
+
+    # per-event stack hierarchy (set by DataCrumbsAnalyzer.postread_trace for preset=stack)
+    st = getattr(dfa.analyzer, "_stack_traces", None)
+    sdf = (st.compute() if hasattr(st, "compute") else st).reset_index(drop=True)
+
+    print("\n==== per-LAYER (cat) summary ====")
+    print(sdf.groupby("cat").agg(events=("func_name", "size"),
+                                 total_time_s=("time", "sum")).to_string())
+
+    print("\n==== per-FUNCTION summary ====")
+    g = sdf.groupby("func_name")
+    fsum = g.agg(events=("func_name", "size"), time_s=("time", "sum"),
+                 roots=("depth", lambda d: int((d == 0).sum())),
+                 bytes=("size", "sum"))
+    print(fsum.to_string())
+
+    # cross-layer: attribute each nvme_setup_cmd to its ROOT op (the cuFileRead it belongs to)
+    id2func = sdf.set_index("event_id")["func_name"].to_dict()
+    sdf["root_func"] = sdf["root_id"].map(id2func)
+    nvme = sdf[sdf["func_name"] == "nvme_setup_cmd"]
+    cr = sdf[sdf["func_name"] == "cuFileRead"]
+    print("\n==== nvme_setup_cmd attributed to ROOT op (cross-layer) ====")
+    print(nvme["root_func"].value_counts().to_string())
+    if len(cr):
+        per_root = nvme.groupby("root_id").size()
+        amp = len(nvme) / len(cr)
+        print(f"\n==== AMPLIFICATION ====\ncuFileRead ops = {len(cr)} | nvme_setup_cmd = {len(nvme)} "
+              f"| device-cmd amplification = {amp:.2f}x")
+        if len(per_root):
+            print(f"NVMe cmds per cuFileRead: mean={per_root.mean():.2f} min={per_root.min()} "
+                  f"max={per_root.max()}")
+        print(f"cuFileRead bytes requested = {cr['size'].sum()/2**20:.0f} MiB | "
+              f"NVMe bytes issued = {nvme['size'].sum()/2**20:.0f} MiB")
+    print("\nDONE")
+    cluster.close()
+
+
+if __name__ == "__main__":
+    main()

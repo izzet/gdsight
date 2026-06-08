@@ -21,8 +21,30 @@ layer, run it on a GDS workload, and analyze the `.pfw.gz` trace with **DFAnalyz
 - [x] **run on gdsio (GPU_DIRECT read) → `.pfw.gz` with 512 `cuFileRead` events + syscalls** ✅
 - [x] capture cuFile **args (size/offset)** — each `cuFileRead` now has `args:{size,offset}` ✅
 - [x] **block/NVMe kprobe** layer → cuFileRead↔NVMe amplification (1:1 aligned, 4× at 4 MiB) ✅
-- [ ] DFAnalyzer (`feat/datacrumbs`) → per-op cuFile↔bio view
-- [ ] async/batch cuFile full arg extraction (kvikio/ESPN)
+- [x] **DFAnalyzer** (`feat/datacrumbs`) → per-op cuFile↔NVMe attribution + 4× amplification ✅
+- [ ] async/batch cuFile full arg extraction (kvikio/ESPN); map args.size → DFAnalyzer size (byte ampl.)
+
+## ✅ (3) DFAnalyzer: per-op cross-layer attribution + amplification
+Installed `izzet/dfanalyzer @ feat/datacrumbs` (venv `~/dfa-venv`; **pin `dftracer-utils==0.0.5`** —
+0.0.9 renamed `Reader`→`TraceReader` and changed the Indexer/Reader API). Drove it via
+`tools/dfa_drive.py` (`analyzer=datacrumbs preset=stack view_types=[proc_name,func_name]`) on the
+gdsio `-i 4M` trace. The **stack preset nests events by time-containment per (pid,tid)**, so every
+`nvme_setup_cmd` lands under the `cuFileRead` that issued it:
+- per-LAYER: block=256, cufile=65, custom1(syscalls)=4738 events.
+- **cross-layer: all 256 `nvme_setup_cmd` → `root_func = cuFileRead`.**
+- **AMPLIFICATION: 64 cuFileRead → 256 NVMe cmds = 4.00× (mean 4.0/op, min 4, max 4).**
+
+⇒ **GDS-Trace = DataCrumbs (cuFile + NVMe plugins) → DFTracer trace → DFAnalyzer (stack hierarchy) →
+per-op cross-layer GDS attribution + amplification.** No NVIDIA tool produces this.
+
+Driving it surfaced + fixed **3 pandas≥2.2 bugs** in the `feat/datacrumbs` branch:
+1. `assign_hierarchy` `KeyError 'pid'` — pandas≥2.2 drops groupby keys from the `apply` frame → carry
+   pid/tid via a `_grp` column and restore them.
+2. meta column-order mismatch from the restore → build the apply meta in matching order.
+3. `set_stack_metrics` used the removed option `mode.use_inf_as_na` → no-op context + explicit inf→NA.
+
+Remaining: map our `args.size` into DFAnalyzer's `size` column (extra_columns) for **byte** amplification
+(count amplification already works); async/batch cuFile arg extraction for kvikio/ESPN.
 
 ## ✅ (2) block/NVMe cross-layer correlation (the amplification metric)
 Added a custom **block** plugin (`plugins/custom_probes/block/`, `event_type 5` → `get_data_5`) that
