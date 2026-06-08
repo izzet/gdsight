@@ -245,3 +245,13 @@ offset 4096 (offload) + cuFileRead back (reload), like _save_gds/_load_gds. Sepa
 8x32MiB: 8 cuFileWrite + 8 cuFileRead + 16 cuFileHandleRegister -> 514 NVMe, corr_id 100%, 32x amp,
 512MiB conserved. First GDS WRITE workload traced. Trace via LD_PRELOAD system libcufile (cufile-python
 loads the bundled one, like fastsafetensors). dfa_drive.py now attributes cuFileWrite too (CUFILE_IO set).
+
+## Byte amplification vs read size (the overhead of interest) (2026-06-08)
+Distinguished device-CMD amplification (bytes conserved, ~free on this BW-bound drive, a per-op ratio
+artifact) from BYTE amplification (device moves more bytes than requested = wasted bandwidth). gdsio -U
+randread sweep, corr_id-clean (only nvme attributed to each cuFileRead -> exact per-op byte-amp):
+4KiB=2.00x (8MiB req -> 16MiB device), 16KiB=1.27x, 64KiB=1.07x, 256KiB=1.02x, 1MiB=1.00x; 4KiB aligned
+=1.00x. byte-amp ~= 1 + 4KiB_block_overhead/read_size. Invisible to gds_stats/throughput; worst exactly
+in the small-read GDS regime (KV cache, embeddings). corr_id isolates each cuFileRead's own device bytes
+for the exact number. Other axis (host CPU in nvfs_io/nvme submission path) negligible on this BW-bound
+drive; would dominate on faster/IOPS-bound storage.

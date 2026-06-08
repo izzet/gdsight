@@ -142,6 +142,35 @@ ops (the same register-once-not-per-op inefficiency seen in DALI/ESPN). (3) This
 corr_id is 100%; LMCache's real backend uses a `gds_io_threads` pool (concurrent reads) and would hit
 the same concurrent-attribution limit documented above for multi-shard fastsafetensors.
 
+## The overhead that matters: byte amplification vs read size (not command amplification)
+Two distinct "amplifications", and only one is a real cost:
+- **Device-command amplification** (the 4× / 32× / 2584× headlines): **bytes are conserved** — it's just
+  MDTS (~1.25 MiB) splitting one cuFile op into N NVMe commands. Total commands ≈ `total_bytes/MDTS`
+  *regardless of how you chunk into cuFile ops*, so per-op amplification is largely an accounting ratio
+  (a high value = efficient big reads), and on this BW-bound drive throughput stays at the ~2.9 GiB/s
+  ceiling. Not a cost here.
+- **Byte amplification**: the device moves **more bytes than requested** = genuine wasted device/PCIe
+  bandwidth. Measured (corr_id-clean: only the NVMe attributed to each `cuFileRead`), gdsio `-U` randread:
+
+  | unaligned read | device bytes / requested |
+  |---:|---|
+  | **4 KiB** | **2.00×** (exact: 8 MiB req → 16 MiB device) |
+  | 16 KiB | 1.27× |
+  | 64 KiB | 1.07× |
+  | 256 KiB | 1.02× |
+  | 1 MiB | 1.00× |
+  | 4 KiB **aligned** | **1.00×** (exact) |
+
+  It follows `≈ 1 + 4KiB_block_overhead / read_size`: small unaligned reads pay the full block-alignment
+  tax (a 4 KiB read straddling a 4 KiB boundary pulls 8 KiB), large reads amortize it away. It is
+  **invisible to `gds_stats`/throughput** (all still report clean GDS), and it bites precisely in the
+  **small-read regime GDS is sold for** — KV-cache chunks, embedding/ESPN gathers. The corr_id work makes
+  this *exact* per op (2.000×, not "~2 ± metadata-NVMe noise").
+
+(The other axis — host **CPU** spent building/reaping the N device commands in the `nvfs_io`/
+`nvme_setup_cmd` submission path — is the regime where *command* amplification would cost; on this
+BW-bound drive it's negligible, but it would dominate on faster/IOPS-bound storage.)
+
 ## Cross-check vs ground-truth tools (the rigor) — gdsio `-i 4M -s 256M -x 0`
 **Same run**, three independent measurements:
 | layer | GDS-Trace | kernel `/proc/driver/nvidia-fs/stats` | bpftrace (independent kprobe) |
