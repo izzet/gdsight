@@ -255,3 +255,12 @@ randread sweep, corr_id-clean (only nvme attributed to each cuFileRead -> exact 
 in the small-read GDS regime (KV cache, embeddings). corr_id isolates each cuFileRead's own device bytes
 for the exact number. Other axis (host CPU in nvfs_io/nvme submission path) negligible on this BW-bound
 drive; would dominate on faster/IOPS-bound storage.
+
+## Byte amplification in situ: embedding gather (real small-read workload) (2026-06-08)
+workloads/embedding_gather.py (ESPN/DLRM/retrieval style: 4000 random fixed-size rows from a 4GiB table
+-> GPU via cufile-python, table opened once + reused buffer). 768-dim fp32 rows = 3072B (unaligned):
+BYTE-AMP = 2.000x exact (11.72MiB req -> 23.44MiB device), corr_id attribution 100%, register-once
+(1 handleReg), true P2P (shadow~0) -> pure alignment waste at the device, not churn/staging. 1024-dim
+(4096B aligned) = 1.000x. Exactly 2.000x because 3072=0.75*4096 -> half the rows straddle a 4KB block.
+Invisible to gds_stats/throughput. Fix: pad rows to 4KiB multiple / coalesce. Demonstrates byte-amp on a
+genuine workload, not gdsio -U.

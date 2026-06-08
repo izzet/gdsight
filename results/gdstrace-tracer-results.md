@@ -167,6 +167,22 @@ Two distinct "amplifications", and only one is a real cost:
   **small-read regime GDS is sold for** — KV-cache chunks, embedding/ESPN gathers. The corr_id work makes
   this *exact* per op (2.000×, not "~2 ± metadata-NVMe noise").
 
+**In situ on a real workload — embedding gather** (`workloads/embedding_gather.py`, ESPN/DLRM/retrieval
+style: 4000 random fixed-size rows from a 4 GiB table → GPU via cuFile, table opened once + one reused
+buffer). The common **768-dim fp32** layout = **3072 B/row** (not 4 KiB-aligned):
+
+| row layout | byte-amp (corr_id-clean, 100% attributed) | path |
+|---|---|---|
+| **768-dim fp32 (3072 B, unaligned)** | **2.000×** (11.72 MiB req → 23.44 MiB device) | 4000 cuFileRead, **1** handle-reg, true P2P (shadow≈0) |
+| 1024-dim fp32 (4096 B, aligned) | 1.000× (15.62 = 15.62 MiB) | same, no waste |
+
+So a realistic retrieval/embedding gather **silently reads 2× the bytes off NVMe** — exactly `2.000×`
+because 3072 = ¾·4096 makes half the rows straddle a block. It's **register-once + true P2P** (not
+bounced), so this is *pure alignment waste at the device*, not handle churn or staging; and it's
+**invisible to `gds_stats`/throughput** (both report clean GDS at the same bandwidth). The fix is
+actionable — pad rows to a 4 KiB multiple (or coalesce gathers) — and GDS-Trace is what makes the waste
+visible and exact, per op, in the small-read regime GDS is actually deployed in.
+
 (The other axis — host **CPU** spent building/reaping the N device commands in the `nvfs_io`/
 `nvme_setup_cmd` submission path — is the regime where *command* amplification would cost; on this
 BW-bound drive it's negligible, but it would dominate on faster/IOPS-bound storage.)
