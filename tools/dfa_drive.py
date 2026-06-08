@@ -34,16 +34,58 @@ def main():
     st = getattr(dfa.analyzer, "_stack_traces", None)
     sdf = (st.compute() if hasattr(st, "compute") else st).reset_index(drop=True)
 
+    # DFAnalyzer (compute_self_time, datacrumbs.py) already attached self_time/child_time per event:
+    #   self_time  = time NOT spent in nested layers  (this layer's own cost)
+    #   child_time = time spent in nested layers       (deeper-layer cost)
+    has_self = "self_time" in sdf.columns and "child_time" in sdf.columns
+
     print("\n==== per-LAYER (cat) summary ====")
-    print(sdf.groupby("cat").agg(events=("func_name", "size"),
-                                 total_time_s=("time", "sum")).to_string())
+    lagg = {"events": ("func_name", "size"), "total_time_s": ("time", "sum")}
+    if has_self:
+        lagg["self_time_s"] = ("self_time", "sum")
+        lagg["child_time_s"] = ("child_time", "sum")
+    print(sdf.groupby("cat").agg(**lagg).to_string())
 
     print("\n==== per-FUNCTION summary ====")
-    g = sdf.groupby("func_name")
-    fsum = g.agg(events=("func_name", "size"), time_s=("time", "sum"),
-                 roots=("depth", lambda d: int((d == 0).sum())),
-                 bytes=("size", "sum"))
-    print(fsum.to_string())
+    fagg = {"events": ("func_name", "size"), "time_s": ("time", "sum"),
+            "roots": ("depth", lambda d: int((d == 0).sum())), "bytes": ("size", "sum")}
+    if has_self:
+        fagg["self_time_s"] = ("self_time", "sum")
+        fagg["child_time_s"] = ("child_time", "sum")
+    print(sdf.groupby("func_name").agg(**fagg).to_string())
+
+    # ---- cross-layer TIMING: where does each cuFileRead's latency go? (DFAnalyzer self/child) ----
+    if has_self:
+        cf_t = sdf[sdf["func_name"] == "cuFileRead"]
+        nv_t = sdf[sdf["func_name"] == "nvfs_io"]
+        print("\n==== cross-layer TIMING (DFAnalyzer self_time/child_time) ====")
+        if len(cf_t):
+            tot = cf_t["time"].sum()
+            cf_self = cf_t["self_time"].sum()           # cuFile / userspace overhead
+            nvfs = nv_t["time"].sum() if len(nv_t) else cf_t["child_time"].sum()
+            print(f"cuFileRead total wall-time   : {tot:.4f} s over {len(cf_t)} ops "
+                  f"({tot/len(cf_t)*1e3:.0f} us/op)")
+            print(f"  -> cuFile/userspace (self) : {cf_self:.4f} s ({100*cf_self/tot:.1f}%)")
+            print(f"  -> nvidia-fs+device (nvfs) : {nvfs:.4f} s ({100*nvfs/tot:.1f}%)")
+            if len(nv_t):
+                print(f"nvfs_io self_time            : {nv_t['self_time'].sum():.4f} s "
+                      f"(driver+device; its NVMe/p2p children are point events)")
+        else:
+            print("no cuFileRead events")
+        # COMPAT detection: cuFileRead present but no nvfs_io child => POSIX fallback
+        if len(cf_t) and not len(nv_t):
+            print(">>> cuFileRead present but ZERO nvfs_io => COMPAT/POSIX fallback (not real GDS)")
+        # overlap/concurrency via DFAnalyzer's own wall-time (get_job_time = max tend - min tstart).
+        # Use time_start/time_end for both numerator and denominator => unit-independent overlap factor.
+        if len(cf_t) and {"time_start", "time_end"}.issubset(cf_t.columns):
+            dur = (cf_t["time_end"] - cf_t["time_start"])
+            span = cf_t["time_end"].max() - cf_t["time_start"].min()
+            if span > 0:
+                print(f"\n-- overlap / concurrency (cuFileRead) --")
+                print(f"wall span (get_job_time)       : {span/1e6:.4f} s")
+                print(f"sum(per-op dur)                : {dur.sum()/1e6:.4f} s")
+                print(f"avg in-flight (overlap factor) : {dur.sum()/span:.2f}x  "
+                      f"(>1 => worker threads pipelining/concurrency)")
 
     # cross-layer: attribute each nvme_setup_cmd to its ROOT op (the cuFileRead it belongs to)
     id2func = sdf.set_index("event_id")["func_name"].to_dict()

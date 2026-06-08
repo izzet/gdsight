@@ -43,6 +43,33 @@ also does true P2P (`p2p_mapping`=3003, `pin_shadow`=1 over 2000 reads) — *no 
 bounce*; the driver maps GPU pages P2P per op regardless. The nvidia-fs layer is what settles this per
 op (we previously could only guess from the aggregate `BufRegister`/`Active Shadow-Buffer` counters).
 
+## Bounce/compat induction — caught the per-op fallback + its cost (cross-layer timing)
+Deliberately induced a fallback by reading from a **non-GDS mount** (OS root ext4, *not* `data=ordered`)
+so cuFile silently drops to **compat/POSIX**, then compared to a true-GDS read of the same size. gdsio
+*reports `XferType: GPUD` either way* (claims GDS!), but the stack tells the truth:
+
+| | **GDS** (`/mnt/nvme1`, `data=ordered`) | **COMPAT** (root ext4 fallback) |
+|---|---|---|
+| `cuFileRead` ops | 256 | 256 (gdsio still says `GPUD`) |
+| `nvfs_io` (nvidia-fs) | **256** | **0** ← the verdict |
+| data path (child) | `nvfs_io` → P2P → NVMe | **`pread64`** (POSIX), no NVMe in-process |
+| kernel `nvidia-fs Reads` Δ | **+256 / +256 MiB** | **0 / 0 MiB** (oracle blind) |
+| cuFileRead wall-time | **0.338 s** | **1.919 s (5.7× slower)** |
+
+**Cross-layer timing — done in DFAnalyzer** (`compute_self_time` → per-event `self_time`/`child_time`;
+overlap via `get_job_time`), surfaced by `tools/dfa_drive.py`. *No custom trace parser.*
+- **GDS:** per `cuFileRead`, **self_time (cuFile/userspace) = 0.9%**, **child_time (nvidia-fs+device via
+  `nvfs_io`) = 99.1%** → the cuFile API adds ~0 overhead; cost is the real I/O.
+- **COMPAT:** `cuFileRead` child_time is **`pread64` (98.2%)** with **zero `nvfs_io`** — the fallback,
+  per op, and **5.7× slower** (532 MB/s vs 2.9 GB/s).
+- **Overlap:** both fully pipeline (overlap factor **3.97×** over 4 workers, zero idle gaps) — so the
+  compat penalty is **per-op path cost, not lost concurrency** (a distinction the timing view makes).
+
+This needs `nvfs_io` as a **duration** op (`nvfs_io_start_op`→`nvfs_io_complete`, same thread) so
+DFAnalyzer's hierarchy attributes time across cuFile→nvidia-fs→device. Honest note: `gds_stats` has an
+aggregate `posix` counter that *can* flag compat in bulk; GDS-Trace adds the **per-op** verdict, the
+**5.7× latency cost**, and the fact the kernel GDS counter shows **nothing** while 256 MiB moved.
+
 ## Cross-check vs ground-truth tools (the rigor) — gdsio `-i 4M -s 256M -x 0`
 **Same run**, three independent measurements:
 | layer | GDS-Trace | kernel `/proc/driver/nvidia-fs/stats` | bpftrace (independent kprobe) |

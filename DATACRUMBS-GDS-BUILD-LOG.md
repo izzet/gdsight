@@ -175,3 +175,19 @@ entry, 1 per cuFileRead = the bridge), `nvfs_get_p2p_dma_mapping` (TRUE zero-cop
 → 320 p2p_mapping (4 shadow ≈0) → 324 nvme; DFAnalyzer shows cufile/nvidiafs/block as 3 layers, all
 nested under cuFileRead. Per-op true-P2P-vs-bounce verdict now available. Finding: kvikio BufRegister=0
 still does true P2P (p2p=3003/shadow=1) — no pre-registration ≠ bounce.
+
+## nvfs_io as a DURATION + cross-layer TIMING via DFAnalyzer + bounce/compat demo (2026-06-08)
+Upgraded the nvidiafs plugin: `nvfs_io_start_op`→`nvfs_io_complete` fire on the **same thread**, so
+`nvfs_io` is now a **duration** op (not a point) nested under each cuFileRead → DFAnalyzer's
+`compute_self_time` gives the cross-layer time breakdown. **All timing analysis is in DFAnalyzer**
+(`tools/dfa_drive.py`), no custom .pfw parser (per user: analysis belongs in DFAnalyzer).
+- GDS read: cuFileRead 0.338 s = **self 0.9% (cuFile/userspace) + child 99.1% (nvidia-fs+device via
+  nvfs_io)**; overlap factor 3.97× (4 workers, 0 idle).
+- **Bounce/compat induction:** reading a non-GDS mount (root ext4, no `data=ordered`) → cuFile compat;
+  gdsio still prints `XferType: GPUD`, but GDS-Trace shows `cuFileRead` with **0 nvfs_io** → `pread64`,
+  kernel `nvidia-fs Reads` Δ = **0**, and **5.7× slower** per op (0.338→1.919 s). Unaligned `-U` does
+  NOT bounce (still true P2P, byte-amplified only).
+- DFAnalyzer fix: `fix_dtypes` swept `size_bin_*_mean` (fractional) into Int64 int_cols → crashed on the
+  compat trace's 4 KiB-read bin (mean 9.5). Route bin `_mean`/`_std` to doubles. (analysis_utils.py)
+- Unit gotcha: `_stack_traces.time` is **seconds** but `time_start/time_end` are **µs** — compute
+  overlap from `time_start/time_end` only.
