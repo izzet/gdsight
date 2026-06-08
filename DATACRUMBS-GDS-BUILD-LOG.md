@@ -380,3 +380,16 @@ HONEST: curated motivating examples on a robust modern stack -> prove the capabi
 NOT demand (each effect is known to experts; the value is automatic per-op attribution -> the fix).
 Removed mixed_tier.py (cufile-python errors on non-GDS files instead of compat -> pivoted Case 2 to
 the real kvikio threshold). Cases 1+2 validated live; Case 3 = already-validated mixed_retrieval.
+
+## Related-work survey for PDSW framing (2026-06-08) -> results/related-work.md
+Read 4 nearest works. (A) Userspace cross-layer tracers (Recorder SC; DFTracer SC'24 [our group,
+Yildirim co-author]; Darshan/DXT) -- trace HDF5->MPI-IO->POSIX, STOP AT POSIX, no kernel/device, mostly
+NO mitigation. (B) eBPF kernel cross-layer (zns-tools: VFS->block->zone for ZNS SSDs, file->LBA->zone
+correlation -- closest METHOD, but CPU/ZNS not GPU, by-LBA not by-app-op, STOPS at characterization;
+IOscope). (C) GDS work (Ravi PDSW'20: built an HDF5 GDS VFD = mitigation/enabling + eval; ESPN: hand-
+aligned embeddings = the fix we auto-detect; gds_stats/NVTX: aggregate/userspace-only). GAP: nobody does
+per-op cross-layer attribution down the GDS path (cuFile<->nvidia-fs<->NVMe). ANGLE: (1) position as the
+downward extension of DFTracer/DFAnalyzer into GDS kernel/device layers; (2) tool+characterization is an
+accepted shape (Recorder/DFTracer/zns-tools stop there); (3) STRONGEST: don't stop -- close diagnosis->
+fix loop (tool flags per-op pathology -> apply alignment/coalescing/batch -> measured ~2x win), like
+Ravi's build-route but tool-guided. Lifts above "yet another tracer".
