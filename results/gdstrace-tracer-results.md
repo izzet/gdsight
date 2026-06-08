@@ -19,6 +19,10 @@ size/offset/count, NVMe `nvme_setup_cmd` kprobe with size/sector, TGID worker-th
 
 \* run-to-run variance (see drift notes).
 
+**Amplification is a size-dependent *device* effect, not reader-specific** (NVMe MDTS ~1.25 MiB splits
+larger reads): kvikio ragged (~546 KiB, <MDTS) = **1.0×**, but kvikio 4 MiB = **4.05×** (300 cuFileRead
+→ 1214 NVMe), DALI whole-file = 2.47×, gdsio -i4M = ~4×. GDS-Trace surfaces it per-op for any reader.
+
 **What no NVIDIA tool shows here:** per-op `cuFileRead{size,offset}` → the exact set of NVMe commands
 it became (with sizes), the device-command amplification, kvikio's dlsym'd/worker-thread reads, and
 DALI's per-read handle-registration + GDS/POSIX mix. `gds_stats` is aggregate cuFile-only; NVTX stops
