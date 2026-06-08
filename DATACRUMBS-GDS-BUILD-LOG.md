@@ -234,3 +234,14 @@ so corr_id attribution drops to ~36% (count>1 -> fallback refuses to guess which
 unattributed, not misattributed). Robust fix = per-request GPU-buffer key (gpu_info->gpuvaddr from
 nvfs_get_p2p_dma_mapping), but that's a non-BTF module struct at a hardcoded offset (brittle) -> DEFERRED
 (user call). Process-level results (amplification/bytes/P2P) remain exact. Next: LMCache.
+
+## LMCache GDS KV offload (writes+reads) traced (2026-06-08)
+GDS writes confirmed STABLE on this node (tiny+256MB gdsio writes + LMCache KV writes; controller healthy,
+0 dmesg errors -> the old controller drop was ACS, not GDS writes). Drove LMCache's GDS mechanism via
+cufile-python (the module its GdsBackend uses; full backend blocked by lmcache 0.4.6's CUDA-13 c_ops /
+libcudart.so.13 on our 12.6 node). workloads/lmcache_gds_kv.py: 4KB POSIX meta header + cuFileWrite at
+offset 4096 (offload) + cuFileRead back (reload), like _save_gds/_load_gds. Separate venv ~/lmcache-venv
+(torch cu126; lmcache pulls cufile-python+nixl+cupy-cuda13x -> kept out of the working gds-venv).
+8x32MiB: 8 cuFileWrite + 8 cuFileRead + 16 cuFileHandleRegister -> 514 NVMe, corr_id 100%, 32x amp,
+512MiB conserved. First GDS WRITE workload traced. Trace via LD_PRELOAD system libcufile (cufile-python
+loads the bundled one, like fastsafetensors). dfa_drive.py now attributes cuFileWrite too (CUFILE_IO set).

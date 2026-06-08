@@ -122,6 +122,26 @@ is ambiguous. A robust fix needs a per-request key (e.g. the GPU buffer vaddr fr
 `nvfs_get_p2p_dma_mapping`), which requires reading a non-BTF module struct at a hardcoded offset
 (version-brittle) — deferred.
 
+## Inference-time KV-cache offload: LMCache's GDS path (writes + reads)
+The other live GDS use case in LLM serving is **KV-cache offload** (spill KV beyond HBM to NVMe, reload
+on hit). Traced via `workloads/lmcache_gds_kv.py`, which drives **LMCache's GDS mechanism through
+cufile-python** — the exact module + calls (`cufile.CuFile(...).write/.read`) LMCache's `GdsBackend`
+uses in `_save_gds`/`_load_gds` (4 KiB POSIX metadata header + GPUDirect write at offset 4096; GDS read
+back). *The full `lmcache.v1.…GdsBackend` can't run here — lmcache 0.4.6 ships a CUDA-13 `c_ops`
+extension (`libcudart.so.13`) that won't load on this CUDA-12.6 node; cufile-python is independent of it.*
+
+8×32 MiB KV chunks, offload then reload: **8 `cuFileWrite` + 8 `cuFileRead` + 16 `cuFileHandleRegister`
+→ 512 `nvfs_io` → 514 NVMe**, true P2P. **corr_id attribution = 100% (514/514 NVMe → a cuFile op)**,
+**32× device-cmd amplification** (32 MiB chunk > MDTS), 512 MiB cuFile == 512 MiB NVMe (conserved).
+GDS writes are stable here (controller healthy throughout) — the historical controller drop was ACS, not
+GDS writes per se (`amd_iommu=off`, ACS intact).
+
+Findings: (1) **first GDS *write* workload traced** — the `cuFileWrite` offload path, attributed
+per-op like reads. (2) LMCache opens a **CuFile per chunk per op** → 16 `cuFileHandleRegister` for 16
+ops (the same register-once-not-per-op inefficiency seen in DALI/ESPN). (3) This driver is sequential so
+corr_id is 100%; LMCache's real backend uses a `gds_io_threads` pool (concurrent reads) and would hit
+the same concurrent-attribution limit documented above for multi-shard fastsafetensors.
+
 ## Cross-check vs ground-truth tools (the rigor) — gdsio `-i 4M -s 256M -x 0`
 **Same run**, three independent measurements:
 | layer | GDS-Trace | kernel `/proc/driver/nvidia-fs/stats` | bpftrace (independent kprobe) |

@@ -54,16 +54,18 @@ def main():
         fagg["child_time_s"] = ("child_time", "sum")
     print(sdf.groupby("func_name").agg(**fagg).to_string())
 
-    # ---- cross-layer TIMING: where does each cuFileRead's latency go? (DFAnalyzer self/child) ----
+    # cuFile data-I/O ops (read+write+async+batch) — the parents of the device-layer work
+    CUFILE_IO = ["cuFileRead", "cuFileWrite", "cuFileReadAsync", "cuFileBatchIOSubmit"]
+    # ---- cross-layer TIMING: where does each cuFile op's latency go? (DFAnalyzer self/child) ----
     if has_self:
-        cf_t = sdf[sdf["func_name"] == "cuFileRead"]
+        cf_t = sdf[sdf["func_name"].isin(CUFILE_IO)]
         nv_t = sdf[sdf["func_name"] == "nvfs_io"]
         print("\n==== cross-layer TIMING (DFAnalyzer self_time/child_time) ====")
         if len(cf_t):
             tot = cf_t["time"].sum()
             cf_self = cf_t["self_time"].sum()    # cuFile/userspace overhead (own frame) - robust
             cf_child = cf_t["child_time"].sum()  # time nested below cuFileRead (same-thread) - robust
-            print(f"cuFileRead total wall-time   : {tot:.4f} s over {len(cf_t)} ops "
+            print(f"cuFile-op total wall-time    : {tot:.4f} s over {len(cf_t)} ops "
                   f"({tot/len(cf_t)*1e3:.0f} us/op)")
             print(f"  -> cuFile/userspace (self) : {cf_self:.4f} s ({100*cf_self/tot:.1f}%)")
             print(f"  -> below cuFile  (child)   : {cf_child:.4f} s ({100*cf_child/tot:.1f}%)")
@@ -95,34 +97,34 @@ def main():
                 print(f"avg in-flight (overlap factor) : {dur.sum()/span:.2f}x  "
                       f"(>1 => worker threads pipelining/concurrency)")
 
-    # ---- cross-layer attribution: NVMe -> the cuFileRead that issued it ----
+    # ---- cross-layer attribution: NVMe -> the cuFile op (read/write) that issued it ----
     nvme = sdf[sdf["func_name"] == "nvme_setup_cmd"]
-    cr = sdf[sdf["func_name"] == "cuFileRead"]
-    print("\n==== cross-layer attribution: NVMe -> cuFileRead ====")
+    cr = sdf[sdf["func_name"].isin(CUFILE_IO)]
+    print("\n==== cross-layer attribution: NVMe -> cuFile op ====")
     # robust: by correlation id (carried through cuFile -> nvidia-fs -> NVMe by the tracer)
     if "corr_id" in sdf.columns and len(cr):
         cr_ids = set(cr["corr_id"].dropna().astype("int64").tolist())
         nvme_corr = nvme["corr_id"].dropna().astype("int64")
         matched = int(nvme_corr.isin(cr_ids).sum())
-        print(f"by CORR_ID (robust)        : {matched}/{len(nvme)} NVMe -> a cuFileRead "
+        print(f"by CORR_ID (robust)        : {matched}/{len(nvme)} NVMe -> a cuFile op "
               f"({100*matched/max(1,len(nvme)):.1f}%)")
         per_op = nvme_corr[nvme_corr.isin(cr_ids)].value_counts()
         if len(per_op):
-            print(f"   NVMe cmds per cuFileRead: mean={per_op.mean():.1f} min={int(per_op.min())} "
+            print(f"   NVMe cmds per cuFile op : mean={per_op.mean():.1f} min={int(per_op.min())} "
                   f"max={int(per_op.max())}")
     # legacy: per-tid time-containment (shows why corr_id was needed for worker-thread/async I/O)
     if "root_id" in sdf.columns:
         id2func = sdf.set_index("event_id")["func_name"].to_dict()
         nvme_rf = nvme["root_id"].map(id2func)
-        to_cr = int((nvme_rf == "cuFileRead").sum())
-        rest = nvme_rf[nvme_rf != "cuFileRead"].value_counts().to_dict()
-        print(f"by TIME-CONTAINMENT (legacy): {to_cr}/{len(nvme)} NVMe -> cuFileRead "
+        to_cr = int(nvme_rf.isin(CUFILE_IO).sum())
+        rest = nvme_rf[~nvme_rf.isin(CUFILE_IO)].value_counts().to_dict()
+        print(f"by TIME-CONTAINMENT (legacy): {to_cr}/{len(nvme)} NVMe -> a cuFile op "
               f"({100*to_cr/max(1,len(nvme)):.1f}%); rest -> {rest}")
     if len(cr):
         amp = len(nvme) / len(cr)
-        print(f"\n==== AMPLIFICATION ====\ncuFileRead ops = {len(cr)} | nvme_setup_cmd = {len(nvme)} "
+        print(f"\n==== AMPLIFICATION ====\ncuFile ops = {len(cr)} | nvme_setup_cmd = {len(nvme)} "
               f"| device-cmd amplification = {amp:.2f}x")
-        print(f"cuFileRead bytes = {cr['size'].sum()/2**20:.0f} MiB | "
+        print(f"cuFile bytes = {cr['size'].sum()/2**20:.0f} MiB | "
               f"NVMe bytes = {nvme['size'].sum()/2**20:.0f} MiB")
     print("\nDONE")
     cluster.close()
