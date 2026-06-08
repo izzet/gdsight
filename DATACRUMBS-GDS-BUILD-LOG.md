@@ -336,3 +336,17 @@ CONCLUSION: cuDF Parquet I/O is WELL-ENGINEERED -- no significant byte-amp patho
 waste a little but negligible aggregate. Tool correctly reports a clean bill of health. Pathology shows
 in naive/hand-rolled code (ESPN-naive), not well-tuned libs -> tool value = diagnosing naive/misconfigured
 GDS. (Rigor: report negatives.) NEXT: elbencho deep-dive (richer benchmark, can stress small-files/dir-trees).
+
+## elbencho deep-dive (external/elbencho submodule) -- HONEST NEGATIVE (2026-06-08)
+Built elbencho v3.1-6 with cufile/gds (deps: libboost-all-dev, libaio-dev). Submodule external/elbencho
+(was wrongly cloned to ~/ first -> moved; convention: external tools under external/). Links SYSTEM
+libcufile -> traceable with NO LD_PRELOAD trick (unlike torch/cudf bundled libcufile).
+- --gds read of 4GB dataset.bin: 2970 MiB/s (drive ceiling), readMiB=4096=1.0x byte-amp (O_DIRECT aligned).
+- Full GDS-Trace (512MB, -b 1M -t4 --gds): 512 cuFileRead + 1 cuFileHandleRegister -> 512 nvfs_io ->
+  768 p2p/nvme, corr_id attribution 100%, device-cmd amp 1.5x (MDTS), bytes conserved (512=512). Validates
+  the tool on a standard 3rd-party benchmark, clean cross-check.
+- bufreg test: --gds (bufreg) = true P2P (p2p 768, shadow 4); --cufile WITHOUT --gdsbufreg = 0 nvfs
+  activity (silent compat/POSIX fallback -- registration required for GDS in elbencho).
+CONCLUSION: elbencho is well-engineered (aligned, register-once) -> NO byte-amp pathology, like cuDF.
+Two real tools now checked, both CLEAN. Pattern: pathology lives in naive/hand-rolled code (ESPN-naive),
+not well-tuned libs. Tool correctly issues clean bills. Note: external/nixl + external/espn already exist.
