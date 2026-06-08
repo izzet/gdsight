@@ -214,6 +214,35 @@ gives per op.
 `nvme_setup_cmd` submission path — is the regime where *command* amplification would cost; on this
 BW-bound drive it's negligible, but it would dominate on faster/IOPS-bound storage.)
 
+## Make-or-break: per-op attribution finds a culprit that aggregate + Nsight both miss
+The decisive test (does per-op below-cuFile attribution find something no shipped tool can?). A realistic
+**mixed retrieval/RAG gather** (`workloads/mixed_retrieval.py`): 4000 interleaved cuFile reads from two
+embedding tables — **A = 1024-dim fp32 (4096 B rows, aligned)** and **B = 768-dim fp32 (3072 B rows,
+NOT 4 KiB-aligned)**. The aggregate looks like one healthy GDS stream. Every tool run on the *same* job:
+
+| tool | verdict on the run | finds the culprit? |
+|---|---|---|
+| app throughput | 13.67 MiB @ ~20 MiB/s — "fine" | no |
+| `gds_stats`/nvidia-fs (aggregate) | 14 req → 19 device = **1.36× blended** | no (which table?) |
+| **Nsight NVTX** (per-op cuFile) | 4000 `cuFileRead` ~142µs, all GDS; ranges lumped by name; **no device bytes** | **no — structurally blind** |
+| `iostat`/`diskstats` | ~19–20 MiB device-wide | no (no GDS/op/table) |
+| **GDS-Trace** (per-op, corr_id) | **B (3072 B) = 2.015× WASTE; A (4096 B) = 1.000×** | **yes — pinpointed** |
+
+Only GDS-Trace separates the culprit: **table B silently reads 2× its bytes off NVMe; table A is clean.**
+Cross-checks (always on the lookout for who's on par / who misses): GDS-Trace's per-op `cuFileRead`
+latency (avg **131µs**) is **on par with Nsight's NVTX** (142µs) — so we don't *lose* the cuFile-op view,
+we *add* the below-cuFile device-byte attribution Nsight lacks. The aggregate counters *do* see the total
+device bytes (19 MiB) but blend the two tables into one 1.36× number; Nsight sees per-op cuFile latency
+but has zero device bytes and lumps both tables under one range name.
+
+**Honest caveats:** (1) the byte-amp *effect* is known (alignment) — the new part is the per-op/per-table
+*attribution*; (2) on this BW-unsaturated drive the waste is *latent* (no throughput cost now) — it's a
+cost/scaling issue (2× the NVMe bandwidth provisioned for table B; would halve its effective QPS at
+saturation); (3) attribution here keys on read *size* (the two tables differ); same-size culprits would
+need file/offset keying (offset is captured, file is not yet); (4) still a realistic *pattern*, not a
+production app with a logged complaint. Net: the capability is real and irreplaceable for this class of
+problem; proving it *matters* still needs a saturated/real deployment.
+
 ## Cross-check vs ground-truth tools (the rigor) — gdsio `-i 4M -s 256M -x 0`
 **Same run**, three independent measurements:
 | layer | GDS-Trace | kernel `/proc/driver/nvidia-fs/stats` | bpftrace (independent kprobe) |

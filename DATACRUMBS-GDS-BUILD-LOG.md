@@ -276,3 +276,16 @@ automatic PER-OP attribution of a known-but-silent effect. Side-by-side: gds_sta
 requested only (blind); nvidia-fs/iostat see device total (aggregate, no per-op); GDS-Trace = per-op
 requested-vs-device exact. To detect it today you manually diff two counters from two layers + never get
 per-op.
+
+## Make-or-break: mixed retrieval, per-op attribution vs Nsight/gds_stats (2026-06-08)
+workloads/mixed_retrieval.py: 4000 interleaved cuFile reads from table A (1024d/4096B aligned) + table B
+(768d/3072B unaligned). Cross-checked all tools on the SAME run:
+- gds_stats/nvidia-fs aggregate: 14 req -> 19 device = 1.36x BLENDED (can't localize).
+- Nsight NVTX (nsys, profile.nvtx=true): 4000 cuFileRead ~142us lumped by name, NO device bytes -> blind.
+- iostat/diskstats: ~19MiB device-wide, no attribution.
+- GDS-Trace + dfa_drive byte-amp-by-size: B(3072)=2.015x WASTE, A(4096)=1.000x -> CULPRIT PINPOINTED.
+On-par check: our cuFileRead latency 131us ~= Nsight 142us (we add below-cuFile, don't lose cuFile view).
+dfa_drive.py gained a "byte amplification BY cuFile op size" view (corr_id-attributed). Honest: effect
+known (alignment); waste latent on BW-unsaturated drive (cost/scaling issue); size-keyed attribution
+(same-size culprits need file/offset). nsys head-to-head confirmed libcufile NVTX (CUFILE_NVTX) gives
+per-op cuFile but stops at the API (no nvfs/nvme).

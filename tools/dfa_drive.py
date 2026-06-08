@@ -126,6 +126,25 @@ def main():
               f"| device-cmd amplification = {amp:.2f}x")
         print(f"cuFile bytes = {cr['size'].sum()/2**20:.0f} MiB | "
               f"NVMe bytes = {nvme['size'].sum()/2**20:.0f} MiB")
+
+    # byte amplification bucketed by cuFile op size (attributes wasted device bytes to the workload/
+    # tensor; the per-op signal that distinguishes culprits an aggregate counter blends together)
+    if "corr_id" in sdf.columns and len(cr) and "size" in cr.columns:
+        crr = cr[cr["corr_id"].notna()].copy()
+        id2sz = dict(zip(crr["corr_id"].astype("int64"), crr["size"]))
+        nv = nvme[nvme["corr_id"].notna()].copy()
+        nv["op_size"] = nv["corr_id"].astype("int64").map(id2sz)
+        nv = nv[nv["op_size"].notna()]
+        if len(nv):
+            print("\n==== byte amplification BY cuFile op size (per-op, corr_id-attributed) ====")
+            print(f"{'op_size_B':>10} {'#ops':>7} {'req_MiB':>9} {'device_MiB':>11} {'byte_amp':>9}")
+            for sz, g in nv.groupby("op_size"):
+                nops = int((crr["size"] == sz).sum())
+                req = nops * int(sz) / 2**20
+                dev = g["size"].sum() / 2**20
+                amp = dev / req if req else 0
+                flag = "  <-- WASTE" if amp > 1.10 else ""
+                print(f"{int(sz):>10} {nops:>7} {req:>9.2f} {dev:>11.2f} {amp:>8.3f}x{flag}")
     print("\nDONE")
     cluster.close()
 
