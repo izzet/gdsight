@@ -7,3 +7,6 @@
 [submodule "external/ESPN-v1"]
 	path = external/ESPN-v1
 	url = https://github.com/susavlsh10/ESPN-v1
+[submodule "external/nixl"]
+	path = external/nixl
+	url = https://github.com/ai-dynamo/nixl

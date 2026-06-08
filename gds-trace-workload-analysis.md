@@ -64,8 +64,38 @@ amplification, the 16 KiB reader threshold, async/batch overheads, and path deci
 where per-op cross-layer attribution matters most. Muradli (NIXL/KV-cache transfer) is a **local,
 reachable design partner / potential co-author** working this exact problem on the same testbed.
 
-## Proposed next experiment (quantify the GDS-intrinsic amplification)
-Sweep cuFile read/write **size × alignment** and measure **kernel NVMe requests per logical op**
-(`/proc/driver/nvidia-fs/stats` Reads count vs logical count, and `iostat` device IOPS) to produce the
-**amplification factor** curve — reproducing Muradli's 64 KB-page effect and turning "468 vs 300" into
-a clean per-op result. That, plus the reader-threshold divergence, is the motivating evidence set.
+## Measured: read-side amplification (kernel oracle) — `step3/step3_ampl.py`
+Reads-only (writes are the risky path on this node). Amplification vs aligned baseline:
+
+| case | 64 KiB | 256 KiB | 1 MiB |
+|---|---|---|---|
+| **aligned** (fm=0,bm=0) | 1.00× | 1.00× | 1.00× |
+| **file +512 B** (sub-4K offset) | 1.06× *bytes* | 1.02× *bytes* | **2.00× ops** |
+| **buf +4 K / +32 K** (GPU-page mis) | 1.00× | 1.00× | 1.00× |
+
+- **File-offset misalignment amplifies:** sub-4K offsets pull the 4K-aligned *superset* (extra bytes at
+  small sizes) and **double the kernel read count at 1 MiB** — consistent with our `.npy` 1.56×.
+- **`gds_stats` is blind to it:** it counts the *logical* cuFile read, not the kernel split — so a 2×
+  NVMe-op amplification never shows up; only `/proc/driver/nvidia-fs/stats` (or a per-op trace) does.
+- **Honest limits:** the read-side effect is *modest* (1.02–1.06× bytes; 2× ops only at 1 MiB).
+  **GPU-buffer 64 KB-page misalignment did NOT amplify reads here** — Muradli's dramatic
+  "GDS slower than CPU" was **writes ≥128 KB**, which we deliberately did not test (write risk). So for
+  a strong amplification figure you'd need the (riskier) write path or a node where writes are safe.
+
+## How the benchmarks measure (none use gds_stats; none do per-op cross-layer)
+- **nixlbench** (`external/nixl/benchmark/nixlbench`): hand-rolled `std::chrono` timers → "elapsed time
+  in microseconds" → BW/latency; sweeps backends. NIXL has **two GDS plugins** (`cuda_gds`, `gds_mt`).
+- **ESPN** (`external/ESPN-v1`): `cudaEvent` + manual `data_size/time` BW; gdsio-style harness.
+- **gdsio**: its own aggregate per-run BW. **gds_stats**: per-process/GPU aggregate counters.
+- ⇒ Every tool reports an **aggregate per-config number**; **none** attributes a single cuFile op down
+  to its NVMe requests (the amplification) or tells you the per-op path. That absence — not "GDS is
+  broken" — is the GDS-Trace wedge.
+
+## Bottom line for the motivation
+The strongest honest evidence set = **(a)** cross-layer per-op attribution is missing everywhere
+(gdsio/nixlbench/ESPN/Muradli all hand-roll aggregate timers); **(b)** real per-op effects exist that
+aggregate tools hide — reader-threshold path divergence (kvikio vs DALI/cuFile) and file-misalignment
+amplification (2× NVMe ops at 1 MiB, `gds_stats`-invisible); **(c)** Muradli (same lab, same testbed) is
+a reachable design partner / co-author, and ESPN/TeraIO/Tutti are the small-random-read workloads where
+this bites. The dramatic write-amplification ("GDS slower than CPU") is real per Muradli but needs the
+write path we avoid here.
