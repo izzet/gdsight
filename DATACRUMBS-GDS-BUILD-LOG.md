@@ -43,8 +43,23 @@ Driving it surfaced + fixed **3 pandas≥2.2 bugs** in the `feat/datacrumbs` bra
 2. meta column-order mismatch from the restore → build the apply meta in matching order.
 3. `set_stack_metrics` used the removed option `mode.use_inf_as_na` → no-op context + explicit inf→NA.
 
-Remaining: map our `args.size` into DFAnalyzer's `size` column (extra_columns) for **byte** amplification
-(count amplification already works); async/batch cuFile arg extraction for kvikio/ESPN.
+## ✅ (1)+(2) byte amplification + async + real reader (kvikio) end-to-end
+- **(1) byte amplification:** patched the DataCrumbs reader (`dftracer.py io_function`) to map
+  `args.size`/`args.offset` → the `size`/`offset` columns (it only read `size_sum`/`ret`). Sizes now
+  flow: gdsio -i4M = 256 MiB cuFileRead = 256 MiB NVMe → **byte amplification 1.0×** (bytes conserved;
+  the 4× is op-count). sys_io read/write bytes map too.
+- **(2a) async:** `cuFileReadAsync` size via `size_t*` deref validated (gdsio -x5 → 128 events, size=1 MiB).
+- **(2b) batch:** `cuFileBatchIOSubmit` captured (gdsio -x6 → 125 events) but **duration-only** — the
+  `CUfileIOParams_t` array-walk for per-op size is the remaining piece (ESPN uses batch).
+- **REAL READER (kvikio), end-to-end:** traced `step3_ragged` via `datacrumbs_wrap python`. kvikio uses
+  **sync `cuFileRead`** (not async/batch as the libkvikio strings suggested), on a **worker thread** —
+  all **3000** captured with per-op size+offset (the exact case the old LD_PRELOAD interposer missed:
+  dlsym'd symbol + worker thread → vindicates eBPF-uprobe + the TGID fix). DFAnalyzer: **3013
+  nvme_setup_cmd all → root `cuFileRead`**, 1601 MiB each way, amplification 1.0× (ragged ~546 KiB
+  reads < 1.25 MiB MDTS → ~1 NVMe cmd each).
+
+**Remaining:** batch `CUfileIOParams_t` array-walk (per-op size for cuFileBatchIOSubmit) + an ESPN build
+to run that batch-based reader through the stack.
 
 ## ✅ (2) block/NVMe cross-layer correlation (the amplification metric)
 Added a custom **block** plugin (`plugins/custom_probes/block/`, `event_type 5` → `get_data_5`) that
