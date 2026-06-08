@@ -7,6 +7,17 @@ Figure-1 (an earlier "bypass" claim was a measurement error; this one is verifie
 nvidia-fs DMA counters with a `gdsio -x0` control). Scripts: `step3/step3_sizesweep.py`,
 `step3/step3_mixed.py`. Ground-truth oracle: `/proc/driver/nvidia-fs/stats` (`rw_stats_enabled=1`).
 
+> ## ⚠️ REALITY CHECK — this is kvikio-SPECIFIC, not a GDS-intrinsic gap
+> Verified on the same node: **raw cuFile (`gdsio -x0 -i 4K`) DMAs 4 KiB reads** (kernel Δreads=65536,
+> ΔreadMiB=256), and **DALI's numpy GPU reader DMAs sub-16 KiB `.npy` reads** (tiny 4 KiB .npy:
+> Δreads=98082, ΔreadMiB=197 = GDS). So **only kvikio** applies a 16 KiB→POSIX threshold by default;
+> cuFile and DALI do not. cuFile *has* the knob (`posix_gds_min_kb`) but it defaults to 0 (off). ⇒ This
+> scenario demonstrates a **reader (kvikio) policy that GDS tools can't see — NOT GDS silently failing
+> on its own.** The honest, ecosystem-level takeaway is the **divergence**: identical data + identical
+> GDS stack, yet kvikio→POSIX while DALI/cuFile→GDS for the same small reads, and **no per-op tool tells
+> you which path YOUR reader+config actually took.** That (cross-layer, *reader-aware*, per-op
+> attribution) is the defensible thesis; "GDS silently falls back by itself" is **not** supported here.
+
 ## The mechanism (a real kvikio default, not a bug)
 kvikio routes reads **below `KVIKIO_GDS_THRESHOLD` (default 16 KiB) to its own POSIX path**, *above*
 cuFile — to avoid GDS per-op setup cost on tiny reads. Reasonable as a default; the problem is it's a
