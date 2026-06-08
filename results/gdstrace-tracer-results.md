@@ -35,6 +35,29 @@ at cuFile; Darshan has no cuFile.
 tool's per-op capture matches the kernel oracle and an independent kprobe with **zero drift in a single
 run**. kvikio cross-checked the same way: cuFileRead 3000 ≈ kernel Reads `n`, bytes 1601 MiB ≈ readMiB.
 
+## Pathologies GDS-Trace diagnoses that coarse tools miss
+Each is a per-op cross-layer effect invisible to `gds_stats` (aggregate, cuFile-only), `nvidia-smi`
+(PCIe only), throughput, or Darshan (no cuFile) — but GDS-Trace pinpoints it per op.
+
+1. **kvikio sub-16 KiB path divergence (silent POSIX).** Bimodal kvikio workload (60% reads <16 KiB):
+   GDS-Trace shows **13529 `cuFileRead` (GDS, sizes ≥64 KiB) + 20472 `pread64` (POSIX, the small
+   reads kvikio routed off GDS, ~166 MiB)**. Cross-check, same class of run: **`gds_stats` reports
+   `posix=0`** ("GDS perfect") and the kernel `nvidia-fs Reads n` counts **only the large reads** — i.e.
+   60% of reads silently took POSIX and no GDS tool shows it; GDS-Trace shows *which* reads and how much.
+2. **DALI device-command amplification.** DALI numpy GPU reader: **9137 `cuFileRead` → 22568
+   `nvme_setup_cmd` = 2.47×** (whole-file ~1–1.8 MB reads split at the ~1.25 MB MDTS into 2–3 commands),
+   plus a **`cuFileHandleRegister` per read** (9137 — handle-reg overhead) and a `cuFileRead`(GDS)/
+   `pread64`(POSIX header) mix. `gds_stats` shows aggregate GDS bandwidth (looks fine); GDS-Trace shows
+   the per-op IOPS cost + the handle churn.
+3. **Unaligned byte amplification.** gdsio 64 KiB random read, aligned vs `-U` unaligned: op count
+   identical, but device **bytes go 128 MiB → 136 MiB = 1.06× byte amplification** (cuFile reads the
+   4 KiB-aligned superset). Still reported as `GPUD` (GDS), so `gds_stats`/throughput look clean;
+   GDS-Trace shows cuFileRead requested 128 MiB while NVMe moved 136 MiB — 6% wasted device bandwidth.
+
+**Why this is the contribution:** these are exactly the "is GDS actually doing what I think, per op?"
+questions from the demand evidence (forum users `fuyao3860`/`pandeyshweta2401`; Muradli's hand-rolled
+timers). GDS-Trace answers them with per-op, cross-layer ground truth that no shipped tool provides.
+
 ## Drift notes (why numbers differ where they do)
 1. **NVMe-command count varies run-to-run** (256 / 259 / 375 for identical gdsio `-i4M`). Cause:
    device-side splitting of >MDTS (~1.25 MB) reads is non-deterministic (MDTS, queue state, alignment).
