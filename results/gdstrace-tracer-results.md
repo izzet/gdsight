@@ -93,12 +93,18 @@ I/O *shape* differs completely (1 zero-copy read vs 2050 staged POSIX reads).
    lib/libcufile.so.0`), so a uprobe hardcoded to the *system* CUDA `libcufile` misses the user layer
    (kernel `nvfs_io`/NVMe still fire). Fix: `LD_PRELOAD` the traced `libcufile` (or point the uprobe at
    the loaded one). The tracer should attach to the *actually-loaded* `libcufile`.
-2. **cuFile uses internal worker threads.** fastsafetensors makes 1 `cuFileRead` on its thread, but cuFile
-   pipelines the 16 MB chunks across its own threads — so the `nvfs_io`/NVMe land **off the caller
-   thread**. Consequence: per-tid time-containment **splits** the attribution (1319 NVMe → `nvfs_io`
-   roots, 465 → `cuFileRead`) and the `nvfs_io` start→complete duration (keyed by `{tid,event_id}`)
-   **overlaps and is not additive**. The robust signal is DFAnalyzer's `cuFileRead` `self_time`/
-   `child_time` (works for both). Proper fix (future): correlate cross-thread by handle/op-id, not time.
+2. **cuFile uses internal worker threads** — and we fixed the attribution for it. fastsafetensors makes
+   1 `cuFileRead` on its thread, but cuFile dispatches the 16 MB chunks across its own worker-thread pool,
+   so the `nvfs_io`/NVMe land **off the caller thread**. Per-tid time-containment therefore **split** the
+   attribution (only 465/1817 NVMe → `cuFileRead`, the rest stranded on worker threads = 25.6%).
+   **Fix — correlation id through the layers** (all in our plugins, no DataCrumbs core changes): the cuFile
+   plugin tags each op with a `corr_id` (= entry ts) in a shared map; `nvfs_io`/NVMe stamp the active
+   op's `corr_id` (same-thread lookup, with a per-process fallback used only when exactly one cuFile op
+   is in flight — unambiguous). DFAnalyzer attributes by `corr_id`, not time. Result: **1815/1817 NVMe →
+   the cuFileRead = 99.9%** (vs 25.6% by time-containment), and gdsio's synchronous case is unchanged
+   (98.5% either way — no regression). Trade-off: to keep attribution clean, `nvfs_io` is now a **point**
+   event (its async start→complete duration was unreliable), so per-layer *time* decomposition is no
+   longer reported (cuFileRead latency still is); recovering it needs correct per-layer async durations.
 
 ## Cross-check vs ground-truth tools (the rigor) — gdsio `-i 4M -s 256M -x 0`
 **Same run**, three independent measurements:

@@ -95,23 +95,35 @@ def main():
                 print(f"avg in-flight (overlap factor) : {dur.sum()/span:.2f}x  "
                       f"(>1 => worker threads pipelining/concurrency)")
 
-    # cross-layer: attribute each nvme_setup_cmd to its ROOT op (the cuFileRead it belongs to)
-    id2func = sdf.set_index("event_id")["func_name"].to_dict()
-    sdf["root_func"] = sdf["root_id"].map(id2func)
+    # ---- cross-layer attribution: NVMe -> the cuFileRead that issued it ----
     nvme = sdf[sdf["func_name"] == "nvme_setup_cmd"]
     cr = sdf[sdf["func_name"] == "cuFileRead"]
-    print("\n==== nvme_setup_cmd attributed to ROOT op (cross-layer) ====")
-    print(nvme["root_func"].value_counts().to_string())
+    print("\n==== cross-layer attribution: NVMe -> cuFileRead ====")
+    # robust: by correlation id (carried through cuFile -> nvidia-fs -> NVMe by the tracer)
+    if "corr_id" in sdf.columns and len(cr):
+        cr_ids = set(cr["corr_id"].dropna().astype("int64").tolist())
+        nvme_corr = nvme["corr_id"].dropna().astype("int64")
+        matched = int(nvme_corr.isin(cr_ids).sum())
+        print(f"by CORR_ID (robust)        : {matched}/{len(nvme)} NVMe -> a cuFileRead "
+              f"({100*matched/max(1,len(nvme)):.1f}%)")
+        per_op = nvme_corr[nvme_corr.isin(cr_ids)].value_counts()
+        if len(per_op):
+            print(f"   NVMe cmds per cuFileRead: mean={per_op.mean():.1f} min={int(per_op.min())} "
+                  f"max={int(per_op.max())}")
+    # legacy: per-tid time-containment (shows why corr_id was needed for worker-thread/async I/O)
+    if "root_id" in sdf.columns:
+        id2func = sdf.set_index("event_id")["func_name"].to_dict()
+        nvme_rf = nvme["root_id"].map(id2func)
+        to_cr = int((nvme_rf == "cuFileRead").sum())
+        rest = nvme_rf[nvme_rf != "cuFileRead"].value_counts().to_dict()
+        print(f"by TIME-CONTAINMENT (legacy): {to_cr}/{len(nvme)} NVMe -> cuFileRead "
+              f"({100*to_cr/max(1,len(nvme)):.1f}%); rest -> {rest}")
     if len(cr):
-        per_root = nvme.groupby("root_id").size()
         amp = len(nvme) / len(cr)
         print(f"\n==== AMPLIFICATION ====\ncuFileRead ops = {len(cr)} | nvme_setup_cmd = {len(nvme)} "
               f"| device-cmd amplification = {amp:.2f}x")
-        if len(per_root):
-            print(f"NVMe cmds per cuFileRead: mean={per_root.mean():.2f} min={per_root.min()} "
-                  f"max={per_root.max()}")
-        print(f"cuFileRead bytes requested = {cr['size'].sum()/2**20:.0f} MiB | "
-              f"NVMe bytes issued = {nvme['size'].sum()/2**20:.0f} MiB")
+        print(f"cuFileRead bytes = {cr['size'].sum()/2**20:.0f} MiB | "
+              f"NVMe bytes = {nvme['size'].sum()/2**20:.0f} MiB")
     print("\nDONE")
     cluster.close()
 

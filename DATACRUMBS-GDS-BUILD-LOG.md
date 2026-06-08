@@ -208,3 +208,19 @@ shard from /mnt/nvme1. `workloads/fastsafetensors_load.py` (GDS vs --nogds). Ins
   thread, so per-tid attribution splits (1319 NVMe->nvfs_io roots, 465->cuFileRead) and the nvfs_io
   start->complete duration (keyed {tid,event_id}) overlaps/not-additive. Robust signal = DFAnalyzer
   cuFileRead self/child. Future: cross-thread correlation by handle/op-id. dfa_drive.py now flags this.
+
+## Cross-thread attribution FIXED: correlation id through the layers (2026-06-08)
+fastsafetensors exposed that cuFile dispatches I/O to INTERNAL worker threads, so nvfs_io/NVMe land off
+the caller thread -> per-tid time-containment attributed only 465/1817 NVMe to the cuFileRead (25.6%).
+**Fix (all in OUR plugins, NO datacrumbs core changes):** shared header
+`custom_probes/gdstrace_corr.bpf.h` owns 3 maps (defined in the cuFile plugin via GDSTRACE_CORR_OWNER,
+extern'd in nvidiafs/block; all plugin .o link into one datacrumbs.bpf.o). cuFile op entry calls
+`gdstrace_corr_begin(corr_id=entry_ts)` (per-tid map + per-tgid count + per-tgid op); device ops call
+`gdstrace_corr_current()` = per-tid lookup (synchronous) else per-tgid op when count==1 (worker thread,
+unambiguous). corr_id emitted as an arg on cuFile/nvfs_io/NVMe; DFAnalyzer reader (dftracer.py) maps
+args.corr_id -> a column; dfa_drive.py attributes by corr_id.
+- fastsafetensors: **1815/1817 NVMe -> cuFileRead = 99.9%** (was 25.6% by time-containment).
+- gdsio (synchronous -w4): 98.5% by corr_id == 98.5% by time-containment (no regression).
+- Trade-off: nvfs_io is now a POINT (its async start->complete duration was garbage); per-layer TIME
+  decomposition dropped (cuFileRead latency still reported). Recovering it needs correct async per-layer
+  durations. The user vetoed core changes -> kept everything in custom plugins (cuFile plugin owns maps).
