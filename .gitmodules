@@ -4,12 +4,17 @@
 [submodule "external/brahma"]
 	path = external/brahma
 	url = https://github.com/izzet/brahma.git
-[submodule "external/ESPN-v1"]
-	path = external/ESPN-v1
-	url = https://github.com/susavlsh10/ESPN-v1
 [submodule "external/nixl"]
 	path = external/nixl
 	url = https://github.com/ai-dynamo/nixl
 [submodule "external/datacrumbs"]
 	path = external/datacrumbs
-	url = https://github.com/LLNL/datacrumbs
+	url = https://github.com/izzet/datacrumbs.git
+	branch = develop
+[submodule "external/dfanalyzer"]
+	path = external/dfanalyzer
+	url = https://github.com/izzet/dfanalyzer.git
+	branch = feat/datacrumbs
+[submodule "external/espn"]
+	path = external/espn
+	url = https://github.com/susavlsh10/ESPN-v1
