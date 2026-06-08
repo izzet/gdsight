@@ -10,11 +10,11 @@
 [submodule "external/datacrumbs"]
 	path = external/datacrumbs
 	url = https://github.com/izzet/datacrumbs.git
-	branch = develop
+	branch = feat/cufile-gds
 [submodule "external/dfanalyzer"]
 	path = external/dfanalyzer
 	url = https://github.com/izzet/dfanalyzer.git
-	branch = feat/datacrumbs
+	branch = fix/pandas-2.2-datacrumbs
 [submodule "external/espn"]
 	path = external/espn
 	url = https://github.com/susavlsh10/ESPN-v1
