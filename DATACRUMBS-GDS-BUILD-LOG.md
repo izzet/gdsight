@@ -49,8 +49,10 @@ Driving it surfaced + fixed **3 pandas≥2.2 bugs** in the `feat/datacrumbs` bra
   flow: gdsio -i4M = 256 MiB cuFileRead = 256 MiB NVMe → **byte amplification 1.0×** (bytes conserved;
   the 4× is op-count). sys_io read/write bytes map too.
 - **(2a) async:** `cuFileReadAsync` size via `size_t*` deref validated (gdsio -x5 → 128 events, size=1 MiB).
-- **(2b) batch:** `cuFileBatchIOSubmit` captured (gdsio -x6 → 125 events) but **duration-only** — the
-  `CUfileIOParams_t` array-walk for per-op size is the remaining piece (ESPN uses batch).
+- **(2b) batch ✅:** `cuFileBatchIOSubmit` now **walks the `CUfileIOParams_t` array** (stride 64 B,
+  size@+32, file_offset@+16; 256-cap BPF loop) → emits `args:{size=Σ sub-op bytes, count=nr, offset}`.
+  Validated gdsio -x6: a 4-op batch shows `count=4, size=4 MiB`. (Added a `count` field to
+  `cufile_event_t`.)
 - **REAL READER (kvikio), end-to-end:** traced `step3_ragged` via `datacrumbs_wrap python`. kvikio uses
   **sync `cuFileRead`** (not async/batch as the libkvikio strings suggested), on a **worker thread** —
   all **3000** captured with per-op size+offset (the exact case the old LD_PRELOAD interposer missed:
