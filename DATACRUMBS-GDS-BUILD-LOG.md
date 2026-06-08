@@ -142,3 +142,28 @@ the izzet fork + PR.)*
   client lib) or wrapped — untracked processes produce empty traces. Traces land under `<trace_dir>/YY/MM/DD/`.
 - Probe model: types 0=syscalls, 1=kernel kprobes (bio/ext4/iomap/fscache), 2=userspace uprobes,
   4=custom. cuFile = **type-2 uprobe** on `libcufile.so`. Output = DFTracer `.pfw.gz`.
+
+## Overnight autonomous session (2026-06-08) — (1) tracer complete + (2) value proven
+Finished the tracer and validated end-to-end on real + synthetic readers; full results +
+cross-checks + pathologies in **`results/gdstrace-tracer-results.md`**.
+
+**(1) tracer coverage — DONE:** sync `cuFileRead`/`cuFileWrite` (size/offset), async `cuFileReadAsync`
+(pointer deref), **batch `cuFileBatchIOSubmit` (CUfileIOParams_t array-walk → count + Σsize)**, NVMe
+`nvme_setup_cmd` (size/sector). Real readers through the full stack: **kvikio** (sync, dlsym'd,
+worker-thread), **DALI** (sync, whole-file, 2.47× amplification), **ESPN** (batch reader, built from
+`cufile_bread.cc`).
+
+**(2) value — DONE:** cross-checked vs kernel nvidia-fs + bpftrace (same-run **exact** match; cuFile
+layer 64=64/256MiB=256MiB, NVMe 259=259) and documented run-to-run device-split variance as the only
+"drift". Four pathologies coarse tools miss, each diagnosed per-op: kvikio sub-16K POSIX path
+divergence (gds_stats `posix=0`, blind), DALI device-cmd amplification (2.47×), unaligned byte
+amplification (1.06×), ESPN per-read handle-registration (0.115s > 0.053s reads).
+
+**Gotchas (overnight):**
+- **`datacrumbs_wrap` does NOT inject into a plain C++ binary** (espn_bread captured nothing) — use
+  `datacrumbs_track --executable <bin>` (patchelf). wrap worked for python; track is the reliable path.
+- ESPN build: prebuilt `GDS` binary is buggy in our env (`device pointer already registered`); built
+  `cufile_bread.cc` instead — needs `libssl-dev` (openssl/sha.h) and `-lcuda` (`cuGetErrorName`),
+  `-I/usr/local/cuda-12.6/include` + `-lcufile -lcudart`.
+- batch BPF array-walk: 256-iter cap on the loop (verifier); `CUfileIOParams_t` stride 64B,
+  file_offset@+16, size@+32.

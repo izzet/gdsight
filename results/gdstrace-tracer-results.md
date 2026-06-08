@@ -15,6 +15,7 @@ size/offset/count, NVMe `nvme_setup_cmd` kprobe with size/sector, TGID worker-th
 | **gdsio** `-x 6` batch | cuFileBatchIOSubmit | 125 | 128 | — | `count`+`size` from `CUfileIOParams_t` | batch arg-walk |
 | **kvikio** (`step3_ragged`) | cuFileRead (sync, dlsym'd, worker-thread) | 3000 | 3013 | **1.0×** | 1601 = 1601 MiB | ragged ~546 KiB < MDTS → 1 cmd each |
 | **DALI** numpy GPU reader | cuFileRead (sync) | 9137 | 22568 | **2.47×** | 9875 ≈ 9896 MiB | whole-file ~1–1.8 MB > MDTS → 2–3 cmds; **re-registers a handle per read**; also 13k `pread64` (POSIX header reads), 300 of which hit NVMe |
+| **ESPN** `cufile_bread` (batch) | cuFileBatchIOSubmit | 32 submits (128 sub-ops each) | 4096 | 128 cmds/submit (1:1 per sub-op, 4 KiB) | 16 = 16 MiB | batch arg-walk gives `count=128,size=512KiB`/submit; all 4096 NVMe → root cuFileBatchIOSubmit; **4096 `cuFileHandleRegister` (0.115 s) > batch reads (0.053 s)** |
 
 \* run-to-run variance (see drift notes).
 
@@ -53,6 +54,11 @@ Each is a per-op cross-layer effect invisible to `gds_stats` (aggregate, cuFile-
    identical, but device **bytes go 128 MiB → 136 MiB = 1.06× byte amplification** (cuFile reads the
    4 KiB-aligned superset). Still reported as `GPUD` (GDS), so `gds_stats`/throughput look clean;
    GDS-Trace shows cuFileRead requested 128 MiB while NVMe moved 136 MiB — 6% wasted device bandwidth.
+4. **Redundant per-read handle registration (ESPN).** ESPN's batch reader registers a `cuFileHandle`
+   **per read** (4096 `cuFileHandleRegister` for 4096 reads of one file) — GDS-Trace shows it spends
+   **more wall-time registering handles (0.115 s) than on the batch reads themselves (0.053 s)**. A
+   diagnosable GDS-usage inefficiency (register once, not per op) that `gds_stats` (no per-op
+   HandleRegister timing) cannot surface.
 
 **Why this is the contribution:** these are exactly the "is GDS actually doing what I think, per op?"
 questions from the demand evidence (forum users `fuyao3860`/`pandeyshweta2401`; Muradli's hand-rolled
