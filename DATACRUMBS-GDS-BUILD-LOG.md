@@ -301,3 +301,12 @@ device bytes. So the waste is LATENT at low load (earlier framing) but BITES at 
 Grounded: DLRM-on-SSD (512B-of-4KB read amplification; FlashEmbedding APSys'21, arXiv:2110.11489) +
 ESPN (arXiv:2312.05417, manually aligns embeddings 2 blocks->1 = the fix GDS-Trace flags automatically).
 Our 4KiB-unaligned = conservative 2x; documented sub-block embedding case up to 8x.
+
+## CORRECTION (honesty): who can see the byte-amp discrepancy? (2026-06-08)
+Re-checked: in the HOMOGENEOUS saturation run, existing tools DO see the aggregate 2x -- iostat device
+1.18 GB/s vs app useful 0.59 GB/s = 2x; diskstats 4096 MiB device vs 2048 MiB requested = 2x. So
+GDS-Trace is NOT uniquely needed to DETECT the 2x in a uniform workload (an admin diffing iostat vs app
+throughput catches it). (Earlier 'buy faster storage trap' framing overclaimed.) The UNIQUE value is
+ATTRIBUTION in a MIXED workload (mixed_retrieval): iostat/gds_stats show one blended 1.36x and cannot say
+which table; only per-op size/corr_id attribution pinpoints B=2.015x vs A=1.000x. Detection of aggregate
+= existing tools; per-op/per-tensor attribution in heterogeneous workloads = GDS-Trace. Docs corrected.

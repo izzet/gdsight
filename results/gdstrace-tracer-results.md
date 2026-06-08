@@ -259,11 +259,15 @@ At saturation the gap converges on the 2× byte-amp: the unaligned reads make th
 bytes** (nvidia-fs `readMiB`: 512 vs 256 MiB for the same 256 MiB requested) and deliver **~2× less
 useful throughput**. **Fixing alignment ≈ doubles throughput on the *same drive*.**
 
-**Why this is the worked example that matters:** at saturation `gds_stats`/`iostat` show the device busy
-and useful throughput low → the natural (wrong) conclusion is *"we're storage-bound, buy a faster
-drive."* GDS-Trace shows **byte-amp ≈ 2×** → the right fix is *"align/pack the data, ~2× for free."*
-Nsight sees per-op cuFile latency (uniformly higher under load) but no device bytes, so it can't tell
-you either.
+**Why this matters — and the honest scope of who can see it.** This homogeneous run shows the waste has a
+real throughput cost (~2×). But **existing tools *can* detect the aggregate 2× here**: `iostat` device
+read rate (1.18 GB/s) vs the app's useful throughput (0.59 GB/s) = 2×, or `diskstats`/nvidia-fs `readMiB`
+(4096 MiB device) vs cuFile-requested (2048 MiB). So GDS-Trace is **not** uniquely needed to *detect* the
+2× when the whole workload is uniform — an admin diffing iostat against app throughput catches it.
+**The uniqueness is attribution in a *mixed* workload** (next section): when table A (aligned) and table B
+(unaligned) are interleaved, iostat/gds_stats show one **blended 1.36×** and cannot say *which* table is
+the culprit; only per-op (size/corr_id) attribution pinpoints B=2.015×, A=1.000×. Detection of the
+aggregate = existing tools; per-op/per-tensor attribution = GDS-Trace.
 
 **Grounded in published work** (per the brief's bar): DLRM-on-SSD documents this exact pattern — embedding
 vectors are 128–512 B, so "from each 4 KB block only 512 B (or 128 B) is relevant" (FlashEmbedding,
