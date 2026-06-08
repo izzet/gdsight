@@ -365,3 +365,18 @@ clean modern node. Hidden silent-degradation pathologies would need: older/misco
 old GPU, small BAR1), REMOTE storage (NFS-RDMA/WekaFS/VAST where bounce/fallback is common), or a real
 misconfigured deployment -- not this clean node. Reinforces: tool value = per-op attribution/verification
 + naive-code diagnosis; gotcha-finding needs a varied/real environment.
+
+## Curated anti-pattern SUITE (motivating examples, decision-framed) (2026-06-08)
+results/curated-pathologies.md + tools/run_curated_suite.sh: 3 realistic curated GDS anti-patterns where
+the STANDARD-TOOL DECISION is wrong and per-op attribution gives the right fix.
+- Case 1 'buy faster storage' (unaligned layout): gdsio 4K randread -w64 aligned 1.18 vs -U 0.43 GiB/s
+  (~2.8x); iostat/gds_stats -> "buy faster drive"; GDS-Trace byte-amp 2x -> "align data, 2.8x free".
+- Case 2 'GDS is healthy' (kvikio 16KiB threshold): 4000 reads 60% small -> nvidia-fs n+1617 (large only);
+  gds_stats "GDS working"; GDS-Trace 1617 cuFileRead + 2385 pread64 -> "60% silently POSIX, batch them".
+  workloads/kvikio_threshold.py.
+- Case 3 'which tensor' (mixed 768d+1024d): aggregate 1.36x; GDS-Trace per-read-class B(3072)=2.015x,
+  A(4096)=1.000x -> "fix table B". workloads/mixed_retrieval.py.
+HONEST: curated motivating examples on a robust modern stack -> prove the capability + the gap exists,
+NOT demand (each effect is known to experts; the value is automatic per-op attribution -> the fix).
+Removed mixed_tier.py (cufile-python errors on non-GDS files instead of compat -> pivoted Case 2 to
+the real kvikio threshold). Cases 1+2 validated live; Case 3 = already-validated mixed_retrieval.
