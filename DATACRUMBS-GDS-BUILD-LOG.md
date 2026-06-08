@@ -20,8 +20,27 @@ layer, run it on a GDS workload, and analyze the `.pfw.gz` trace with **DFAnalyz
 - [x] cuFile probe category — auto-discovered `cuFileRead/ReadAsync/Write/WriteAsync/BatchIOSubmit/BatchIOGetStatus/HandleRegister`
 - [x] **run on gdsio (GPU_DIRECT read) → `.pfw.gz` with 512 `cuFileRead` events + syscalls** ✅
 - [x] capture cuFile **args (size/offset)** — each `cuFileRead` now has `args:{size,offset}` ✅
-- [ ] add **block/bio kprobe** layer → cuFileRead↔NVMe amplification correlation
+- [x] **block/NVMe kprobe** layer → cuFileRead↔NVMe amplification (1:1 aligned, 4× at 4 MiB) ✅
 - [ ] DFAnalyzer (`feat/datacrumbs`) → per-op cuFile↔bio view
+- [ ] async/batch cuFile full arg extraction (kvikio/ESPN)
+
+## ✅ (2) block/NVMe cross-layer correlation (the amplification metric)
+Added a custom **block** plugin (`plugins/custom_probes/block/`, `event_type 5` → `get_data_5`) that
+kprobes **`nvme_setup_cmd(ns, req)`** and emits a point event with
+`args:{size=req->__data_len, sector=req->__sector}` (read via `BPF_CORE_READ`; `struct request` is in
+vmlinux BTF). Picked `nvme_setup_cmd` via bpftrace: it ≈ the logical read count and runs **in the
+submitting process context** (327/328 in `gdsio`), so DataCrumbs' TGID filter captures the worker-thread
+GDS device commands. (`submit_bio` is noisier — counts other processes' I/O.)
+
+**One trace now has both layers, same tids+timestamps:**
+| workload | cuFileRead ops | nvme_setup_cmd | amplification |
+|---|---:|---:|---|
+| `gdsio -i 1M` (aligned) | 256 (1 MiB) | 256 (1 MiB) | **1.0×** (baseline) |
+| `gdsio -i 4M` | 64 (4 MiB) | 256 (1310720/262144/… B) | **4.0×** (device MDTS ~1.25 MiB splits each read) |
+
+This is the per-op cross-layer attribution (`cuFileRead{size,offset} → the N NVMe commands it became,
+each with size/sector`) that **no NVIDIA tool produces**. DFAnalyzer correlates by tid + time window
+to compute per-op amplification (op-count and bytes).
 
 ## ✅ (1) per-op cuFile arg capture (size/offset) — proper custom plugin
 `gdsio -i 1M` → 512 `cuFileRead` events, all `args:{"size":1048576,"offset":<varies>}` + duration +
