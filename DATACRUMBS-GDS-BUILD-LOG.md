@@ -350,3 +350,18 @@ libcufile -> traceable with NO LD_PRELOAD trick (unlike torch/cudf bundled libcu
 CONCLUSION: elbencho is well-engineered (aligned, register-once) -> NO byte-amp pathology, like cuDF.
 Two real tools now checked, both CLEAN. Pattern: pathology lives in naive/hand-rolled code (ESPN-naive),
 not well-tuned libs. Tool correctly issues clean bills. Note: external/nixl + external/espn already exist.
+
+## Edge-case hunt: hidden silent-degradation -- THREE NEGATIVES (stack is robust) (2026-06-08)
+Aimed for layer-internal behaviors invisible to existing tools. Tested 3 hypotheses, all negative:
+1. Silent bounce via BAR1 pressure: INFEASIBLE -- A100 BAR1=64GiB (>= GPU mem), can't exhaust.
+2. Unaligned-write RMW: driver REJECTS unaligned O_DIRECT writes (gdsio -U -I3 wrote ~nothing, 0 reads)
+   -> no silent read-modify-write edge case.
+3. Managed-memory bounce (cudaMallocManaged + cuFile): TRUE P2P anyway (p2p=64, shadow~0, nvidia-fs
+   +64 reads) -- same as cudaMalloc device buffer. No bounce. (workloads/managed_buffer_test.py)
+CONCLUSION: modern GDS stack (A100/CUDA12.6/nvfs2.28/BAR1=64GiB/IOMMU-off) is ROBUST -- true zero-copy
+P2P for device AND managed memory, rejects (not silently-degrades) unaligned writes. The nvfs shadow/
+bounce path essentially never fires here. So the instrumented bounce-detection has nothing to flag on a
+clean modern node. Hidden silent-degradation pathologies would need: older/misconfigured stack (IOMMU-on,
+old GPU, small BAR1), REMOTE storage (NFS-RDMA/WekaFS/VAST where bounce/fallback is common), or a real
+misconfigured deployment -- not this clean node. Reinforces: tool value = per-op attribution/verification
++ naive-code diagnosis; gotcha-finding needs a varied/real environment.
