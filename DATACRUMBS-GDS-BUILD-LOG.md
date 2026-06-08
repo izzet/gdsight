@@ -224,3 +224,13 @@ args.corr_id -> a column; dfa_drive.py attributes by corr_id.
 - Trade-off: nvfs_io is now a POINT (its async start->complete duration was garbage); per-layer TIME
   decomposition dropped (cuFileRead latency still reported). Recovering it needs correct async per-layer
   durations. The user vetoed core changes -> kept everything in custom plugins (cuFile plugin owns maps).
+
+## Real HF model (Qwen2.5-3B) + concurrent-loader limitation (2026-06-08)
+Loaded a real 2-shard model (5.75 GiB, 434 tensors) via fastsafetensors_load.py --path <dir> (now
+supports a model dir = all *.safetensors, vLLM-style). GDS-Trace: 2 cuFileRead + 2 cuFileHandleRegister
+-> 5168 NVMe, true P2P, 2584x amplification, 5886 MiB conserved, 2.78 GiB/s. Works on a genuine model.
+LIMITATION: fastsafetensors loads shards CONCURRENTLY (2 overlapping cuFileReads + shared worker pool),
+so corr_id attribution drops to ~36% (count>1 -> fallback refuses to guess which read a worker op serves;
+unattributed, not misattributed). Robust fix = per-request GPU-buffer key (gpu_info->gpuvaddr from
+nvfs_get_p2p_dma_mapping), but that's a non-BTF module struct at a hardcoded offset (brittle) -> DEFERRED
+(user call). Process-level results (amplification/bytes/P2P) remain exact. Next: LMCache.

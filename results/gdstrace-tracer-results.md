@@ -106,6 +106,22 @@ I/O *shape* differs completely (1 zero-copy read vs 2050 staged POSIX reads).
    event (its async start→complete duration was unreliable), so per-layer *time* decomposition is no
    longer reported (cuFileRead latency still is); recovering it needs correct per-layer async durations.
 
+**Real HF model (Qwen2.5-3B-Instruct, 2 safetensors shards, 5.75 GiB, 434 tensors).** Loaded via
+`fastsafetensors_load.py --path <model_dir>` (vLLM-style, all shards). GDS-Trace: **2 `cuFileRead` +
+2 `cuFileHandleRegister`** (register-once per shard) → **5168 NVMe** commands, true P2P (5159
+`p2p_dma_mapping`, 0 shadow), **2584× device-cmd amplification**, 5886 MiB cuFile == 5886 MiB NVMe
+(bytes conserved), 2.78 GiB/s. Confirms the tool on a genuine model, not a synthetic shard.
+
+*Limitation surfaced (concurrent multi-shard).* fastsafetensors loads the 2 shards **concurrently**
+(2 overlapping `cuFileRead`s sharing one worker pool). corr_id is robust when ≤1 op is in flight
+(single shard 99.9%; gdsio synchronous 98.5%) but drops to **~36%** here: with >1 cuFileRead active,
+the per-process fallback correctly refuses to guess which read a worker-thread op serves, so worker-pool
+NVMe (the bulk) are left unattributed rather than misattributed. Process-level results (total
+amplification, bytes, P2P) are still exact; only *which of the concurrent reads* a worker op belongs to
+is ambiguous. A robust fix needs a per-request key (e.g. the GPU buffer vaddr from
+`nvfs_get_p2p_dma_mapping`), which requires reading a non-BTF module struct at a hardcoded offset
+(version-brittle) — deferred.
+
 ## Cross-check vs ground-truth tools (the rigor) — gdsio `-i 4M -s 256M -x 0`
 **Same run**, three independent measurements:
 | layer | GDS-Trace | kernel `/proc/driver/nvidia-fs/stats` | bpftrace (independent kprobe) |
