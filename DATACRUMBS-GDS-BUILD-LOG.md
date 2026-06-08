@@ -23,24 +23,34 @@ layer, run it on a GDS workload, and analyze the `.pfw.gz` trace with **DFAnalyz
 - [ ] add **block/bio kprobe** layer → cuFileRead↔NVMe amplification correlation
 - [ ] DFAnalyzer (`feat/datacrumbs`) → per-op cuFile↔bio view
 
-## ✅ (1) per-op cuFile arg capture (size/offset)
-`gdsio -i 1M` → 512 `cuFileRead` events, all with `args:{"size":1048576,"offset":<varies>}`. Now each
-GDS op is attributed by **size + file_offset + duration + thread** — the per-op data needed for
-amplification/path analysis (e.g., which ops are sub-threshold, which span pages).
+## ✅ (1) per-op cuFile arg capture (size/offset) — proper custom plugin
+`gdsio -i 1M` → 512 `cuFileRead` events, all `args:{"size":1048576,"offset":<varies>}` + duration +
+thread. Per-op GDS attribution by size+offset — the data for amplification/path analysis.
 
-**How:** since our only uprobe category is `cufile`, extended the *generic* uprobe path (no separate
-plugin needed): capture `PT_REGS_PARM3`=size, `PT_REGS_PARM4`=file_offset at uprobe **entry** into
-`fn_value_t`, carry to `general_event_t` at **exit**, emit as args in `general_event.h` get_data_1.
-Added `size`/`offset` to `general_event_t`+`fn_value_t` (`shared.h`), zeroed in `init.bpf.c`.
-Matches the cuFile **sync** ABI: `cuFileRead(fh, buf, size, file_offset, buf_offset)`.
+**Design — the right way (not a generic register hack).** First attempt captured `PT_REGS_PARM3/4` in
+the *generic* uprobe path → **fragile** (would mislabel args for any other function/category, and wrong
+for cuFile async/batch). **Reverted.** DataCrumbs' designed extension is a **custom probe plugin** with
+explicit, signature-aware SEC programs — exactly how `sys_io` captures POSIX args
+(`SEC("ksyscall/read") BPF_KSYSCALL(read_entry, int fd, void* data, u64 count)`). Added
+`etc/datacrumbs/plugins/custom_probes/cufile/`:
+- `cufile.bpf.c`: `SEC("uprobe/<libcufile>:cuFileRead") BPF_UPROBE(.., void* fh, void* buf, u64 size,
+  u64 file_offset)` — typed args, only on functions whose signature we know. Entry stashes size/offset
+  in a carry map (`cufile_args_map`); uretprobe emits a `cufile_event_t`. `cuFileReadAsync` derefs the
+  `size_t*`; `cuFileBatchIOSubmit`/`cuFileHandleRegister` = duration-only for now.
+- `cufile.bpf.h` (`cufile_event_t`), `cufile_process.h` (`get_data_4` → emits args), `probes.json`
+  (function order = event_id order).
+- config: 2nd custom category `cufile` (`event_type: 4`, `start_event_id: 200000`).
 
-**Caveat / next:** correct for **sync `cuFileRead`/`cuFileWrite`** (PARM3=size). For
-`cuFileReadAsync` (size is a `size_t*`) and `cuFileBatchIOSubmit` (array of params), PARM3 is a
-pointer/count, not the size → needs deref/array handling (future; kvikio/ESPN use these).
+**Framework notes (how POSIX args are captured = the model):** custom plugins write their own SEC
+programs; the generated `customN.bpf.c` just `#include`s the plugin; the generic uprobe generator does
+duration-only. Processors dispatch `event->type → get_data_N` (`GET_DATA_N_EXISTS`, up to 10):
+1=general, 2=sys_io, **3=usdt (taken)** → cuFile uses **4**. Kept the TGID worker-thread fix; reverted
+the generic-path hack.
 
-**Gotcha:** after changing a shared BPF header (`shared.h`/`common.h`), the BPF link
-(`bpftool gen object`) fails with `Invalid argument` on a stale object with mismatched BTF — do a
-**clean BPF rebuild** (`make clean_all` + rm `libexec/.../objects/*.o`).
+**Remaining:** full arg extraction for `cuFileReadAsync`/`cuFileBatchIOSubmit` (kvikio/ESPN use these).
+
+**Gotcha:** after editing a shared BPF header, clean the BPF objects (stale BTF → `bpftool gen object`
+`Invalid argument`).
 
 ## ✅ RESULT: per-op cuFile tracing works (with a fix)
 `gdsio -w4 -x0` (509 GDS ops) → trace has **512 `cuFileRead`** events (`cat:cufile`, per-op `dur`
