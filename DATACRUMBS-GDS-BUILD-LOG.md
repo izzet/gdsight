@@ -425,3 +425,16 @@ always-on heuristic CORRECT (not just plausible), which heuristic-only tracers c
 OPERATIONAL BUG: crashed datacrumbs runs leave stale servers; multiple servers collide on the same eBPF
 probes -> empty/corrupt traces. Must `sudo pkill -9 -f datacrumbs` between runs / after a crash.
 workloads/{concurrent_reader,async_reader}.py added.
+
+## METHOD RESULT: corr_id collapses on async, LBA recovers -- complementary framework (2026-06-08)
+Fixed lba_match.py to parse cuFileReadAsync (not just cuFileRead). Clean async traces (the "async crash"
+was the server pileup, not async). Results -> results/cross-layer-attribution.md:
+- ASYNC cuFileReadAsync: corr_id 6.4% (200 ops) / 8.5% (2000 ops) -- COLLAPSES (nvme carries no corr_id,
+  fully decoupled; of the few it assigns only ~37% correct). LBA 98.5% / 97.2% -- RECOVERS by device address.
+- SYNC: corr_id robust 99.8-99.9% (all cases incl 8-thread); LBA good but same-range ambiguity hurts on
+  large-reads-over-small-file (8x4MB -> LBA 47.8%).
+- Where both apply they AGREE ~100% (fastsafetensors 1815/1815) -> mutual validation.
+CONTRIBUTION (method): complementary cross-layer attribution framework -- corr_id (timing/thread, cheap,
+sync-robust) + LBA (deterministic address, async-robust), each covers the other's failure mode. Per-op
+attribution of ASYNC cuFile I/O below the API (inference-relevant) appears unique. This is the demonstrated
+core design contribution, no longer just "yet another tracer".
