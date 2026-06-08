@@ -236,12 +236,42 @@ device bytes (19 MiB) but blend the two tables into one 1.36× number; Nsight se
 but has zero device bytes and lumps both tables under one range name.
 
 **Honest caveats:** (1) the byte-amp *effect* is known (alignment) — the new part is the per-op/per-table
-*attribution*; (2) on this BW-unsaturated drive the waste is *latent* (no throughput cost now) — it's a
-cost/scaling issue (2× the NVMe bandwidth provisioned for table B; would halve its effective QPS at
-saturation); (3) attribution here keys on read *size* (the two tables differ); same-size culprits would
+*attribution*; (2) the waste is *latent* at low load but becomes a **real ~2× throughput ceiling at
+serving-level concurrency** — demonstrated in the saturation section above; (3) attribution here keys on
+read *size* (the two tables differ); same-size culprits would
 need file/offset keying (offset is captured, file is not yet); (4) still a realistic *pattern*, not a
 production app with a logged complaint. Net: the capability is real and irreplaceable for this class of
 problem; proving it *matters* still needs a saturated/real deployment.
+
+## Does it matter? At saturation, byte-amp is a ~2× throughput ceiling (grounded in DLRM/ESPN)
+The byte-amp waste is *latent* at low load (same latency, spare BW) but **bites hard at the high
+concurrency of real serving.** 4 KiB random GDS reads, aligned (packed) vs `-U` unaligned, throughput vs
+concurrency:
+
+| workers | aligned (GiB/s) | unaligned (GiB/s) | speedup from fixing alignment |
+|---:|---:|---:|---:|
+| 16 | 0.51 | 0.35 | 1.45× |
+| 32 | 0.85 | 0.42 | 2.04× |
+| 64 | **1.15** | **0.46** | **2.5×** |
+| 128 | 0.90 | 0.44 | 2.07× |
+
+At saturation the gap converges on the 2× byte-amp: the unaligned reads make the device move **2× the
+bytes** (nvidia-fs `readMiB`: 512 vs 256 MiB for the same 256 MiB requested) and deliver **~2× less
+useful throughput**. **Fixing alignment ≈ doubles throughput on the *same drive*.**
+
+**Why this is the worked example that matters:** at saturation `gds_stats`/`iostat` show the device busy
+and useful throughput low → the natural (wrong) conclusion is *"we're storage-bound, buy a faster
+drive."* GDS-Trace shows **byte-amp ≈ 2×** → the right fix is *"align/pack the data, ~2× for free."*
+Nsight sees per-op cuFile latency (uniformly higher under load) but no device bytes, so it can't tell
+you either.
+
+**Grounded in published work** (per the brief's bar): DLRM-on-SSD documents this exact pattern — embedding
+vectors are 128–512 B, so "from each 4 KB block only 512 B (or 128 B) is relevant" (FlashEmbedding,
+APSys'21; *Supporting Massive DLRM Inference*, arXiv:2110.11489), i.e. 8–32× read amplification for tiny
+vectors. **ESPN** (the real GDS retrieval system, arXiv:2312.05417) *manually* "aligns embeddings …
+reduces blocks from 2 to 1 per document" — exactly the fix GDS-Trace flags **automatically, per op**.
+Our 4 KiB-unaligned test is the conservative 2× case; the documented sub-block embedding case (512 B of
+4 KB) is up to 8×.
 
 ## Cross-check vs ground-truth tools (the rigor) — gdsio `-i 4M -s 256M -x 0`
 **Same run**, three independent measurements:

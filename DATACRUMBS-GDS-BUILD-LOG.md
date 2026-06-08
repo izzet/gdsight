@@ -289,3 +289,15 @@ dfa_drive.py gained a "byte amplification BY cuFile op size" view (corr_id-attri
 known (alignment); waste latent on BW-unsaturated drive (cost/scaling issue); size-keyed attribution
 (same-size culprits need file/offset). nsys head-to-head confirmed libcufile NVTX (CUFILE_NVTX) gives
 per-op cuFile but stops at the API (no nvfs/nvme).
+
+## Saturation: byte-amp becomes a real ~2x throughput ceiling (grounded) (2026-06-08)
+4KiB random GDS reads, aligned(packed) vs -U(unaligned), throughput vs concurrency:
+-w16 1.45x, -w32 2.04x, -w64 2.5x (aligned 1.15 vs unaligned 0.46 GiB/s), -w128 2.07x. At saturation the
+gap converges on the 2x byte-amp: device reads 512 vs 256 MiB (2x) for the same 256MiB requested, delivers
+~2x less useful throughput. Fixing alignment ~doubles throughput on the SAME drive. Cross-check: at
+saturation gds_stats/iostat show device busy + low useful -> wrong conclusion "buy faster storage";
+GDS-Trace shows byte-amp 2x -> "align/pack, ~2x free"; Nsight sees uniform per-op cuFile latency, no
+device bytes. So the waste is LATENT at low load (earlier framing) but BITES at serving concurrency.
+Grounded: DLRM-on-SSD (512B-of-4KB read amplification; FlashEmbedding APSys'21, arXiv:2110.11489) +
+ESPN (arXiv:2312.05417, manually aligns embeddings 2 blocks->1 = the fix GDS-Trace flags automatically).
+Our 4KiB-unaligned = conservative 2x; documented sub-block embedding case up to 8x.
