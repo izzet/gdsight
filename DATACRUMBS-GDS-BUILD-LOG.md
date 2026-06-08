@@ -310,3 +310,18 @@ throughput catches it). (Earlier 'buy faster storage trap' framing overclaimed.)
 ATTRIBUTION in a MIXED workload (mixed_retrieval): iostat/gds_stats show one blended 1.36x and cannot say
 which table; only per-op size/corr_id attribution pinpoints B=2.015x vs A=1.000x. Detection of aggregate
 = existing tools; per-op/per-tensor attribution in heterogeneous workloads = GDS-Trace. Docs corrected.
+
+## Grounded real workload: ESPN multi-vector retrieval (2026-06-08)
+Survey (actually searched, not from memory): runnable cuFile/GDS benchmarks are homogeneous (gdsio,
+nixlbench); heterogeneous storage workloads (GIDS/BaM GNN) BYPASS cuFile (GPU-initiated NVMe) -> not our
+stack. Real heterogeneous cuFile workload = ESPN (arXiv:2312.05417, published GDS retrieval). Grounded
+params: CLS 128-dim fp16 = 256B + BOW ~2KB (32-dim fp16/token), 4KiB blocks, ~1000 docs/query, latency-
+bound; authors packed CLS+BOW (2 blocks -> 1/doc). workloads/espn_retrieval.py (naive vs aligned over
+dataset.bin). naive 3763 docs/s, 8000 ops, 31 MiB device; aligned 7646 docs/s (2.03x), 4000 ops, 15 MiB.
+GDS-Trace per-read-class: naive CLS(256B)=16.0x WASTE, BOW(2KB)=2.0x; aligned packed(2304B)=1.78x.
+RIGOR cross-check: existing tools see the 2x AGGREGATE (docs/s app; nvidia-fs n= ops 2x; readMiB/iostat
+device 2x; /proc/PID/io per-process; Nsight lumped). ONLY GDS-Trace names the 256B CLS class as the 16x
+redundant fix-target from the trace alone. Honest scope: automated per-class diagnosis (which class), not
+revealing an invisible effect; ESPN already found it manually; CLS is obvious to an expert -> tool value
+grows where the wasteful class is NON-OBVIOUS (still to be found). Also re-confirmed /proc/self/io
+read_bytes DOES count GDS reads (300MiB) -> per-process attribution is NOT a gap (iotop sees it).

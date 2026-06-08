@@ -277,6 +277,38 @@ reduces blocks from 2 to 1 per document" — exactly the fix GDS-Trace flags **a
 Our 4 KiB-unaligned test is the conservative 2× case; the documented sub-block embedding case (512 B of
 4 KB) is up to 8×.
 
+## Grounded real workload: ESPN multi-vector retrieval (per-read-class attribution)
+Proving the phenomenon on a *published* cuFile workload (not a synthetic table). ESPN (arXiv:2312.05417)
+is a real GDS retrieval system: per candidate document it reads a **CLS vector (128-dim fp16 = 256 B)**
+plus a **BOW multi-vector blob (~2–10 KB, 32-dim fp16/token)**, 16-bit, **4 KiB blocks**, ~1000 (or
+top-64) docs/query, latency-bound. Its authors explicitly **packed CLS+BOW** to cut "2 blocks to 1 per
+document." `workloads/espn_retrieval.py` reproduces both layouts over our real 4 GB file:
+
+| layout | docs/s | cuFile ops | device bytes | per-read-class byte-amp (GDS-Trace) |
+|---|---:|---:|---:|---|
+| **naive** (CLS & BOW separate) | **3763** | 8000 (2/doc) | 31 MiB | **CLS 256 B = 16.0×**, BOW 2 KB = 2.0× |
+| **aligned** (ESPN's pack) | **7646** (2.03×) | 4000 (1/doc) | 15 MiB | packed 2304 B = 1.78× |
+
+Aligning ≈ **doubles document throughput** (matches ESPN's reported win). **Rigorous cross-check — who
+sees what (honest):**
+
+| signal | tool(s) | unique to us? |
+|---|---|---|
+| 2× slower (3763 vs 7646 docs/s) | app throughput | no (app-level) |
+| 2× cuFile ops (8000 vs 4000) | nvidia-fs `n=`, Nsight count | no (aggregate count) |
+| 2× device bytes / 3.56× aggregate amp | nvidia-fs `readMiB`, `iostat`, `diskstats` | no (aggregate) |
+| device bytes per process | `/proc/PID/io read_bytes`, `iotop` | no (per-process total) |
+| per-op cuFile latency | Nsight NVTX (lumped by range name) | no (no size/device) |
+| **CLS class = 16× waste (the fix target)** | **GDS-Trace per-read-class (by size)** | **yes** |
+
+**Honest scope.** Existing tools show *that* naive ESPN wastes ~2× (throughput, op count, device bytes —
+all aggregate); only GDS-Trace **names the 256 B CLS reads as the 16× redundant class to pack**, from the
+trace alone with no layout foreknowledge — i.e. the exact optimization ESPN's authors derived by hand.
+So the contribution is **automated per-class diagnosis** (which class to fix), not revealing an otherwise
+invisible effect — and ESPN already found this manually, so it's a diagnostic aid for those who *don't*
+already know their layout, not a new phenomenon. (The CLS case is also fairly obvious to an expert;
+the tool's value grows where the wasteful class is *non-obvious* — still to be found.)
+
 ## Cross-check vs ground-truth tools (the rigor) — gdsio `-i 4M -s 256M -x 0`
 **Same run**, three independent measurements:
 | layer | GDS-Trace | kernel `/proc/driver/nvidia-fs/stats` | bpftrace (independent kprobe) |
