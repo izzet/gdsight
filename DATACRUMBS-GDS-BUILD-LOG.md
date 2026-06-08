@@ -19,9 +19,28 @@ layer, run it on a GDS workload, and analyze the `.pfw.gz` trace with **DFAnalyz
 - [x] cmake configure + build + install datacrumbs → `~/dc-prefix`
 - [x] cuFile probe category — auto-discovered `cuFileRead/ReadAsync/Write/WriteAsync/BatchIOSubmit/BatchIOGetStatus/HandleRegister`
 - [x] **run on gdsio (GPU_DIRECT read) → `.pfw.gz` with 512 `cuFileRead` events + syscalls** ✅
-- [ ] capture cuFile **args (size/offset)** — needs a custom cuFile probe (generic uprobe only gives dur)
+- [x] capture cuFile **args (size/offset)** — each `cuFileRead` now has `args:{size,offset}` ✅
 - [ ] add **block/bio kprobe** layer → cuFileRead↔NVMe amplification correlation
 - [ ] DFAnalyzer (`feat/datacrumbs`) → per-op cuFile↔bio view
+
+## ✅ (1) per-op cuFile arg capture (size/offset)
+`gdsio -i 1M` → 512 `cuFileRead` events, all with `args:{"size":1048576,"offset":<varies>}`. Now each
+GDS op is attributed by **size + file_offset + duration + thread** — the per-op data needed for
+amplification/path analysis (e.g., which ops are sub-threshold, which span pages).
+
+**How:** since our only uprobe category is `cufile`, extended the *generic* uprobe path (no separate
+plugin needed): capture `PT_REGS_PARM3`=size, `PT_REGS_PARM4`=file_offset at uprobe **entry** into
+`fn_value_t`, carry to `general_event_t` at **exit**, emit as args in `general_event.h` get_data_1.
+Added `size`/`offset` to `general_event_t`+`fn_value_t` (`shared.h`), zeroed in `init.bpf.c`.
+Matches the cuFile **sync** ABI: `cuFileRead(fh, buf, size, file_offset, buf_offset)`.
+
+**Caveat / next:** correct for **sync `cuFileRead`/`cuFileWrite`** (PARM3=size). For
+`cuFileReadAsync` (size is a `size_t*`) and `cuFileBatchIOSubmit` (array of params), PARM3 is a
+pointer/count, not the size → needs deref/array handling (future; kvikio/ESPN use these).
+
+**Gotcha:** after changing a shared BPF header (`shared.h`/`common.h`), the BPF link
+(`bpftool gen object`) fails with `Invalid argument` on a stale object with mismatched BTF — do a
+**clean BPF rebuild** (`make clean_all` + rm `libexec/.../objects/*.o`).
 
 ## ✅ RESULT: per-op cuFile tracing works (with a fix)
 `gdsio -w4 -x0` (509 GDS ops) → trace has **512 `cuFileRead`** events (`cat:cufile`, per-op `dur`
