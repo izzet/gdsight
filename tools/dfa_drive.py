@@ -61,15 +61,23 @@ def main():
         print("\n==== cross-layer TIMING (DFAnalyzer self_time/child_time) ====")
         if len(cf_t):
             tot = cf_t["time"].sum()
-            cf_self = cf_t["self_time"].sum()           # cuFile / userspace overhead
-            nvfs = nv_t["time"].sum() if len(nv_t) else cf_t["child_time"].sum()
+            cf_self = cf_t["self_time"].sum()    # cuFile/userspace overhead (own frame) - robust
+            cf_child = cf_t["child_time"].sum()  # time nested below cuFileRead (same-thread) - robust
             print(f"cuFileRead total wall-time   : {tot:.4f} s over {len(cf_t)} ops "
                   f"({tot/len(cf_t)*1e3:.0f} us/op)")
             print(f"  -> cuFile/userspace (self) : {cf_self:.4f} s ({100*cf_self/tot:.1f}%)")
-            print(f"  -> nvidia-fs+device (nvfs) : {nvfs:.4f} s ({100*nvfs/tot:.1f}%)")
+            print(f"  -> below cuFile  (child)   : {cf_child:.4f} s ({100*cf_child/tot:.1f}%)")
             if len(nv_t):
-                print(f"nvfs_io self_time            : {nv_t['self_time'].sum():.4f} s "
-                      f"(driver+device; its NVMe/p2p children are point events)")
+                nv_self = nv_t["self_time"].sum()
+                # nvfs_io durations are additive only when ops don't overlap on a thread (synchronous
+                # cuFile). cuFile's INTERNAL worker threads pipeline them -> sum is meaningless + the
+                # nvfs_io/NVMe land off the caller thread, so per-tid attribution splits.
+                if nv_self > tot * 1.5:
+                    print(f"  [note] Sum nvfs_io self_time = {nv_self:.1f} s >> cuFileRead wall "
+                          f"({tot:.2f} s) => cuFile used INTERNAL worker threads: nvfs_io ops overlap "
+                          f"(durations not additive) and attribution splits across threads.")
+                else:
+                    print(f"  nvfs_io self_time          : {nv_self:.4f} s (nvidia-fs+device, synchronous)")
         else:
             print("no cuFileRead events")
         # COMPAT detection: cuFileRead present but no nvfs_io child => POSIX fallback

@@ -191,3 +191,20 @@ Upgraded the nvidiafs plugin: `nvfs_io_start_op`→`nvfs_io_complete` fire on th
   compat trace's 4 KiB-read bin (mean 9.5). Route bin `_mean`/`_std` to doubles. (analysis_utils.py)
 - Unit gotcha: `_stack_traces.time` is **seconds** but `time_start/time_end` are **µs** — compute
   overlap from `time_start/time_end` only.
+
+## First REAL workload: vLLM fastsafetensors GDS loader (2026-06-08)
+Traced `--load-format fastsafetensors` (vLLM's GPUDirect weight loader) loading a 2 GiB safetensors
+shard from /mnt/nvme1. `workloads/fastsafetensors_load.py` (GDS vs --nogds). Install: torch **cu126**
+(NOT default cu130 — driver is 12.6) + safetensors + fastsafetensors into /opt/gds-venv.
+- GDS: **1 cuFileRead + 1 cuFileHandleRegister** (register-once; opposite of DALI/ESPN churn) -> 131
+  nvfs_io -> 1786 NVMe, true P2P, 2.65 GiB/s. Cross-checked: bpftrace=1 cuFileRead, kernel +2048 MiB.
+- nogds: 0 cuFile, **2050 pread64** -> 2205 NVMe, 2.12 GiB/s (~25% slower). The GDS-vs-fallback contrast.
+- cross-layer timing (DFAnalyzer): cuFileRead 2.7% cuFile/userspace + 97.3% below.
+- **GOTCHA 1:** torch's pip wheels bundle their own libcufile (site-packages/nvidia/cufile/lib/
+  libcufile.so.0); the system-libcufile uprobe misses it (kernel layers still fire). Fix: run with
+  `LD_PRELOAD=$DATACRUMBS_CLIENT_LIB:/usr/local/cuda-12.6/.../libcufile.so.1.11.1` so the traced
+  libcufile is the one loaded (both SONAME libcufile.so.0 -> ABI compatible).
+- **GOTCHA 2 / limitation:** cuFile uses INTERNAL worker threads -> nvfs_io/NVMe land off the caller
+  thread, so per-tid attribution splits (1319 NVMe->nvfs_io roots, 465->cuFileRead) and the nvfs_io
+  start->complete duration (keyed {tid,event_id}) overlaps/not-additive. Robust signal = DFAnalyzer
+  cuFileRead self/child. Future: cross-thread correlation by handle/op-id. dfa_drive.py now flags this.

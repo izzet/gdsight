@@ -70,6 +70,36 @@ DFAnalyzer's hierarchy attributes time across cuFile→nvidia-fs→device. Hones
 aggregate `posix` counter that *can* flag compat in bulk; GDS-Trace adds the **per-op** verdict, the
 **5.7× latency cost**, and the fact the kernel GDS counter shows **nothing** while 256 MiB moved.
 
+## Real workload: vLLM's fastsafetensors GDS weight loader
+First real (non-synthetic, in-production) GDS workload through the stack: `--load-format fastsafetensors`
+(vLLM's GPUDirect weight loader, IBM foundation-model-stack), loading a 2 GiB safetensors shard from
+`/mnt/nvme1`. Script: `workloads/fastsafetensors_load.py` (GDS vs `--nogds` fallback).
+
+| | **GDS** (`nogds=False`) | **nogds** (CPU-staged fallback) |
+|---|---|---|
+| cuFile API | **1 `cuFileRead` + 1 `cuFileHandleRegister`** | none |
+| data path | 1 read → 131 `nvfs_io` → 1786 NVMe (true P2P) | **2050 `pread64`** → CPU → 2205 NVMe |
+| throughput | **2.65 GiB/s** | 2.12 GiB/s (~25% slower) |
+| cross-layer timing | cuFileRead: **2.7% cuFile/userspace, 97.3% below** | POSIX `pread64` self-time |
+
+Findings: fastsafetensors is **well-behaved** — it registers the handle **once** and issues **one giant
+`cuFileRead`** for the whole file (cross-checked: independent bpftrace = 1 `cuFileRead`; kernel oracle =
++2048 MiB GDS), the *opposite* of DALI/ESPN's per-read churn. That 1 user read → **1786 device commands**
+(2 GiB split at MDTS). GDS's edge over the fallback is modest here (single drive, host-BW bound) but the
+I/O *shape* differs completely (1 zero-copy read vs 2050 staged POSIX reads).
+
+**Two real tracer findings this workload surfaced (matters for any torch-based GDS app):**
+1. **torch bundles its own `libcufile`** (pip `nvidia-cufile-cu12` wheel → `site-packages/nvidia/cufile/
+   lib/libcufile.so.0`), so a uprobe hardcoded to the *system* CUDA `libcufile` misses the user layer
+   (kernel `nvfs_io`/NVMe still fire). Fix: `LD_PRELOAD` the traced `libcufile` (or point the uprobe at
+   the loaded one). The tracer should attach to the *actually-loaded* `libcufile`.
+2. **cuFile uses internal worker threads.** fastsafetensors makes 1 `cuFileRead` on its thread, but cuFile
+   pipelines the 16 MB chunks across its own threads — so the `nvfs_io`/NVMe land **off the caller
+   thread**. Consequence: per-tid time-containment **splits** the attribution (1319 NVMe → `nvfs_io`
+   roots, 465 → `cuFileRead`) and the `nvfs_io` start→complete duration (keyed by `{tid,event_id}`)
+   **overlaps and is not additive**. The robust signal is DFAnalyzer's `cuFileRead` `self_time`/
+   `child_time` (works for both). Proper fix (future): correlate cross-thread by handle/op-id, not time.
+
 ## Cross-check vs ground-truth tools (the rigor) — gdsio `-i 4M -s 256M -x 0`
 **Same run**, three independent measurements:
 | layer | GDS-Trace | kernel `/proc/driver/nvidia-fs/stats` | bpftrace (independent kprobe) |
