@@ -541,3 +541,11 @@ can't tell you (sees 712 reads -> healthy); (2) to actually benefit from GDS on 
 sizes); standard tools blind. Softened "pathology" -> "GDS-vs-reality gap / under-delivery". Tempered the
 doc title + fix sections. This is honest demand: a recognized workload where GDS silently under-delivers and
 tools are blind to why -- but the fix is restructuring, and forcing GDS is counter-productive.
+
+## cuCIM lever VERIFIED: coalesce -> 19.5x for sequential access (2026-06-09)
+workloads/cucim_coalesce_test.py: 4000 contiguous tiles (0% gap), per-tile (4000 small reads, mostly POSIX)
+0.395s/+20MiB GDS vs coalesced 1MiB GDS reads (26 reads) 0.020s/+26MiB GDS = 19.5x speedup + true GDS.
+Honest: speedup combines fewer/larger ops + GDS engagement (both from restructure); SEQUENTIAL only (random
+patch gather can't coalesce -> GDS genuinely under-delivers there). So the cuCIM default per-tile path leaves
+19.5x on the table for region scans, and GDS-Trace shows why (small POSIX reads vs coalesced GDS). NEXT:
+investigate read_region(device=cuda) hang, then update GDS-TRACE-PITCH.md.

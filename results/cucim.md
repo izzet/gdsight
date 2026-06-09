@@ -43,6 +43,20 @@ setup cost isn't worth it for sub-16 KiB tiles (that's *why* kvikio's threshold 
    ≥16 KiB contiguous reads (read a tile *row/region* at once), not flip the threshold. GDS-Trace reveals the
    gap *and* points to the real lever (per-tile sizes), which `gds_stats`/`iostat` cannot.
 
+## Verified: the coalesce lever — 19.5× (for sequential/region access)
+For a contiguous run of 4000 tiles (a region scan; tiles are **0% gap-contiguous** in the file), measured:
+| strategy | reads | time | GDS |
+|---|--:|--:|---|
+| per-tile (cuCIM default path) | 4000 small (6.7 KB avg) | 0.395 s | +20 MiB (mostly POSIX) |
+| **coalesced 1 MiB GDS reads** | 26 large | **0.020 s** | +26 MiB (true GDS) |
+| | | **19.5×** | |
+
+For **sequential/region** WSI access the per-tile path leaves **19.5× on the table**, and GDS-Trace shows
+exactly why (4000 small reads mostly bypassing GDS vs 26 coalesced GDS reads). Honest: the speedup combines
+*fewer/larger ops* **and** GDS engagement (both flow from the restructure). And it's **access-pattern
+dependent** — *random* patch gather can't coalesce (scattered tiles), so there GDS genuinely under-delivers
+and this lever doesn't apply.
+
 ## Honest scope
 A **real, non-obvious finding on a flagship GDS workload**: the marquee "GDS-accelerated digital pathology"
 pipeline mostly runs on POSIX (82% of tiles), the GDS health tool reports fine, and forcing GDS is
