@@ -506,3 +506,14 @@ HONEST CORRECTION to Phase 2a wording: nvidia-fs aggregate ALREADY distinguishes
 runs; our unique value there is PER-OP in a MIXED run, not the distinction itself. -> results/deepnvme.md.
 REMINDER: always run current-tools cross-check alongside our tool (the be-rigorous rule) -- it both tempers
 overclaims and sharpens the contribution (here: the two-axis blindness of the aggregates).
+
+## NIXL cross-check backfill: current tools vs GDS-Trace (measured) (2026-06-09)
+Ran nvidia-fs(GDS aggregate)+diskstats(device) on the NIXL GDS workload (2000x64KiB, inflight 8):
+- nvidia-fs: 2000 GDS reads, +125 MiB. iostat/diskstats: +2008 device IOs, +125 MiB. (64KiB ~= 1 cmd each.)
+- ours (from trace): 2000 cuFileBatchIOSubmit -> 2003 device cmds, corr_id 99.9% + LBA 97.2%.
+=> aggregates give totals; NEITHER ties a device command to a logical transfer. For NIXL (async/concurrent
+engine) that gap is sharper than DeepNVMe: when many KV-transfers overlap, "which transfer caused this
+command/latency" is unanswerable from aggregates -> ours per-op (LBA = deterministic backup for the
+decoupled path). No block_size axis here (64KiB ~= 1 cmd); NIXL's distinctive axis = async per-op attribution.
+-> results/cross-layer-attribution.md (NIXL cross-check table). Now both real engines (NIXL, DeepNVMe) carry
+the current-tools cross-check symmetrically.
