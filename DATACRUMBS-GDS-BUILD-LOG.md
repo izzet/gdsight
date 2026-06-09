@@ -471,3 +471,12 @@ KEY: DeepNVMe uses PLAIN cuFileRead (not the batch API like NIXL); block_size se
 Microbench = 1 cuFileRead/op so corr_id always wins; the corr_id-vs-LBA divergence needs MANY concurrent
 reads (ZeRO-Inference, Phase 3). NEXT: Phase 2 knob sweep (block_size/queue_depth/single_submit/
 overlap_events/intra_op_parallelism) -> per-config device pattern (explain-the-autotuner) + GDS-vs-AIO A/B.
+
+## DeepNVMe Phase 2: explain-the-autotuner + GDS-vs-AIO (2026-06-09) -> results/deepnvme.md
+GDS-vs-AIO A/B (same API): GDS=1024 p2p (true zero-copy), AIO=0 p2p (CPU bounce, libaio->host->cudaMemcpy);
+same device bytes, only GDS-Trace shows which is actually P2P vs host-staged. block_size sweep (1GB):
+256K->4101 nvme/2.46 GB/s; >=1M->~1024 nvme/2.87 GB/s (saturates; DeepNVMe caps chunks at ~MDTS). Throughput
+gated by device-command count, which block_size controls to a ~1MiB/MDTS floor -> explains why the autotuner
+picks ~1MiB (device-level mechanism, invisible to throughput-only tuning). intra_op_parallelism 1 vs 8: no
+effect (device-bound single read; honest no-op). workloads/deepnvme_gds_load.py. NEXT: Phase 3 ZeRO-Inference
+(many concurrent param reads -> the corr_id-vs-LBA divergence on a real workload).
