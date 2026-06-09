@@ -480,3 +480,16 @@ gated by device-command count, which block_size controls to a ~1MiB/MDTS floor -
 picks ~1MiB (device-level mechanism, invisible to throughput-only tuning). intra_op_parallelism 1 vs 8: no
 effect (device-bound single read; honest no-op). workloads/deepnvme_gds_load.py. NEXT: Phase 3 ZeRO-Inference
 (many concurrent param reads -> the corr_id-vs-LBA divergence on a real workload).
+
+## DeepNVMe Phase 3: ZeRO-Inference real workload (2026-06-09) -> results/deepnvme.md
+OPT-1.3B + DeepSpeed ZeRO-3 --disk-offload --use_gds (weights->NVMe, streamed to GPU via GDS each forward).
+Generate streamed +94.5 GB via ~9800 GDS reads. Traced (bounded): 350 cuFileRead + 100 cuFileWrite ->
+25864 p2p (true P2P) + 25864 nvme; per-op corr_id attribution 98.6% (25494/25864). DeepNVMe uses SYNC
+cuFileRead -> per-tid corr_id resolves the concurrent layer-prefetch (cheap heuristic suffices; LBA's
+async advantage NOT triggered -- DeepNVMe is sync, not cuFileReadAsync). Each cuFileRead = a ~196MB param
+tensor -> ~74 device cmds, each tied to its read. GOTCHAS: --offload-dir MUST be on /mnt/nvme1
+(data=ordered); example uses old transformers fork -> patched tokenizer.batch_encode_plus->tokenizer();
+single-pass corr_id count under-reports (nvme precede the cuFileRead EXIT event in file order -> two-pass).
+NET (Phases 1-3): trace GDS path + explain autotuner (block_size->device-cmd->MDTS) + GDS-vs-AIO bounce
+detection + real ZeRO-Inference per-op attribution 98.6%. Honest: DeepNVMe clean+sync -> real-workload
+attribution + explained tuning, NOT a pathology/LBA-win.

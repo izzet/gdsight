@@ -41,10 +41,27 @@ the **device-level mechanism** that the autotuner (throughput-only) can't see.
 `1` vs `8`: identical 2.87 GB/s, 6 NVMe-issuing threads either way. A single large `sync_pread` is already
 device-bound, so the host-parallelism knob doesn't help. (It would matter for many concurrent small ops.)
 
-## Takeaway & scope
-On a real, autotuned production I/O layer, GDS-Trace turns **throughput-only tuning into device-level
-explanation**: true-P2P-vs-bounce per config, and *why* `block_size` matters (device-command count → MDTS
-floor). Honest scope: the tuned configs are well-engineered (clean) — the value is the *explanation* + the
-GDS-vs-bounce distinction. The corr_id-vs-LBA divergence (our async-unique attribution) needs **many
-concurrent reads → ZeRO-Inference (Phase 3)**, the real-workload step. Reproduce:
-`workloads/deepnvme_gds_load.py` + the `file_access` `gds_`/`aio_` scripts.
+## Phase 3 — ZeRO-Inference (real inference workload, NVMe weight offload via GDS)
+Ran **OPT-1.3B** with DeepSpeed ZeRO-3 `--disk-offload --offload-dir /mnt/nvme1/... --use_gds` (weights
+offloaded to NVMe, streamed to GPU via GDS *every forward pass*). GDS engaged heavily: a 16-token generate
+streamed **+94.5 GB via ~9800 GDS reads** (params re-fetched per forward). Traced (bounded run): **350
+`cuFileRead` + 100 `cuFileWrite` (offload) → 25864 `nvfs_get_p2p_dma_mapping` (true P2P) + 25864 `nvme`**;
+per-op attribution **corr_id 98.6%** (25494/25864).
+- **DeepNVMe uses *sync* `cuFileRead`** (per Phase 1), so per-tid corr_id resolves even the concurrent
+  layer-prefetch → the cheap always-on heuristic suffices; the LBA-specific advantage (async/thread-decoupled)
+  is **not** triggered here (DeepNVMe is sync, not `cuFileReadAsync`/batch like NIXL).
+- Each `cuFileRead` is a whole param tensor (~196 MB) → ~74 device commands; GDS-Trace ties each of the
+  25864 device commands to its causing param read — attribution no aggregate tool (`gds_stats`/`iostat`) can do.
+- Gotchas: `--offload-dir` MUST be on `/mnt/nvme1` (`data=ordered`) for GDS; the example targets an old
+  transformers fork → patched `tokenizer.batch_encode_plus` → `tokenizer(...)`. Single-pass corr_id counting
+  under-reports (NVMe events precede their cuFileRead's *exit* event in file order) — count two-pass.
+
+## Takeaway & scope (Phases 1–3)
+On a real, autotuned production I/O layer + a real inference workload, GDS-Trace: **(1)** traces the GDS path
+end-to-end (Phase 1); **(2)** turns throughput-only tuning into **device-level explanation** — true-P2P-vs-
+bounce per config, and *why* `block_size` matters (device-command count → MDTS floor) (Phase 2); **(3)**
+attributes a **real ZeRO-Inference weight-stream per-op at 98.6%** (Phase 3). Honest scope: DeepNVMe is
+well-engineered **and synchronous**, so it's clean and corr_id suffices — this is *real-workload per-op
+attribution + explained tuning*, **not** a pathology or an LBA-win. The LBA-unique (async) regime stays the
+`cuFileReadAsync`/NIXL-batch case. Reproduce: `workloads/deepnvme_gds_load.py`, the `file_access`
+`gds_`/`aio_` scripts, and `run_model.py --disk-offload --use_gds`.
