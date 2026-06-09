@@ -56,6 +56,19 @@ per-op attribution **corr_id 98.6%** (25494/25864).
   transformers fork → patched `tokenizer.batch_encode_plus` → `tokenizer(...)`. Single-pass corr_id counting
   under-reports (NVMe events precede their cuFileRead's *exit* event in file order) — count two-pass.
 
+## Cross-check: current tools vs GDS-Trace (measured, not asserted)
+| signal | nvidia-fs / gds_stats (GDS aggregate) | iostat / diskstats (device) | GDS-Trace |
+|---|---|---|---|
+| **GDS vs bounce** (2a) | **sees it**: GDS readMiB +5120, AIO **+0** | **blind**: identical 5125 device IOs / 5120 MiB for both | per-op — *which* reads bounce in a **mixed** run |
+| **device-cmd count / block_size** (2b) | **blind**: 3 cuFile reads, +3072 MiB regardless of block_size | **sees it**: 12293 (256 KiB) vs 3077 (4 MiB) device IOs | ties the count to the causing `cuFileRead` per-op |
+| **read→device-cmd linkage** (3) | aggregate totals only | aggregate IOs only | **unique**: 350 reads → 25864 cmds, 98.6% attributed |
+
+Each aggregate tool sees **one axis and is blind to the other** (nvidia-fs/gds_stats: GDS-engaged-or-not;
+iostat: device-command count); **neither attributes per-op**. GDS-Trace is the only view that spans both
+axes *and* ties them to the causing op. (Honest correction to 2a: for *separate* runs nvidia-fs already
+distinguishes GDS-vs-bounce at the aggregate — our unique value there is **per-op in a mixed run**, not the
+distinction itself.)
+
 ## Takeaway & scope (Phases 1–3)
 On a real, autotuned production I/O layer + a real inference workload, GDS-Trace: **(1)** traces the GDS path
 end-to-end (Phase 1); **(2)** turns throughput-only tuning into **device-level explanation** — true-P2P-vs-

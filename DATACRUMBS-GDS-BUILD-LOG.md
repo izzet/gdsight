@@ -493,3 +493,16 @@ single-pass corr_id count under-reports (nvme precede the cuFileRead EXIT event 
 NET (Phases 1-3): trace GDS path + explain autotuner (block_size->device-cmd->MDTS) + GDS-vs-AIO bounce
 detection + real ZeRO-Inference per-op attribution 98.6%. Honest: DeepNVMe clean+sync -> real-workload
 attribution + explained tuning, NOT a pathology/LBA-win.
+
+## DeepNVMe cross-check: current tools vs GDS-Trace (measured) (2026-06-09)
+Ran the standard tools side-by-side (was missing). nvidia-fs(GDS aggregate) + diskstats(device, =iostat):
+- GDS vs AIO: GDS readMiB +5120 / AIO +0 (nvidia-fs DISTINGUISHES); diskstats IDENTICAL 5125 IOs / 5120 MiB
+  for both (iostat BLIND to P2P-vs-bounce).
+- block_size: nvidia-fs SAME (3 cuFile reads, +3072 MiB) for 256K and 4M (BLIND to device-cmd count);
+  diskstats device-IOs 12293(256K) vs 3077(4M) (iostat SEES the count).
+=> each aggregate tool sees ONE axis, blind to the other (nvidia-fs: GDS-engaged; iostat: device-cmd count);
+NEITHER attributes per-op. GDS-Trace spans both axes + ties to the causing op (P3: 350 reads->25864 cmds 98.6%).
+HONEST CORRECTION to Phase 2a wording: nvidia-fs aggregate ALREADY distinguishes GDS-vs-bounce for separate
+runs; our unique value there is PER-OP in a MIXED run, not the distinction itself. -> results/deepnvme.md.
+REMINDER: always run current-tools cross-check alongside our tool (the be-rigorous rule) -- it both tempers
+overclaims and sharpens the contribution (here: the two-axis blindness of the aggregates).
