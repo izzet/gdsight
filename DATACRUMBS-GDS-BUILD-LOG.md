@@ -531,3 +531,13 @@ FIX: coalesce tiles to >=16KB (recommended) OR KVIKIO_GDS_THRESHOLD=0 (all GDS b
 byte-amp). This is the demand proof: a flagship GDS workload where GDS silently doesn't apply to 82% of I/O
 and the GDS health tool says fine. Caveat: kvikio threshold path (cuCIM's benchmark path); read_region
 (device=cuda) HUNG separately. read_region hang worth its own look.
+
+## cuCIM finding -- HONEST NUANCE (forcing GDS is worse) (2026-06-09)
+Rigor check: forcing GDS (KVIKIO_GDS_THRESHOLD=0) was SLOWER (0.82 vs 0.75s) + 1.65x byte-amp -> the 82%
+bypass is LARGELY CORRECT (GDS doesn't help sub-16KB tiles; that's why the threshold exists). So the finding
+is NOT "flip a flag". It is: (1) the flagship GDS workload barely uses GDS (only 18% of tiles), and gds_stats
+can't tell you (sees 712 reads -> healthy); (2) to actually benefit from GDS on WSI you must RESTRUCTURE
+(coalesce tiles to >=16KB), not flip the threshold. GDS-Trace reveals the gap + the real lever (per-tile
+sizes); standard tools blind. Softened "pathology" -> "GDS-vs-reality gap / under-delivery". Tempered the
+doc title + fix sections. This is honest demand: a recognized workload where GDS silently under-delivers and
+tools are blind to why -- but the fix is restructuring, and forcing GDS is counter-productive.

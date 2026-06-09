@@ -1,6 +1,8 @@
-# cuCIM whole-slide imaging (digital pathology) under GDS-Trace — a real, non-obvious pathology
+# cuCIM whole-slide imaging (digital pathology) under GDS-Trace — GDS silently under-delivers
 
-**The first non-obvious GDS pathology we found in the wild, on a flagship GDS workload.**
+**The first non-obvious GDS-vs-reality gap we found in the wild, on a flagship GDS workload: the marquee
+"GDS-accelerated digital pathology" pipeline runs 82% on POSIX, the GDS health tools call it healthy, and
+the real lever is I/O restructuring — not a flag.**
 
 ## Workload (real, recognized GDS use case)
 Whole-slide-image (WSI) tiled reads are NVIDIA's marquee cuCIM + GDS example (digital pathology). Real
@@ -30,18 +32,23 @@ The GDS-specific tools report **"healthy"** precisely *because* the bypassed til
 cuFile/nvidia-fs path — they're invisible to a GDS counter. Only tracing **both** paths in one per-op view
 (ours) reveals that most of the workload isn't on GDS at all.
 
-## Tool-guided fix + the trade-off
-- **Coalesce adjacent tiles into ≥16 KiB reads** → cross the threshold → true GDS. (Recommended.)
-- **Or `KVIKIO_GDS_THRESHOLD=0`** → all tiles GDS, but the small/unaligned tiles then amplify: 25.5 MiB
-  requested → **42 MiB device = 1.65× byte-amp**. Forcing GDS isn't free — coalescing is the right fix.
-
-(GDS-Trace shows *both* failure modes per-tile: the silent-POSIX split at the default threshold, and the
-byte-amp when forced.)
+## Is the bypass even bad? (the honest nuance)
+**Forcing GDS is *worse*, not better:** `KVIKIO_GDS_THRESHOLD=0` made all tiles GDS but ran **slower (0.82 s
+vs 0.75 s)** and amplified **25.5 MiB → 42 MiB device = 1.65×**. So the bypass is *largely correct* — GDS's
+setup cost isn't worth it for sub-16 KiB tiles (that's *why* kvikio's threshold exists). The finding is **not**
+"flip a flag." It's two-fold:
+1. **GDS is barely engaged for the flagship GDS workload** — only 18% of WSI tiles actually use it — and the
+   GDS health tools can't tell you that (they see the 712 reads and call it healthy).
+2. **To actually benefit from GDS on WSI you must restructure the I/O** — coalesce adjacent tiles into
+   ≥16 KiB contiguous reads (read a tile *row/region* at once), not flip the threshold. GDS-Trace reveals the
+   gap *and* points to the real lever (per-tile sizes), which `gds_stats`/`iostat` cannot.
 
 ## Honest scope
-This is a **real, non-obvious pathology on a flagship GDS workload** — the demand proof we'd been missing: a
-recognized digital-pathology GDS pipeline where GDS silently doesn't apply to 82% of the I/O, while the GDS
-health tool (`gds_stats`) reports fine. Caveats: (1) it's kvikio's threshold behavior on the tile-read path
-that cuCIM's own `gds_whole_slide` benchmark uses; (2) cuCIM's high-level `read_region(device="cuda")` may
-route differently — it **hung** on our setup (GPU idle ~256 s; a separate issue worth its own look). Reproduce:
+A **real, non-obvious finding on a flagship GDS workload**: the marquee "GDS-accelerated digital pathology"
+pipeline mostly runs on POSIX (82% of tiles), the GDS health tool reports fine, and forcing GDS is
+counter-productive — the genuine lever is I/O restructuring, which only per-op cross-layer tracing surfaces.
+This is the closest we've come to *demand* — a recognized workload where GDS silently under-delivers and the
+standard tools are blind to why. Caveats: (1) it's kvikio's threshold behavior on the tile-read path cuCIM's
+own `gds_whole_slide` benchmark uses; (2) cuCIM's high-level `read_region(device="cuda")` **hung** on our
+setup (GPU idle ~256 s) — unverified whether it bypasses similarly; worth its own look. Reproduce:
 `workloads/cucim_gds_tiles.py` + `CMU-1.svs` (openslide-testdata).
