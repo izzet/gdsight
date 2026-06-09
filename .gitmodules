@@ -21,3 +21,6 @@
 [submodule "external/elbencho"]
 	path = external/elbencho
 	url = https://github.com/breuner/elbencho.git
+[submodule "external/DeepSpeedExamples"]
+	path = external/DeepSpeedExamples
+	url = https://github.com/deepspeedai/DeepSpeedExamples.git

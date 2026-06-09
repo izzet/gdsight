@@ -455,3 +455,19 @@ not a tracer conflict, caused earlier failures). (4) datacrumbs client does NOT 
 (5) corr_id collapse is the high-in-flight cuFileReadAsync regime; NIXL's count=1 batches don't trigger it.
 Server-pileup gotcha persists: pkill must use a var-built pattern ("sbin/${p} run") so the literal isn't in
 my own cmdline (else self-kill).
+
+## DeepNVMe (DeepSpeed) Phase 1: trace the GDS path -- WORKS (2026-06-09)
+Install: deepspeed-venv; torch cu126 FIRST, then `DS_BUILD_GDS=1 DS_BUILD_AIO=1 pip install deepspeed
+--no-build-isolation` w/ CUDA_HOME=/usr/local/cuda-12.6 (pip build isolation hides torch -> MUST use
+--no-build-isolation, else "Unable to pre-compile async_io, please first install torch"). ds_report:
+async_io [OKAY], gds [OKAY]. DeepSpeedExamples submodule (external/DeepSpeedExamples); deepnvme/file_access/
+has paired py_/aio_/gds_ load+store scripts (clean A/B + POSIX baseline).
+Phase 1 trace (gds_load_gpu_tensor.py, 1GB, LD_PRELOAD system libcufile so the uprobe fires -- DeepNVMe
+resolves cuFile via torch's bundled lib otherwise): DeepNVMe's GDS op issues ONE plain cuFileRead
+(sync_pread of the whole file, on a worker thread tid!=pid) -> driver splits by block_size(1MiB) into
+1024 nvfs_get_p2p_dma_mapping (true P2P) + 1024 nvme_setup_cmd; 4 nvfs_io; readMiB+1024 (true GDS, 2.7 GB/s).
+Attribution: corr_id 1024/1024 + LBA 1024/1024, agree 100% (1 op in flight -> count==1 fallback).
+KEY: DeepNVMe uses PLAIN cuFileRead (not the batch API like NIXL); block_size sets the device-cmd count.
+Microbench = 1 cuFileRead/op so corr_id always wins; the corr_id-vs-LBA divergence needs MANY concurrent
+reads (ZeRO-Inference, Phase 3). NEXT: Phase 2 knob sweep (block_size/queue_depth/single_submit/
+overlap_events/intra_op_parallelism) -> per-config device pattern (explain-the-autotuner) + GDS-vs-AIO A/B.
