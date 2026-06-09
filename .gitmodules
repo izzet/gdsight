@@ -24,3 +24,6 @@
 [submodule "external/DeepSpeedExamples"]
 	path = external/DeepSpeedExamples
 	url = https://github.com/deepspeedai/DeepSpeedExamples.git
+[submodule "external/cucim"]
+	path = external/cucim
+	url = https://github.com/rapidsai/cucim.git

@@ -517,3 +517,17 @@ command/latency" is unanswerable from aggregates -> ours per-op (LBA = determini
 decoupled path). No block_size axis here (64KiB ~= 1 cmd); NIXL's distinctive axis = async per-op attribution.
 -> results/cross-layer-attribution.md (NIXL cross-check table). Now both real engines (NIXL, DeepNVMe) carry
 the current-tools cross-check symmetrically.
+
+## cuCIM WSI: a REAL non-obvious pathology in the wild (2026-06-09) -> results/cucim.md
+Digital-pathology whole-slide-image tiled reads = NVIDIA's flagship cuCIM+GDS example. Real Aperio SVS
+(CMU-1.svs, 23220 JPEG tiles 256x256, mean 6.7KB/tile, range 2.3-33.7KB), read via kvikio (cuCIM's
+gds_whole_slide path). workloads/cucim_gds_tiles.py. FINDING: 4000 random tiles -> 712 cuFileRead (GDS,
+tiles>=16KB) + 3289 pread64 (silent POSIX, tiles<16KB) = 82% of WSI tiles SILENTLY BYPASS GDS (below
+kvikio's 16KB threshold). Non-obvious: WSI is the GDS marketing workload but tile size defeats it.
+CROSS-CHECK: gds_stats/cuFileGetStats sees 712 cuFile reads -> "GDS healthy" (BLIND: the 3289 POSIX reads
+never enter cuFile); nvidia-fs readMiB +19 (GDS tiles only, BLIND to POSIX); diskstats +3788 device IOs
+(both paths, can't split). ONLY GDS-Trace (traces cuFileRead AND pread64 per-tile) names the 82% bypass.
+FIX: coalesce tiles to >=16KB (recommended) OR KVIKIO_GDS_THRESHOLD=0 (all GDS but 25.5->42 MiB = 1.65x
+byte-amp). This is the demand proof: a flagship GDS workload where GDS silently doesn't apply to 82% of I/O
+and the GDS health tool says fine. Caveat: kvikio threshold path (cuCIM's benchmark path); read_region
+(device=cuda) HUNG separately. read_region hang worth its own look.
