@@ -549,3 +549,14 @@ Honest: speedup combines fewer/larger ops + GDS engagement (both from restructur
 patch gather can't coalesce -> GDS genuinely under-delivers there). So the cuCIM default per-tile path leaves
 19.5x on the table for region scans, and GDS-Trace shows why (small POSIX reads vs coalesced GDS). NEXT:
 investigate read_region(device=cuda) hang, then update GDS-TRACE-PITCH.md.
+
+## read_region investigation -> CORRECTS the cuCIM finding (2026-06-09)
+read_region(device=cuda) does NOT persistently hang (the 256s was a cold first-GDS-init transient; warm =
+0.9s for 4000 patches; small cases work in 0.35s). Bisection: all cuda configs work fast once warm.
+CRUCIAL CORRECTION: read_region(device=cuda) 4000 patches -> 108 nvfs_io (GDS) + 1 pread64 = it COALESCES
+tiles into ~1MiB GDS reads, NO per-tile bypass. So the PRODUCTION cuCIM GDS API is well-engineered/clean.
+The 82% bypass is the NAIVE per-tile kvikio path (cuCIM's gds_whole_slide BENCHMARK + naive users), NOT the
+main API. Tempered cucim.md: naive per-tile under-delivers (82% bypass, 19.5x slower than coalesced);
+production read_region coalesces (clean). Consistent with "well-engineered clean, naive under-delivers".
+Tool value: reveals which path your code is on (per-tile bypass vs coalesced GDS) + the 19.5x lever, which
+gds_stats/iostat can't. workloads/read_region_test.py. NEXT: update GDS-TRACE-PITCH.md.
