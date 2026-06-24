@@ -1,0 +1,6 @@
+label,cufile_ops,A_cmd_mean,A_byte_mean,dev_maxKiB,unattributed
+x0_seq_4K,65536,1.000,1.0000,32,4
+x0_seq_64K,4096,1.000,1.0000,64,4
+x0_seq_256K,1024,1.000,1.0000,256,5
+x0_seq_1M,256,1.000,1.0000,1024,4
+x0_seq_4M,64,4.000,1.0000,1280,4
