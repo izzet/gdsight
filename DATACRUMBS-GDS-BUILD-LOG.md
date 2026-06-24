@@ -593,6 +593,23 @@ tracer effect); those cells have wide error bars but lie on the IOPS curve.** Ha
 `results/step5-overhead/{overhead_final.txt,overhead_raw_*}`; written up in
 `results/instrumentation-cost-coverage.md` Table C.
 
-**TODO (separate from overhead):** fix the trace-flush bug — make the stop path tolerate the log
-write (drop `set -e` around it or fix log ownership) so `.pfw.gz` flushes → unblocks per-op
-cross-layer re-runs on v3. Upstream-worthy fix for the `external/datacrumbs` fork.
+## ✅ Trace-flush bug FIXED (2026-06-24) — empty .pfw.gz root cause + fix
+**Symptom:** every traced run produced a **0-byte `.pfw.gz`** on the v3 rebuild, despite probes
+firing (verified: `pid_map` has the app pid, `cuFileRead_entry` run_cnt=65536, events in `fn_pid_map`).
+So **capture worked; the server just never wrote the trace.**
+**Root cause (two coupled bugs):**
+1. **`datacrumbs_stop` did `kill -9` (SIGKILL).** The server flushes its trace **only on SIGINT**
+   (binary strings: `Received SIGINT … exiting gracefully` + `EventProcessor::finalize` + `fflush`).
+   SIGKILL → no finalize → empty trace.
+2. The stop path's log redirect (`>>$LOG`) hit a (cosmetic) "Permission denied" and, under
+   `set -eo pipefail`, **aborted the stop function before the graceful step ran**.
+**Fix (in `external/datacrumbs` fork @ feat/cufile-gds, commit e817c8e):**
+- `datacrumbs_stop.in`: **SIGINT first → wait for graceful exit → SIGKILL stragglers**; matcher
+  `[d]atacrumbs` so it no longer kills unrelated shells (that was the "Killed/no output" noise).
+- `datacrumbs_utility.in`: ensure per-run log is writable + make start/stop log redirects non-fatal
+  (`|| true`) so the graceful stop is always reached.
+**Verified end-to-end:** gdsio 4K randread → **3.87 MB trace, 65535 cuFileRead → 65534 nvme_setup_cmd
++ 65535 nvfs_io + 65534 p2p_dma_mapping**; parses through DFAnalyzer (per-LAYER cufile/block/nvidiafs,
+per-op cross-layer attribution, 1.0× amplification, true-P2P). The installed `~/dc-prefix` scripts
+regenerate from the patched `.in` via `ninja install`. Residual: a harmless cosmetic "Permission
+denied" on the per-run log line (does not affect the trace). **TODO: push the fork commit + PR.**
