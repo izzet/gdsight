@@ -19,7 +19,7 @@ import sys, gzip, json, statistics as st
 def load(path):
     cufile, nvme, nvfs = {}, [], 0
     op = gzip.open if path.endswith(".gz") else open
-    with op(path, "rt") as f:
+    with op(path, "rt", errors="replace") as f:
         for ln in f:
             ln = ln.strip().rstrip(",")
             if not ln or ln[0] != "{":

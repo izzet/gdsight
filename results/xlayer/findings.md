@@ -154,6 +154,32 @@ below kvikio's 16 KB threshold *and* (b) 1.6× device read-amplification below t
 granularity; coalescing eliminates both. Our per-op cross-layer tracer is what quantifies the
 device-layer 1.6× that `gds_stats`/`iostat` cannot attribute, and predicts it from access geometry.
 
+## Result 6 — compat-fallback divergence: the device layer can't see it; nvfs-presence is the per-op signature
+
+Same aligned 64K reads on the same /mnt/nvme1 file, true GDS vs `CUFILE_FORCE_COMPAT_MODE=true`
+(forced silent bounce; cuFileRead still fires). `/tmp/compat_div.sh`.
+
+| | nvfs_io | A_byte | A_cmd | device cmd | attribution |
+|---|--:|--:|--:|--:|--:|
+| true GDS | **2000** | 1.000 | 1.00 | 64K | 2000 ✓ |
+| forced compat bounce | **0** | 1.000 | 1.00 | 64K | 2000 ✓ |
+
+**The device stream is identical** (same A_byte, A_cmd, command sizes, byte count) — so `iostat`/
+diskstats and any device-layer tool **cannot distinguish true GDS from a silent bounce**. The *only*
+cross-layer difference is the **nvidia-fs layer: present (nvfs_io=2000) for GDS, absent (0) for
+compat** — i.e. the per-op signature of a silent fallback is "cuFileRead present + nvfs_io absent +
+nvme present." Per-op attribution **survives the bounce** (corr_id propagates in-thread → 2000
+attributed), so the tracer labels each op's path.
+
+**Honest scope (don't overclaim):** for a read that *enters* cuFile and bounces, `gds_stats`/
+`cuFileGetStats` already exposes it via its aggregate `posix` counter — so the tracer is **not** the
+only way to know compat happened; its edge is (1) **per-op** granularity (which op, correlated to the
+device cmds) and (2) it also catches the harder case `gds_stats` is blind to — reads that **bypass
+cuFile entirely** (e.g. kvikio's <16 KB threshold → `pread64` that never enters cuFile, the cuCIM
+case). The genuinely new bit here is the clean demonstration that **silent fallback is device-layer-
+invisible and is detectable only by the presence/absence of the middle (nvidia-fs) layer** — which
+requires the cross-layer view. This is a supporting result, not a headline.
+
 ## Next arms (where genuinely new findings should live)
 - **Alignment read-amplification (Study A, alignment axis):** NVIDIA docs say GDS "uses internal cache
   when file_offset/size/ptr are not 4K aligned" → measure per-op A_byte>1 / path change on misaligned
