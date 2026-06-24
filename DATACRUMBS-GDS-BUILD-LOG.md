@@ -460,7 +460,7 @@ my own cmdline (else self-kill).
 Install: deepspeed-venv; torch cu126 FIRST, then `DS_BUILD_GDS=1 DS_BUILD_AIO=1 pip install deepspeed
 --no-build-isolation` w/ CUDA_HOME=/usr/local/cuda-12.6 (pip build isolation hides torch -> MUST use
 --no-build-isolation, else "Unable to pre-compile async_io, please first install torch"). ds_report:
-async_io [OKAY], gds [OKAY]. DeepSpeedExamples submodule (external/DeepSpeedExamples); deepnvme/file_access/
+async_io [OKAY], gds [OKAY]. DeepSpeedExamples submodule (external/deepspeedexamples); deepnvme/file_access/
 has paired py_/aio_/gds_ load+store scripts (clean A/B + POSIX baseline).
 Phase 1 trace (gds_load_gpu_tensor.py, 1GB, LD_PRELOAD system libcufile so the uprobe fires -- DeepNVMe
 resolves cuFile via torch's bundled lib otherwise): DeepNVMe's GDS op issues ONE plain cuFileRead

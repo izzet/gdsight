@@ -4,7 +4,7 @@ DeepNVMe is DeepSpeed's NVMe I/O layer behind **ZeRO-Inference/Infinity** (weigh
 **FastPersist** checkpointing — a real, production GDS consumer, tuned by an autotuner over five knobs
 (`block_size, queue_depth, single_submit, overlap_events, intra_op_parallelism`). Install: `deepspeed-venv`,
 `DS_BUILD_GDS=1 DS_BUILD_AIO=1 pip install deepspeed --no-build-isolation` (CUDA_HOME set); `ds_report` →
-`async_io [OKAY]`, `gds [OKAY]`. Workloads: `external/DeepSpeedExamples/deepnvme/file_access/*`,
+`async_io [OKAY]`, `gds [OKAY]`. Workloads: `external/deepspeedexamples/deepnvme/file_access/*`,
 `workloads/deepnvme_gds_load.py` (parametrized).
 
 ## Phase 1 — traced end-to-end
