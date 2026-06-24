@@ -1,0 +1,5 @@
+regime,nvme_scored,corr_id_pct,lba_unique_pct
+sync_T1,4000,100.0,100.0
+concurrent_T16,4000,100.0,100.0
+async_IF64,4000,1.6,100.0
+async_overlap_hot64,4000,1.6,0.0
