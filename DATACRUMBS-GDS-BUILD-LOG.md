@@ -560,3 +560,39 @@ main API. Tempered cucim.md: naive per-tile under-delivers (82% bypass, 19.5x sl
 production read_region coalesces (clean). Consistent with "well-engineered clean, naive under-delivers".
 Tool value: reveals which path your code is on (per-tile bypass vs coalesced GDS) + the 19.5x lever, which
 gds_stats/iostat can't. workloads/read_region_test.py. NEXT: update GDS-TRACE-PITCH.md.
+
+## Tracer overhead measured (Table C / §5.x) + rebuild on v3 (2026-06-24)
+Rebuilt the full DataCrumbs toolchain on a fresh v3 instance (the image predates the tracer work):
+libbpf 1.5.0 + bpftool 7.5.0 from source → `~/dc-prefix`; `cmake -G Ninja` with
+`-DBPFTOOL_EXECUTABLE -DDATACRUMBS_HOST=izzet-gdstrace-node -DDATACRUMBS_LAUNCHER_TYPE=SLURM
+-DDATACRUMBS_CONFIGURED_TRACE_DIR=<must-exist>`; `ninja datacrumbs_explorer datacrumbs_generator`
+→ `ninja run_explorer run_generator` (emits per-host BPF sources: custom1/cufile/block/nvidiafs)
+→ `ninja && ninja install`; caps on `$PREFIX/sbin/datacrumbs`; libbpf.so → /usr/local/lib + ldconfig;
+DFAnalyzer venv `~/dfa-venv` — **install dfanalyzer NON-editable** (editable shadows the `dftracer`
+namespace so `dftracer.utils` from `dftracer-utils==0.0.5` isn't found). Scripted: `chameleon/build_datacrumbs.sh`.
+
+**Verified probes attach + fire** (the capture half is fine): `bpftool prog show` → `read_entry`
+run_cnt 17k+, `openat` 9k; `bpftool link show` → 10 uprobes on `libcufile.so`, nvme/nvfs kprobes.
+
+**Orchestration bugs hit (datacrumbs_run wrapper, NOT capture):**
+- `/var/run/datacrumbs/datacrumbs.runid` is **sticky** → consecutive runs reuse the same run_id and
+  collide on the per-run `/tmp/datacrumbs_cc_<id>.log`. Must clear runid + stale server between runs.
+- The stop path (`set -eo pipefail`) appends to that log; a **"Permission denied" on the log trips
+  `set -e` and aborts graceful stop → server hard-killed before flush → 0-byte `.pfw.gz`.**
+  ⇒ **trace-write is currently broken**; blocks the cross-layer *figures*, but NOT the overhead numbers.
+- `dc_reset` (kill server + `rm /var/run/datacrumbs/*` + `/tmp/datacrumbs_*.log`) before each run is the workaround.
+
+**Overhead result — final (size × {seq,rand} sweep, x4 sizes 4K–4M, + achieved-IOPS column):**
+rand 256M/N5 (tight, CV<1.3%); seq re-run 2G/N7 to lengthen short runs. Key finding: **overhead
+collapses onto achieved IOPS** — seq & rand on one line, fit ≈0.22%/kIOPS ⇒ **~2.2 µs/op** (matches
+bpftime kernel-uprobe ~3.2µs, amortized → self-validating). ≈0% at 1M/4M (both patterns); rises to
+8% (rand 4K, 36.8 kIOPS) / 15% (seq 4K, 58.8 kIOPS). **Sequential 4K–64K stayed noisy even at 2G
+(CV 8–16%) — intrinsic mid-size-seq variance on this single PM983 (baseline CV ≈ traced CV, NOT a
+tracer effect); those cells have wide error bars but lie on the IOPS curve.** Harness
+`tools/overhead_bench.sh` (PATTERNS/S/N/TAG env), merge+IOPS `tools/overhead_table.py`; data in
+`results/step5-overhead/{overhead_final.txt,overhead_raw_*}`; written up in
+`results/instrumentation-cost-coverage.md` Table C.
+
+**TODO (separate from overhead):** fix the trace-flush bug — make the stop path tolerate the log
+write (drop `set -e` around it or fix log ownership) so `.pfw.gz` flushes → unblocks per-op
+cross-layer re-runs on v3. Upstream-worthy fix for the `external/datacrumbs` fork.
