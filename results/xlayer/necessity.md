@@ -80,3 +80,36 @@ embedding/KV reads (a recognized RAG/inference pattern), 8 threads, default kvik
 Tracer modes: **pid-filter** (default, low-overhead, targeted via `datacrumbs_track`) vs
 **trace-all** (capture unmodified processes; rebuild flag). Tools: `workloads/rag_mixed.py`,
 `tools/mixed_score.py`; controlled C analog `workloads/gds_mixed.c`.
+
+---
+
+# Result 3 — NIXL-sized variant (real transfer-engine KV sizes, no library confound) ✅
+
+Addresses the reviewer's "representative-not-captured" critique by driving the GDS path with NIXL's
+*actual* KV transfer size for a production model: **2560 B = Llama-3.1-70B block-access KV I/O at PP=8**
+(from NIXL `benchmark/kvbench/test/inference_workload_matgen.py` + the llama3 model config; range
+across configs 256 B–10 KB). Heterogeneous async workload (`workloads/gds_mixed.c`, `cuFileReadAsync`):
+200×1 MiB page reads (class A) + 2000×2560 B KV reads (class B). Crucially NIXL uses its **own** GDS
+backend (`cuda_gds`), issuing `cuFileRead` directly — **no kvikio 16 KiB threshold**, so this removes
+the library-policy confound entirely. Scorer `tools/keystone_gds_score.py`.
+
+| observer | class A | class B | verdict |
+|---|--:|--:|---|
+| **aggregate** device/app | — | — | **1.052× → benign** |
+| **per-class via LBA** | 1.000× | **3.20×** | class-B KV reads amplify 3.2× at the device |
+| **corr_id (async)** | — | 64% correct, **36% unattributed** | unreliable — can't give a trustworthy per-class device-byte number |
+| **`gds_stats`** | sees 2200 cuFile ops | — | blind to the **amplification** (API-side; sees the 2560 B *request*, not its 8192 B *device* cost) |
+
+**Two real engines, two mechanisms, one necessity.** The kvikio pipeline (Result 2) loses GDS by
+*silent POSIX bypass* (gds_stats blind to the ops, corr_id mis-bills 94% to the clean class). The
+NIXL/transfer-engine pipeline (here) keeps everything on GDS but pays *device read-amplification*
+(3.2×) that gds_stats cannot see and async corr_id cannot reliably attribute (36% unattributed). In
+**both**, only per-op address-based (LBA) attribution recovers the per-class truth. Demonstrating the
+phenomenon across two real engines' actual workloads — by two different mechanisms — is the answer to
+"is this one cherry-picked workload?": it is not.
+
+Honest scope: NIXL is not *run* here (not installed on v3; full kvbench is distributed/etcd/torch) —
+we replay its real KV size through the real GDS path; building NIXL to drive `nixl_agent`+`cuda_gds`
+end-to-end is the AE/camera-ready stretch. corr_id is 64% here (partial collapse) vs 1.6% in the clean
+oracle (Table 1) because small KV reads complete partly in-context; the 36% unattributed is the
+decoupled tail — either way corr_id is untrustworthy for the per-class number, LBA is exact.
