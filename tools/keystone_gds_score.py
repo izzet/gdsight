@@ -29,7 +29,7 @@ def main():
         try: e = json.loads(line)
         except Exception: continue
         n, a = e.get('name'), e.get('args', {})
-        if n in ('cuFileReadAsync','cuFileRead') and 'offset' in a:
+        if n in ('cuFileReadAsync','cuFileRead','cuFileBatchIOSubmit') and 'offset' in a:
             cufile[int(a.get('corr_id',-1))] = (int(a['offset']), int(a.get('size',0)))
         elif n == 'nvme_setup_cmd' and 'sector' in a:
             nvme.append((int(a.get('corr_id',-1)), int(a['sector']), int(a.get('size',0))))
