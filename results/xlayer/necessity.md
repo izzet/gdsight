@@ -138,11 +138,16 @@ a perfect cuFile-API monitor sees *one* op where the device did 64 — **per-NVM
 is the only thing that recovers the per-class device cost.** This is the captured real-world eval: a
 production transfer engine's actual GDS path, attributed per-op cross-layer.
 
-**Honest gaps (stated):** (a) on this DataCrumbs build the `cuFileBatchIOSubmit` *uprobe* did not fire
-(0 cuFile-API events), so corr_id is not measured *on the NIXL run itself* — the device layers
-(nvfs/nvme) are fully captured and the corr_id-collapse story is carried by the oracle (Table 1) and
-the synthetic NIXL-sized run; fixing the batch uprobe is a DataCrumbs-build follow-up (it would only
-confirm batch-granularity, not change the LBA result). (b) Single-agent NIXL transfer with a
+**Honest gaps (stated):** (a) on this build the `cuFileBatchIOSubmit` *uprobe* did not fire (0 cuFile-API
+events). **Diagnosed (2026-06-25):** the uprobe *is attached* at the correct symbol offset
+(`libcufile.so+0x14fac0` = `cuFileBatchIOSubmit`) but `run_cnt=0` while `nvfs_io`/`nvme` fire 16k× — so
+NIXL drives the device through a *different* libcufile than the one the userspace uprobe sits on (the
+`nixl` wheel ships a bundled cu13 `libcufile.so.0`; the kernel kprobes fire regardless of which
+userspace libcufile is used, the userspace uprobe does not). The fix (force the system libcufile via
+`LD_PRELOAD`, add the bundled copy as a second uprobe target, or remove the bundled cu13 cufile) is a
+follow-up; it would confirm batch-granularity + corr_id collapse on the real engine but does not change
+the LBA per-class result. Device layers (nvfs/nvme) are fully captured; the corr_id-collapse story is
+carried by the oracle (Table 1) and the synthetic NIXL-sized run. (b) Single-agent NIXL transfer with a
 NIXL-derived access pattern — the real engine and real KV sizes, though not a captured multi-node
 prefill→decode `kvbench` trace (distributed/etcd/torch; future work). (c) `cupy` is used only as a
 VRAM allocator (its compute kernels JIT-fail on this driver — irrelevant to the GDS path).
