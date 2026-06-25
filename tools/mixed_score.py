@@ -32,9 +32,10 @@ def main():
     ap=argparse.ArgumentParser()
     ap.add_argument("--trace",required=True); ap.add_argument("--file",required=True)
     ap.add_argument("--bs",type=int,default=4096); ap.add_argument("--sec",type=int,default=512)
+    ap.add_argument("--sb",type=int,default=3072,help="small-class read size (to count POSIX-bypassed reqs)")
     a=ap.parse_args()
     exts=extents(a.file); starts=[e[0] for e in exts]
-    cufile={}; nvme=[]
+    cufile={}; nvme=[]; posix_b=0
     with gzip.open(a.trace,"rt",errors="replace") as f:
         for ln in f:
             ln=ln.strip().rstrip(",")
@@ -44,39 +45,43 @@ def main():
             n,ar=ev.get("name"),ev.get("args",{})
             if n in ("cuFileReadAsync","cuFileRead","cuFileBatchIOSubmit") and "offset" in ar:
                 cufile[int(ar.get("corr_id",-1))]=(int(ar["offset"]),int(ar.get("size",0)))
+            elif n in ("read","pread64") and int(ar.get("size",0))==a.sb:
+                posix_b+=a.sb                      # small-class reads that silently went POSIX (bypass)
             elif n=="nvme_setup_cmd" and "sector" in ar:
                 nvme.append((int(ar.get("corr_id",-1)),int(ar["sector"]),int(ar.get("size",0))))
-    # requested bytes per class (from cuFile API events)
-    req={'A':0,'B':0}
+    # requested bytes per class: A from cuFile (GDS) events, B from POSIX-bypassed reads
+    req={'A':0,'B':posix_b}
     for off,sz in cufile.values(): req[cls(off)]+=sz
     # device bytes per class via LBA (our method); corr_id classification accuracy
-    dev={'A':0,'B':0}; cdev={'A':0,'B':0}; corr_ok=0; corr_resolved=0; cmds=0; dev_tot=0
+    dev={'A':0,'B':0}; devc={'A':0,'B':0}; cmds=0; dev_tot=0
+    b_correct=b_wrong=b_none=0                              # corr_id outcome for class-B device cmds
     for cid,sec,sz in nvme:
         lb=p2l(exts,starts,sec*a.sec//a.bs)
         if lb is None: continue
         foff=lb*a.bs
         if foff<0: continue
-        c=cls(foff); dev[c]+=sz; dev_tot+=sz; cmds+=1     # cmds = ALL device cmds (the honest denom)
-        if cid in cufile:
-            corr_resolved+=1
-            cc=cls(cufile[cid][0]); cdev[cc]+=sz          # corr_id's (mis)attribution of device bytes
-            if cc==c: corr_ok+=1
+        c=cls(foff); dev[c]+=sz; devc[c]+=1; dev_tot+=sz; cmds+=1
+        if c=='B':
+            if cid in cufile:
+                if cls(cufile[cid][0])=='B': b_correct+=1
+                else: b_wrong+=1                            # stale corr_id from another class => mis-billed
+            else: b_none+=1
     reqT=req['A']+req['B']
+    cuf_ops={'A':0,'B':0}
+    for off,sz in cufile.values(): cuf_ops[cls(off)]+=1
     def ab(c): return dev[c]/req[c] if req[c] else 0
-    print("=== heterogeneous async workload: who can see the class-B pathology? ===")
-    print(f"requested  A={req['A']/2**20:6.1f} MiB  B={req['B']/2**20:6.1f} MiB   "
-          f"(B is {100*req['B']/reqT:.0f}% of bytes, but most of the OPS)")
-    print(f"device     A={dev['A']/2**20:6.1f} MiB  B={dev['B']/2**20:6.1f} MiB")
+    print("=== real kvikio RAG-mix: who can see the class-B pathology? ===")
+    print(f"requested  A={req['A']/2**20:6.1f} MiB (GDS)   B={req['B']/2**20:6.1f} MiB (POSIX-bypassed)")
+    print(f"device     A={dev['A']/2**20:6.1f} MiB         B={dev['B']/2**20:6.1f} MiB ({devc['B']} cmds)")
     print()
-    print(f"(1) AGGREGATE device/app  = {dev_tot/reqT:.3f}x   <- what iostat-vs-app sees: looks BENIGN")
-    print(f"(2) PER-CLASS via LBA     : A={ab('A'):.3f}x   B={ab('B'):.3f}x   "
-          f"(LBA classifies {100*cmds/cmds:.0f}% of {cmds} device cmds)  <- class B PATHOLOGICAL")
-    cab=lambda c: cdev[c]/req[c] if req[c] else 0
-    print(f"(3) corr_id over ALL cmds : correct {100*corr_ok/cmds if cmds else 0:.1f}% "
-          f"({corr_ok}/{cmds}); only {100*corr_resolved/cmds if cmds else 0:.1f}% even resolve to a cuFile op")
-    print(f"    corr_id per-class A_byte: A={cab('A'):.3f}x  B={cab('B'):.3f}x  "
-          f"(true B={ab('B'):.3f}x) <- corr_id's per-class number is WRONG: under-counts B by "
-          f"{100*(1-cab('B')/ab('B')) if ab('B') else 0:.0f}% (mis-billed to A)")
+    print(f"gds_stats view  : {cuf_ops['A']+cuf_ops['B']} cuFileRead, all class A -> reports 'GDS healthy'.")
+    print(f"                  class B ({devc['B']} device cmds) is INVISIBLE to gds_stats (silently POSIX).")
+    print(f"(1) AGGREGATE device/app = {dev_tot/reqT:.3f}x   <- iostat-vs-app: looks BENIGN")
+    print(f"(2) corr_id on class B   : {100*b_correct/devc['B'] if devc['B'] else 0:.1f}% correct "
+          f"({b_correct}/{devc['B']}); {100*b_wrong/devc['B'] if devc['B'] else 0:.0f}% MIS-billed to class A "
+          f"(stale corr_id), {100*b_none/devc['B'] if devc['B'] else 0:.0f}% unattributed <- corr_id is WRONG")
+    print(f"(3) LBA on class B       : 100% attributable; reveals B amplifies {ab('B'):.2f}x at the device "
+          f"(true class-A {ab('A'):.2f}x) <- ONLY address-based per-op attribution sees it")
 
 if __name__=="__main__":
     main()

@@ -613,3 +613,15 @@ So **capture worked; the server just never wrote the trace.**
 per-op cross-layer attribution, 1.0× amplification, true-P2P). The installed `~/dc-prefix` scripts
 regenerate from the patched `.in` via `ninja install`. Residual: a harmless cosmetic "Permission
 denied" on the per-run log line (does not affect the trace). **TODO: push the fork commit + PR.**
+
+## Trace-all mode unlocks unmodified-workload tracing (2026-06-25)
+`datacrumbs_wrap` (LD_PRELOAD of the client lib) SEGFAULTS on the kvikio/cupy python stack, so real
+python GDS workloads couldn't be traced via injection. Fix: rebuild with
+`-DDATACRUMBS_TRACE_ALL_PROCESSES_OPT=ON` → BPF `need_tracing()` returns 1 for all PIDs (no pid_map
+filter, no injection needed) → trace UNMODIFIED python+kvikio cleanly. Confirmed kvikio uses the
+SYSTEM libcufile we uprobe (cuFileRead/Async events captured). Build gotcha: the default `ninja`
+target races a "clean BPF artifacts" step that deletes datacrumbs.bpf.o before install; workaround =
+`ninja <...>/objects/datacrumbs.bpf.o` directly, then `cmake -P build/cmake_install.cmake` (no ninja),
+then re-setcap. Two tracer modes now: pid-filter (default, targeted, low overhead) vs trace-all
+(unmodified processes; filter the trace by the workload's file extents / pid). Used for the real
+kvikio RAG-mix necessity result (results/xlayer/necessity.md Result 2).
