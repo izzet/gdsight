@@ -113,3 +113,36 @@ we replay its real KV size through the real GDS path; building NIXL to drive `ni
 end-to-end is the AE/camera-ready stretch. corr_id is 64% here (partial collapse) vs 1.6% in the clean
 oracle (Table 1) because small KV reads complete partly in-context; the 36% unattributed is the
 decoupled tail — either way corr_id is untrustworthy for the per-class number, LBA is exact.
+
+---
+
+# Result 4 — REAL end-to-end NIXL engine, traced (the captured real-world keystone) ✅
+
+The strongest answer to "representative-not-captured": we drive the **actual `nixl_agent` + `cuda_gds`
+backend** (NIXL 1.3.0 from PyPI, `nixl-cu12`) doing true P2P file→GPU(VRAM) reads with NIXL's own
+heterogeneous KV access pattern (200×1 MiB page reads + 2000×2560 B Llama-3.1-70B PP=8 KV reads),
+traced unmodified under DATACRUMBS trace-all. Reproducible: `chameleon/setup_nixl_venv.sh`,
+`workloads/nixl_gds_{probe,kv}.py`, `tools/run_nixl_e2e.sh`.
+
+| observer | class A | class B | verdict |
+|---|--:|--:|---|
+| nvfs_io / p2p_dma_mapping | — | — | **2171 / 2171 → true P2P GDS confirmed on the real engine** |
+| aggregate device/app | — | — | **1.052× → benign** |
+| per-class via LBA | 1.000× | **3.200×** | NIXL's KV reads amplify 3.2× at the device |
+| cuFile API (gds_stats-class) | — | — | NIXL issues **`cuFileBatchIOSubmit`** — 64 reads collapsed into **one** API call → the API layer is batch-granular and cannot separate per-read |
+
+**Two things this nails.** (1) The real-engine numbers **match the synthetic NIXL-sized run (Result 3)
+exactly** (aggregate 1.052×, class-B 3.20×) — proving that replay was faithful, and that the keystone
+is not an artifact of our probe. (2) NIXL batches 64 reads into a single `cuFileBatchIOSubmit`, so even
+a perfect cuFile-API monitor sees *one* op where the device did 64 — **per-NVMe-command LBA attribution
+is the only thing that recovers the per-class device cost.** This is the captured real-world eval: a
+production transfer engine's actual GDS path, attributed per-op cross-layer.
+
+**Honest gaps (stated):** (a) on this DataCrumbs build the `cuFileBatchIOSubmit` *uprobe* did not fire
+(0 cuFile-API events), so corr_id is not measured *on the NIXL run itself* — the device layers
+(nvfs/nvme) are fully captured and the corr_id-collapse story is carried by the oracle (Table 1) and
+the synthetic NIXL-sized run; fixing the batch uprobe is a DataCrumbs-build follow-up (it would only
+confirm batch-granularity, not change the LBA result). (b) Single-agent NIXL transfer with a
+NIXL-derived access pattern — the real engine and real KV sizes, though not a captured multi-node
+prefill→decode `kvbench` trace (distributed/etcd/torch; future work). (c) `cupy` is used only as a
+VRAM allocator (its compute kernels JIT-fail on this driver — irrelevant to the GDS path).
