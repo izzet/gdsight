@@ -86,3 +86,33 @@ tuning artifact.
 - nvidia-fs `Ops: BatchIO` counter stays 0 even with stats on; the GDS reads register under
   `Reads n=`, so the aggregate total (215 MiB) is captured fairly — the point is granularity, not a
   disabled counter.
+
+---
+
+## 5. Mechanism depth — batch-size sweep (why each observer fails, separated)
+
+Varying NIXL's GDS batch size (fixed 2560 B PP8 KV) cleanly separates the two independent failure
+causes of the standard observers (`tools/run_nixl_batchsweep.sh`):
+
+| batch | cuFile API ops | API coarsening | B A_byte (LBA) | corr_id correct / unattributed |
+|--:|--:|--:|--:|--:|
+| 1 | 2200 | **1× / op** | 3.200× | 0% / **100%** |
+| 8 | 275 | 8× / op | 3.200× | 1% / 99% |
+| 32 | 69 | 32× / op | 3.200× | 10% / 89% |
+| 64 | 35 | 63× / op | 3.200× | 9% / 90% |
+| 128 | 18 | **123× / op** | 3.200× | 8% / 91% |
+
+- **The cuFile API's blindness is *batch-driven*** — coarsening scales exactly with batch size
+  (1×→123×/op), so `cuFileGetStats`/Nsight see 18 calls for 2208 device reads at batch 128. Per-read
+  behavior is structurally invisible at the API and gets worse the more the engine batches.
+- **corr_id's blindness is *async-driven*, not batch-driven** — it collapses to **100% unattributed
+  even at batch=1** (one read per submit). The batch submit is asynchronous, so the device command
+  fires after the submit returns and the per-thread correlation window has already closed. Timing
+  correlation fails on async GDS *independently* of batching.
+- **The device amplification is physical and invariant — 3.200× at every batch size** — only
+  per-NVMe-command LBA recovers it, and it does so identically regardless of how the engine batches or
+  schedules. This is the single robust attributor.
+
+Takeaway: an operator cannot fix this by changing batch size or by buying a better API profiler — the
+amplification is invisible to the API at any useful batch size and un-attributable by timing at any
+batch size. Per-op cross-layer address attribution is the only method that works, and it is invariant.
