@@ -27,3 +27,6 @@
 [submodule "external/cucim"]
 	path = external/cucim
 	url = https://github.com/rapidsai/cucim.git
+[submodule "external/zns-tools"]
+	path = external/zns-tools
+	url = https://github.com/stonet-research/zns-tools.git
