@@ -37,9 +37,10 @@ int main(int argc, char** argv){
   descr.handle.fd=fd; descr.type=CU_FILE_HANDLE_TYPE_OPAQUE_FD;
   CUfileHandle_t fh; CK(cuFileHandleRegister(&fh,&descr));
 
+  int do_reg = (argc>=8) ? atoi(argv[7]) : 1;  // 1=cuFileBufRegister (true P2P), 0=skip (test internal path)
   size_t bufsz = iosize + ptr_mis + 65536;     // slack for ptr offset
   void* dptr; CC(cudaMalloc(&dptr,bufsz));
-  CK(cuFileBufRegister(dptr,bufsz,0));
+  if(do_reg) CK(cuFileBufRegister(dptr,bufsz,0));
 
   long ok=0; ssize_t bytes=0;
   for(long i=0;i<count;i++){
@@ -51,7 +52,8 @@ int main(int argc, char** argv){
   printf("ALIGN_PROBE iosize=%zu foff_mis=%ld ptr_mis=%ld ok=%ld/%ld bytes=%zd\n",
          iosize,(long)foff_mis,(long)ptr_mis,ok,count,bytes);
 
-  cuFileBufDeregister(dptr); cudaFree(dptr);
+  if(do_reg) cuFileBufDeregister(dptr);
+  cudaFree(dptr);
   cuFileHandleDeregister(fh); close(fd); cuFileDriverClose();
   return 0;
 }
