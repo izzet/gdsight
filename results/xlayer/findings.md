@@ -90,10 +90,17 @@ size, device-ptr offset), traced, per-op `A_byte = device bytes / requested byte
 
 **Law:** `A_byte = ⌈(file_off mod 4K + size)/4K⌉·4K / size`. The device read granularity is **4 KiB**:
 sub-4K reads pay up to **8×** (512 B → 4 KiB); any sub-4K-misaligned *file* offset adds exactly one
-block. Cross-validates the documented 4K-alignment requirement — and **refines it**: of the three
-things the docs lump together ("file_offset, size, devPtr"), only the **file-side** two amplify
-*device* reads; **device-pointer misalignment costs nothing at the device** (handled GPU-side). That
-asymmetry is not in the docs and is GDS-specific (the GPU pointer is the GDS-unique element).
+block. **Mechanism (verified, 2026-06-25):** this is **block-layer 4 KiB read-rounding on the *true
+P2P* path**, not cuFile's internal bounce cache — for all the misaligned cases the trace shows
+`nvfs_get_p2p_dma_mapping` firing per op and the bounce indicator (`nvfs_mgroup_pin_shadow_pages`) at
+baseline noise, i.e. no host staging. Only **file-offset/size** misalignment inflates device bytes
+(`A_byte>1`); **GPU-pointer** misalignment does not (`A_byte=1.000`, P2P) — necessarily, since the GPU
+pointer only relocates where data lands in GPU memory and cannot change which device blocks are
+fetched (a near-tautology, kept only as a one-line clarification, *not* a headline). **We make no
+claim about cuFile's documented internal-cache/staging path** — we did not observe it trigger for
+512 B misalignment on this config, and we report device-read bytes directly rather than reinterpreting
+the docs. (NVIDIA's guides treat file_offset/size/devPtr alignment as equivalent triggers for
+*staging*; that is a different axis from the *device-read-byte* amplification we measure.)
 
 **Why this one matters (unlike A_cmd):** A_byte is a *direct device-bandwidth tax* — at A_byte=8, 7/8
 of consumed device bandwidth moves bytes the app never asked for. No separate perf run needed: the
@@ -104,9 +111,10 @@ end-app throughput depends on BW- vs IOPS-bound regime, but the device-bandwidth
 O_DIRECT reader, CPU too) — we do **not** claim to have discovered it. The contributions: (1) **per-op
 cross-layer attribution** of it in the GDS path — `gds_stats` reports the 512 B request and `posix=0`
 ("healthy"); `iostat` sees 4 KiB device reads in aggregate but cannot tie them to the op or know
-they are 8× the request; only per-op cuFile↔NVMe byte-correlation names it; (2) the measured
-**file-side vs GPU-ptr asymmetry**; (3) the link to real GDS workloads — small-granularity access
-(WSI tiles ~6.7 KB, embedding/KV gathers) silently pays this.
+they are 8× the request; only per-op cuFile↔NVMe byte-correlation names it; (2) it is **predictable
+from access geometry** (closed form, no fitting — see Result 5); (3) the link to real GDS workloads —
+small-granularity access (WSI tiles ~6.7 KB, embedding/KV gathers) silently pays this. *(The file-side
+vs GPU-ptr point is a one-line clarification, not a contribution.)*
 
 **Emerging coherent thesis:** small-granularity access is the silent killer for GDS, in *two distinct*
 cross-layer ways aggregate tools miss — (1) below kvikio's 16 KB threshold → silent POSIX bypass
@@ -125,10 +133,13 @@ mean 6.77 KB, range 2.3–33.7 KB): **0.0% have a 4K-aligned file offset, 0.0% a
 | predicted from geometry (the law) | 2.326 | 1.745 | 1.605 |
 | **measured (traced through GDS)** | **2.326** | **1.745** | **1.605** |
 
-**Exact match.** A real digital-pathology slide read through GDS moves **1.6× the requested bytes at
-the device** (~38% of device read-bandwidth spent on alignment padding), 78.5% of tiles amplified
->1.5×. The geometry-only prediction nails the measured device behavior → the instrument is validated
-*and* the phenomenon is real, not constructed. `gds_stats` reports the 149.8 MiB requested + `posix=0`
+**Exact match — and note this is NOT a fit.** The "predicted" column is the closed-form law
+`⌈(off mod 4K + size)/4K⌉·4K/size` evaluated on each tile's offset/size from the SVS directory; it has
+**zero free parameters and is computed before the run**, not regressed against the measurement. The
+four-significant-figure agreement therefore validates that the per-op attribution recovers the true
+device behavior, rather than indicating overfitting. A real digital-pathology slide read through GDS
+moves **1.6× the requested bytes at the device** (~38% of device read-bandwidth on alignment padding),
+78.5% of tiles amplified >1.5×; the phenomenon is real, not constructed. `gds_stats` reports the 149.8 MiB requested + `posix=0`
 ("healthy"); `iostat` sees the inflated device bytes only in aggregate; **only per-op cuFile↔NVMe
 byte-correlation attributes the 1.6× to the tile reads and predicts it from geometry.**
 

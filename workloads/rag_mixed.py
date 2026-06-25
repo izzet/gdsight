@@ -6,7 +6,12 @@ Two op-classes a real pipeline mixes, read directly to GPU with kvikio:
 T worker threads issue them concurrently (a data loader). Class is encoded by file region
 (A < 1 GiB, B >= 1 GiB of the backing file) so the tracer's LBA attribution can split them.
 Trace under DATACRUMBS trace-all (no injection). Usage: rag_mixed.py [--threads 8]"""
-import argparse, threading, time
+import argparse, os, threading, time
+# Pin the GDS threshold so the bypass boundary is unambiguous in the artifact: small reads
+# (< 16 KiB) take the POSIX backend, larger reads take GDS. This is the kvikio *Python*
+# binding default (gds_threshold=16384), set explicitly here so the result does not depend
+# on which binding's default is in effect.
+os.environ.setdefault("KVIKIO_GDS_THRESHOLD", "16384")
 import cupy, kvikio
 
 ABASE = 0
