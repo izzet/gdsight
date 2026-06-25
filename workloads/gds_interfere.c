@@ -23,19 +23,24 @@
 #define BBASE (1L<<30)            // small reads (class B)
 
 static CUfileHandle_t FH;
-typedef struct { int tid; size_t sz; long cnt; off_t base; off_t stride; off_t misalign; long nslots; } targ_t;
+static int FD;
+typedef struct { int tid; size_t sz; long cnt; off_t base; off_t stride; off_t misalign; long nslots; int cpu; } targ_t;
 static void* worker(void* a){
-  targ_t* t=(targ_t*)a; void* buf; CC(cudaMalloc(&buf,t->sz)); CK(cuFileBufRegister(buf,t->sz,0));
-  unsigned seed=t->tid*2654435761u; long ok=0;
+  targ_t* t=(targ_t*)a;
+  void* buf=NULL; void* hbuf=NULL;
+  if(t->cpu){ if(posix_memalign(&hbuf,4096,t->sz)){perror("memalign");return NULL;} }  // CPU path: host O_DIRECT
+  else { CC(cudaMalloc(&buf,t->sz)); CK(cuFileBufRegister(buf,t->sz,0)); }             // GDS path: P2P to GPU
+  unsigned seed=t->tid*2654435761u;
   for(long i=0;i<t->cnt;i++){
-    seed = seed*1103515245u + 12345u;                 // cheap PRNG for scattered offsets
-    long slot = (seed >> 8) % t->nslots;              // bounded to the file region
+    seed = seed*1103515245u + 12345u;
+    long slot = (seed >> 8) % t->nslots;
     off_t off = t->base + slot*t->stride + t->misalign;
-    ssize_t r = cuFileRead(FH, buf, t->sz, off, 0);
-    if(r==(ssize_t)t->sz) ok++;
-    else fprintf(stderr,"read tid=%d i=%ld off=%ld ret=%zd (want %zu)\n",t->tid,i,(long)off,r,t->sz);
+    ssize_t r = t->cpu ? pread(FD, hbuf, t->sz, off)        // NVMe -> host RAM (CPU/bounce path)
+                       : cuFileRead(FH, buf, t->sz, off, 0); // NVMe -> GPU BAR1 (GDS P2P path)
+    if(r!=(ssize_t)t->sz) fprintf(stderr,"read tid=%d i=%ld off=%ld ret=%zd (want %zu)\n",t->tid,i,(long)off,r,t->sz);
   }
-  cuFileBufDeregister(buf); cudaFree(buf); return NULL;
+  if(t->cpu) free(hbuf); else { cuFileBufDeregister(buf); cudaFree(buf); }
+  return NULL;
 }
 
 int main(int argc,char**argv){
@@ -44,19 +49,21 @@ int main(int argc,char**argv){
   int ns=atoi(argv[2]), nl=atoi(argv[3]);
   size_t ssz=strtoull(argv[4],0,10), lsz=strtoull(argv[5],0,10);
   long scnt=strtol(argv[6],0,10), lcnt=strtol(argv[7],0,10);
+  int large_cpu = (argc>=9) ? atoi(argv[8]) : 0;     // 0=large via GDS P2P, 1=large via CPU/host O_DIRECT
   CK(cuFileDriverOpen());
-  int fd=open(path,O_RDONLY|O_DIRECT); if(fd<0){perror("open");return 1;}
-  CUfileDescr_t d; memset(&d,0,sizeof(d)); d.handle.fd=fd; d.type=CU_FILE_HANDLE_TYPE_OPAQUE_FD;
+  FD=open(path,O_RDONLY|O_DIRECT); if(FD<0){perror("open");return 1;}
+  CUfileDescr_t d; memset(&d,0,sizeof(d)); d.handle.fd=FD; d.type=CU_FILE_HANDLE_TYPE_OPAQUE_FD;
   CK(cuFileHandleRegister(&FH,&d));
   // bound slots to the file regions (file ~2 GiB): A=[0,768MiB) large, B=[1GiB,1.9GiB) small
   long lslots = (768L<<20)/((off_t)lsz*2); if(lslots<1) lslots=1;
   long sslots = (900L<<20)/65536;
   int N=ns+nl; pthread_t th[N]; targ_t ta[N];
-  for(int i=0;i<ns;i++) ta[i]=(targ_t){i, ssz, scnt, BBASE, 65536, 3072, sslots};   // small, scattered, unaligned
-  for(int i=0;i<nl;i++) ta[ns+i]=(targ_t){ns+i, lsz, lcnt, ABASE, (off_t)lsz*2, 0, lslots}; // large, aligned
+  for(int i=0;i<ns;i++) ta[i]=(targ_t){i, ssz, scnt, BBASE, 65536, 3072, sslots, 0};   // small: always GDS
+  for(int i=0;i<nl;i++) ta[ns+i]=(targ_t){ns+i, lsz, lcnt, ABASE, (off_t)lsz*2, 0, lslots, large_cpu}; // large: GDS or CPU
   for(int i=0;i<N;i++) pthread_create(&th[i],0,worker,&ta[i]);
   for(int i=0;i<N;i++) pthread_join(th[i],0);
-  printf("INTERFERE n_small=%d n_large=%d ssz=%zu lsz=%zu scnt=%ld lcnt=%ld\n",ns,nl,ssz,lsz,scnt,lcnt);
-  cuFileHandleDeregister(FH); close(fd); cuFileDriverClose();
+  printf("INTERFERE n_small=%d n_large=%d ssz=%zu lsz=%zu scnt=%ld lcnt=%ld large_path=%s\n",
+         ns,nl,ssz,lsz,scnt,lcnt, large_cpu?"CPU":"GDS");
+  cuFileHandleDeregister(FH); close(FD); cuFileDriverClose();
   return 0;
 }

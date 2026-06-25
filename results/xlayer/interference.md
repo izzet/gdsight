@@ -59,3 +59,12 @@ rigorous **tail-latency root-cause attribution** capability — genuinely hard t
 and reinforces the consistent theme: the contribution is *per-op cross-layer attribution*, not new
 physics. Open GDS-specific angle (untested): is GDS P2P interference worse than CPU-bounce (BAR1 /
 non-reorderable P2P commands)? That could be a genuinely GDS-specific result.
+
+## GDS-specific angle tested — NULL (honest)
+Does GDS-P2P large-read contention hurt small GDS ops more than CPU-bounce large reads (shared GPU
+PCIe/BAR1 vs separate host path)? Same small (GDS) load; large reads via GDS P2P vs CPU host O_DIRECT
+(`gds_interfere.c` arg `large_cpu`). Small-op p99: **GDS-large 1227 us vs CPU-large 1267 us — identical
+(within noise).** No GDS-specific interference: contention is at the shared NVMe queue (same device
+commands either path), not the GPU link (PCIe/BAR1 nowhere near saturated at 2.9 GiB/s on one drive).
+Might differ on PCIe-saturated/multi-drive hardware (untestable here). Confirms: no novel GDS-specific
+physics; the contribution is per-op cross-layer attribution, not new device behavior.
