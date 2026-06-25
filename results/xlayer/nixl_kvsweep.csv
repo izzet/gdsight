@@ -1,0 +1,5 @@
+kv_size_B,model_parallel,reqB_MiB,deviceB_MiB,A_byte,corr_id_correct_pct,corr_id_unattr_pct,batches
+256,layer-access,0.49,7.81,16.000,17,83,32
+1280,PP16,2.44,15.62,6.400,9,91,32
+2560,PP8,4.88,15.62,3.200,10,90,32
+10240,PP2,19.53,31.25,1.600,11,89,32

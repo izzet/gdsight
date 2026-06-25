@@ -138,16 +138,18 @@ a perfect cuFile-API monitor sees *one* op where the device did 64 — **per-NVM
 is the only thing that recovers the per-class device cost.** This is the captured real-world eval: a
 production transfer engine's actual GDS path, attributed per-op cross-layer.
 
-**Honest gaps (stated):** (a) on this build the `cuFileBatchIOSubmit` *uprobe* did not fire (0 cuFile-API
-events). **Diagnosed (2026-06-25):** the uprobe *is attached* at the correct symbol offset
-(`libcufile.so+0x14fac0` = `cuFileBatchIOSubmit`) but `run_cnt=0` while `nvfs_io`/`nvme` fire 16k× — so
-NIXL drives the device through a *different* libcufile than the one the userspace uprobe sits on (the
-`nixl` wheel ships a bundled cu13 `libcufile.so.0`; the kernel kprobes fire regardless of which
-userspace libcufile is used, the userspace uprobe does not). The fix (force the system libcufile via
-`LD_PRELOAD`, add the bundled copy as a second uprobe target, or remove the bundled cu13 cufile) is a
-follow-up; it would confirm batch-granularity + corr_id collapse on the real engine but does not change
-the LBA per-class result. Device layers (nvfs/nvme) are fully captured; the corr_id-collapse story is
-carried by the oracle (Table 1) and the synthetic NIXL-sized run. (b) Single-agent NIXL transfer with a
-NIXL-derived access pattern — the real engine and real KV sizes, though not a captured multi-node
-prefill→decode `kvbench` trace (distributed/etcd/torch; future work). (c) `cupy` is used only as a
-VRAM allocator (its compute kernels JIT-fail on this driver — irrelevant to the GDS path).
+**cuFile-API layer + corr_id now captured on the real engine (gap CLOSED, 2026-06-25).** The
+`cuFileBatchIOSubmit` uprobe initially showed 0 events: it *was* attached at the right offset
+(`libcufile.so+0x14fac0`) but `run_cnt=0` while nvfs/nvme fired, because the `nixl` wheel binds its
+bundled **cu13** `libcufile.so.0` (different inode) instead of the system one our uprobe sits on. Fix:
+`LD_PRELOAD` the system `libcufile.so.0` → NIXL uses the probed `.so` → `cuFileBatchIOSubmit` fires (35
+batch ops for 2208 device reads). We now have the **full real-engine cross-check** — cuFile API
+(batch-granular) + corr_id (87% unattributed under async batch) + LBA per-class — plus a KV-size sweep
+(16×/6.4×/3.2×/1.6× across real model-parallel configs, exact closed-form match) and 3-run robustness,
+**cross-checked against nvidia-fs `/proc` stats and `iostat` (both benign 1.05× aggregate, can't split
+per class)**. Full irreplaceability table: **`results/xlayer/nixl-e2e-complete.md`**.
+
+**Remaining honest scope:** single-agent NIXL transfer with a NIXL-derived access pattern (real engine,
+real backend, real KV sizes) — not a captured multi-node prefill→decode `kvbench` trace
+(distributed/etcd/torch; future work). `cupy` used only as a VRAM allocator (its compute kernels
+JIT-fail on this driver — irrelevant to the GDS path).

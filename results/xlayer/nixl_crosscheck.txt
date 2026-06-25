@@ -1,0 +1,23 @@
+=== raw aggregate counters (before -> after) ===
+--- (A) nvidia-fs /proc stats [gds_stats-class aggregate] ---
+BEFORE: IO stats: Enabled, peer IO stats: Disabled
+Reads				: n=0 ok=0 err=0 readMiB=0 io_state_err=0
+Reads				: Bandwidth(MiB/s)=0 Avg-Latency(usec)=0
+Bar1-map			: n=1823 ok=1823 err=0 free=1823 callbacks=0 active=0 delay-frees=0
+Ops				: Read=0 Write=0 BatchIO=0
+AFTER:  IO stats: Enabled, peer IO stats: Disabled
+Reads				: n=2200 ok=2200 err=0 readMiB=215 io_state_err=0
+Reads				: Bandwidth(MiB/s)=0 Avg-Latency(usec)=0
+Bar1-map			: n=1891 ok=1891 err=0 free=1891 callbacks=0 active=0 delay-frees=0
+Ops				: Read=0 Write=0 BatchIO=0
+--- (B) diskstats nvme1n1 [iostat aggregate]; field6=sectors read, *512=bytes ---
+BEFORE sectors=584654786  AFTER sectors=585097138  -> device read delta = 215 MiB (AGGREGATE, cannot split A vs B)
+=== (C) OUR per-op cross-layer view (known reqA=200MiB reqB=4.88MiB) ===
+cuFileRead(Async) ops: A=3 B=32  (all via GDS, no bypass)
+requested  A=200.0MiB  B=4.88MiB
+device     A=200.0MiB  B=15.62MiB
+(1) AGGREGATE device/app = 1.052x  (benign)
+(2) PER-CLASS via LBA    : A=1.000x  B=3.200x  (class B amplifies)
+(3) corr_id on B (2000 cmds): 9% correct, 90% unattributed, 1% mis-billed  -> unreliable under async
+cuFileBatchIOSubmit events (cuFile-API layer): 35
+nvfs_io=2200 p2p=2200 nvme=2208

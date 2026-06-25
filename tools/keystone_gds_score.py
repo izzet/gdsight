@@ -13,6 +13,12 @@ EXT = re.compile(r'^\s*\d+:\s+(\d+)\.\.\s+\d+:\s+(\d+)\.\.\s+\d+:\s+(\d+):')
 
 def main():
     T, F = sys.argv[1], sys.argv[2]
+    # optional known per-class requested bytes (argv[3]=reqA, argv[4]=reqB) -- needed for batched
+    # workloads (NIXL), where one cuFileBatchIOSubmit mixes both classes so cuFile events can't
+    # give per-class requested. Device per-class still comes from LBA.
+    req_override = {}
+    if len(sys.argv) >= 5:
+        req_override = {'A': int(sys.argv[3]), 'B': int(sys.argv[4])}
     ex = []
     for ln in subprocess.run(["filefrag","-v",F],capture_output=True,text=True).stdout.splitlines():
         m = EXT.match(ln)
@@ -36,6 +42,7 @@ def main():
     cls = lambda o: 'A' if o < BBASE else 'B'
     req = {'A':0,'B':0}; ops = {'A':0,'B':0}
     for off, sz in cufile.values(): req[cls(off)] += sz; ops[cls(off)] += 1
+    if req_override: req = req_override   # batched workloads: cuFile events mix classes; use known sizes
     dev = {'A':0,'B':0}; bcmd = bok = bwrong = bnone = 0
     for cid, sec, sz in nvme:
         lb = p2l(sec*SEC//BS)
