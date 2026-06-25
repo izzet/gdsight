@@ -13,7 +13,10 @@ NA=${NA:-200}; SA=${SA:-1048576}; NB=${NB:-2000}; SB=${SB:-2560}; BATCH=${BATCH:
 sudo pkill -9 -f 'sbin/datacrumbs run' >/dev/null 2>&1 || true
 sudo rm -f /var/run/datacrumbs/* /tmp/datacrumbs_*.log >/dev/null 2>&1 || true
 sync; echo 3 | sudo tee /proc/sys/vm/drop_caches >/dev/null
-APP="env LD_LIBRARY_PATH=$CUDALIB $NIXL_PY $HOME/projects/gdstrace/workloads/nixl_gds_kv.py --file $F --na $NA --sa $SA --nb $NB --sb $SB --batch $BATCH"
+# LD_PRELOAD the SYSTEM libcufile so NIXL uses the exact .so our uprobe sits on (the nixl wheel
+# otherwise loads its bundled cu13 libcufile -> different inode -> cuFileBatchIOSubmit uprobe misses).
+SYSCUFILE=/usr/local/cuda-12.6/targets/x86_64-linux/lib/libcufile.so.0
+APP="env LD_PRELOAD=$SYSCUFILE LD_LIBRARY_PATH=$CUDALIB $NIXL_PY $HOME/projects/gdstrace/workloads/nixl_gds_kv.py --file $F --na $NA --sa $SA --nb $NB --sb $SB --batch $BATCH"
 echo "=== traced run (real nixl_agent + GDS backend, trace-all) ==="
 datacrumbs_run --app "$APP" 2>&1 | grep -iE 'NIXL_GDS_KV|Permission|ERR' | head
 sleep 2
