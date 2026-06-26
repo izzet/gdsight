@@ -73,13 +73,52 @@ its wall-clock payoff is latent on an idle drive (the small-read stream is laten
 realized under bandwidth contention — multi-tenant drives (our setup) or many concurrent serving
 streams — exactly where KV-offload runs.
 
-## The takeaway (the necessity claim, demonstrated)
-Two tools, two fixes, one correct:
-- **Current tools** → "device busy, GDS healthy" → *add concurrency* → A_byte stays 3.20×, goodput flat.
-- **GDS-Trace** → "class-B amplifies 3.20× from sub-4K-misaligned reads" → *align/coalesce* → A_byte
-  1.0×, 1.8× goodput.
+## Step 6 — Why this is *not* "just align to 4K" (the fix is measured, and the spec sheet is wrong)
+The obvious reviewer objection is: *"aligning/coalescing I/O is textbook; the docs tell you the block
+size; you'd do it in the baseline."* Our data refutes this on this system — the corrective granularity
+is **not** what any layer's documentation reports, and is knowable only by cross-layer measurement.
 
-The difference is not resolution for its own sake. The per-op, cross-layer, address-based attribution is
-what turns an unactionable "the device is busy" into an actionable, *correct* "fix the KV read
-geometry" — and we showed the obvious alternative, derived honestly from the tools people use today,
-does not work.
+A practitioner asks "what is the block size to align to?" Every authoritative source on this machine
+answers **512 B**, which predicts *no problem at all*:
+
+| Where you'd look up the granularity | Reports | Predicted A_byte for a 2560 B aligned read |
+|---|--:|--:|
+| device LBA (`/sys/.../logical_block_size`) | **512 B** | 5×512 = exact → **1.00× ("aligned, fine")** |
+| NVMe `physical_block_size` / `minimum_io_size` | **512 B** | **1.00×** |
+| ext4 block size (`tune2fs`) | 4096 B | 1.60× |
+| **measured effective, GDS path (GDS-Trace)** | **4096 B** | **1.60× aligned / 3.20× as laid out** |
+
+(Reproducible: `tools/probe_effective_granularity.sh` → `results/xlayer/effective-granularity.txt`,
+which measures device-bytes-per-aligned-read = 4096 for every request size 512…4096 B, 8192 for 6144 B —
+i.e. `ceil(S/4096)·4096`, never the `ceil(S/512)·512` the spec predicts.)
+
+The device — the natural place a storage engineer checks for "block size" — says **512 B**, so
+first-principles arithmetic says 2560 B is 5 perfectly-aligned sectors, **1.00×, nothing to fix**. The
+*effective* granularity is **4096 B** (the ext4 block dominating a 512-LBA device, and it holds on the
+true-P2P path — confirmed: an O_DIRECT 512 B read moves 4096 B). Aligning to the documented 512 B leaves
+the entire 3.2× in place; the fix is "align/pad to **4096**," a number you get **only by measuring
+requested-vs-device bytes cross-layer**. `G_eff` is an emergent property of the *interaction* of FS,
+device, and GDS path — not stated by any one of them, and **different on another system** (a 4Kn device,
+a 1 KiB/2 KiB-block FS, XFS, or a controller with a larger mapping unit all change it). On such a
+system the same workload's amplification — and therefore the right fix — changes; GDS-Trace re-derives
+it by measurement, documentation cannot.
+
+And the **magnitude is equally a measured, per-(size×system) quantity, not a constant**: across the same
+real NIXL KV sizes, "align/coalesce" buys nothing-to-everything — `A_byte` = 1.6× (10240 B) … 3.2×
+(2560 B) … **16×** (256 B layer-access) (`nixl-e2e-complete.md` §2). Whether the fix is even worth doing,
+and how much it returns, is set by where the model-determined access size falls on *this* device's
+effective grid — which you measure, not assume.
+
+## The takeaway (the necessity claim, demonstrated)
+Three observers, three wrong moves, one correct fix — and the correct fix is *quantitative and
+system-specific*:
+- **gds_stats / iostat** → "device busy, GDS healthy" → *add concurrency* → A_byte stays 3.20×, no gain.
+- **the spec sheet / device block size (512 B)** → "2560 B is aligned, 1.00×" → *do nothing* → 3.2× waste persists.
+- **GDS-Trace** (requested-vs-device, per op, cross-layer) → "effective granularity is **4096 B**, this
+  class amplifies **3.20×**" → *align/pad to the measured 4096 and coalesce* → A_byte 1.0×, 1.8× goodput.
+
+The contribution is not the textbook lever. It is the cross-layer measurement that, **on this specific
+system**, tells you (a) a problem exists at all (every other view says healthy), (b) how large it is
+(1.0×–16× — worth fixing or not), and (c) the exact granularity to fix it to (4096, which the device
+spec reports as 512). None of (a)–(c) is derivable from any single layer's documentation, and all three
+change across systems — which is precisely why the measurement, not the maxim, is the necessary part.
