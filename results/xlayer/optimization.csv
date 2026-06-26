@@ -1,0 +1,4 @@
+layout,nvfs_readMiB,nvfs_err,disk_MiB,cufile_api_ops,nvme_cmds,our_deviceB_MiB,our_B_A_byte,useful_GiBps
+scatter,938,0,938,1876,120009,937.50,3.200,0.155
+aligned,470,0,469,1876,120012,468.75,1.600,0.149
+packed,294,0,294,5,301,292.97,1.000,2.673
