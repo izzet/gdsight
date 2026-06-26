@@ -1,0 +1,5 @@
+arm,fix_source,batch,align,coalesce,nvfs_MiB,iostat_MiB,our_devB_MiB,A_byte,goodput_MiBps
+BASELINE,--,64,3072,0,16,15,15.62,3.200,84.9
+OBVIOUS:batch2x,gds_stats/iostat,128,3072,0,15,15,15.62,3.200,60.8
+OURS:align4K,GDS-Trace,64,0,0,8,8,7.81,1.600,85.0
+OURS:coalesce,GDS-Trace,64,0,65536,5,5,4.94,1.011,159.4
