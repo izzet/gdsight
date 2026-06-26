@@ -73,13 +73,15 @@ its wall-clock payoff is latent on an idle drive (the small-read stream is laten
 realized under bandwidth contention — multi-tenant drives (our setup) or many concurrent serving
 streams — exactly where KV-offload runs.
 
-## Step 6 — Why this is *not* "just align to 4K" (the fix is measured, and the spec sheet is wrong)
+## Step 6 — Why this is *not* "just align to 4K" (the per-op amplification is the measured part)
 The obvious reviewer objection is: *"aligning/coalescing I/O is textbook; the docs tell you the block
-size; you'd do it in the baseline."* Our data refutes this on this system — the corrective granularity
-is **not** what any layer's documentation reports, and is knowable only by cross-layer measurement.
+size; you'd do it in the baseline."* The 4 KiB grid *is* documented (it is the ext4 block size — a single
+`tune2fs`). Our point is narrower and survives that: (1) the problem is invisible to the tools a
+practitioner consults (gds_stats/iostat read healthy), and (2) the **per-op amplification against the
+grid** — which op-class pays it and how much — is what no tool exposes, and it is what targets the fix.
 
-A practitioner asks "what is the block size to align to?" Every authoritative source on this machine
-answers **512 B**, which predicts *no problem at all*:
+A practitioner asks "what is the block size to align to?" The natural place to check — the *device* —
+answers **512 B** (logical and, on this drive, physical), which predicts *no problem at all*:
 
 | Where you'd look up the granularity | Reports | Predicted A_byte for a 2560 B aligned read |
 |---|--:|--:|
@@ -94,13 +96,15 @@ i.e. `ceil(S/4096)·4096`, never the `ceil(S/512)·512` the spec predicts.)
 
 The device — the natural place a storage engineer checks for "block size" — says **512 B**, so
 first-principles arithmetic says 2560 B is 5 perfectly-aligned sectors, **1.00×, nothing to fix**. The
-*effective* granularity is **4096 B** (the ext4 block dominating a 512-LBA device, and it holds on the
-true-P2P path — confirmed: an O_DIRECT 512 B read moves 4096 B). Aligning to the documented 512 B leaves
-the entire 3.2× in place; the fix is "align/pad to **4096**," a number you get **only by measuring
-requested-vs-device bytes cross-layer**. `G_eff` is an emergent property of the *interaction* of FS,
-device, and GDS path — not stated by any one of them, and **different on another system** (a 4Kn device,
-a 1 KiB/2 KiB-block FS, XFS, or a controller with a larger mapping unit all change it). On such a
-system the same workload's amplification — and therefore the right fix — changes; GDS-Trace re-derives
+binding grid is actually the **4096 B ext4 block** (documented via `tune2fs`; it holds on the true-P2P
+path — an O_DIRECT 512 B read moves 4096 B), so aligning to the device's 512 B leaves the 3.2× in place;
+the grid to align to is **4096**. The 4 KiB constant is one query — *not* a discovery. What is **not**
+queryable a priori is the **per-op amplification**: that the KV class lands sub-4K *and misaligned*
+(off mod 4K = 3072 → 8192 B per 2560 B = 3.2×, vs 1.6× if aligned, vs 1.0× if coalesced) depends on the
+access geometry × file layout, and **only per-op cross-layer measurement gives it**. It is also
+**different on another system** (a 4Kn device, a 1 KiB/2 KiB-block FS, XFS, or a larger controller mapping
+unit change the grid; the access pattern changes the factor). On such a system the amplification — and the
+right fix — changes; GDS-Trace re-derives
 it by measurement, documentation cannot.
 
 And the **magnitude is equally a measured, per-(size×system) quantity, not a constant**: across the same

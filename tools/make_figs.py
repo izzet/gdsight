@@ -67,13 +67,13 @@ req = [512, 2048, 2560, 4096, 6144]
 measured = [4096, 4096, 4096, 4096, 8192]                 # GDS-Trace, effective-granularity.txt
 spec512  = [((s+511)//512)*512 for s in req]             # if you trust the documented 512-B block
 fig2, axg = plt.subplots(figsize=(4.3, 3.0))
-axg.plot(req, [m/1024 for m in spec512], "o--", color=GRAY, label="documented 512-B block\n(predicts 1.0×, 'no problem')")
-axg.plot(req, [m/1024 for m in measured], "s-", color=BAD, label="measured (GDS-Trace)\n→ 4096-B effective grid")
+axg.plot(req, [m/1024 for m in spec512], "o--", color=GRAY, label="device 512-B sector\n(predicts 1.0×, 'no problem')")
+axg.plot(req, [m/1024 for m in measured], "s-", color=BAD, label="measured per-op (GDS-Trace)\n→ 4 KiB grid")
 axg.fill_between(req, [m/1024 for m in spec512], [m/1024 for m in measured], color=BAD, alpha=.10)
 for s, m in zip(req, measured):
     axg.annotate(f"{m//1024}K", (s, m/1024), textcoords="offset points", xytext=(4,4), fontsize=6.5, color=BAD)
 axg.set_xlabel("requested read size (B)"); axg.set_ylabel("device bytes moved per read (KiB)")
-axg.set_title("Effective granularity is measured, not documented", fontsize=9)
+axg.set_title("Per-op device bytes vs. the 512-B sector prediction", fontsize=9)
 axg.legend(fontsize=6.8, loc="upper left", frameon=False)
 axg.set_xticks(req); axg.set_xticklabels([str(s) for s in req], fontsize=7)
 fig2.tight_layout()
