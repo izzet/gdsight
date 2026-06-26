@@ -1,0 +1,25 @@
+kvikio venv OK
+============================================================
+### BASELINE (default kvikio)  (coalesce=0)
+RAG_MIXED na=200 sa=1048576 nb=2000 sb=3072 threads=8 ops=2200 in 0.387s
+=== real kvikio RAG-mix: who can see the class-B pathology? ===
+requested  A= 200.0 MiB (GDS)   B=   5.9 MiB (POSIX-bypassed)
+device     A= 200.0 MiB         B=  15.6 MiB (2000 cmds)
+
+gds_stats view  : 200 cuFileRead on GDS (A=200, B=0); 2000 class-B reads went POSIX.
+                  class B (2000 device cmds) is INVISIBLE to gds_stats (silently POSIX).
+(1) AGGREGATE device/app = 1.047x   <- iostat-vs-app: looks BENIGN
+(2) corr_id on class B   : 0.0% correct (0/2000); 96% MIS-billed to class A (stale corr_id), 4% unattributed <- corr_id is WRONG
+(3) LBA on class B       : 100% attributable; reveals B amplifies 2.67x at the device (true class-A 1.00x) <- ONLY address-based per-op attribution sees it
+============================================================
+### FIX: coalesce B to 64 KiB  (coalesce=65536)
+RAG_MIXED na=200 sa=1048576 nb=2000 sb=3072 threads=8 ops=294 in 0.328s
+=== real kvikio RAG-mix: who can see the class-B pathology? ===
+requested  A= 200.0 MiB (GDS)   B=   5.9 MiB (POSIX-bypassed)
+device     A= 200.0 MiB         B=   5.9 MiB (94 cmds)
+
+gds_stats view  : 294 cuFileRead on GDS (A=200, B=94); 0 class-B reads went POSIX.
+                  class B is now ON the GDS path (94 cuFileRead) -> visible + P2P.
+(1) AGGREGATE device/app = 1.000x   <- iostat-vs-app: looks BENIGN
+(2) corr_id on class B   : 100.0% correct (94/94); 0% MIS-billed to class A (stale corr_id), 0% unattributed <- corr_id is WRONG
+(3) LBA on class B       : 100% attributable; reveals B amplifies 1.00x at the device (true class-A 1.00x) <- ONLY address-based per-op attribution sees it

@@ -35,7 +35,7 @@ def main():
     ap.add_argument("--sb",type=int,default=3072,help="small-class read size (to count POSIX-bypassed reqs)")
     a=ap.parse_args()
     exts=extents(a.file); starts=[e[0] for e in exts]
-    cufile={}; nvme=[]; posix_b=0
+    cufile={}; nvme=[]; posix_b=0; posix_n=0
     with gzip.open(a.trace,"rt",errors="replace") as f:
         for ln in f:
             ln=ln.strip().rstrip(",")
@@ -46,7 +46,7 @@ def main():
             if n in ("cuFileReadAsync","cuFileRead","cuFileBatchIOSubmit") and "offset" in ar:
                 cufile[int(ar.get("corr_id",-1))]=(int(ar["offset"]),int(ar.get("size",0)))
             elif n in ("read","pread64") and int(ar.get("size",0))==a.sb:
-                posix_b+=a.sb                      # small-class reads that silently went POSIX (bypass)
+                posix_b+=a.sb; posix_n+=1          # small-class reads that silently went POSIX (bypass)
             elif n=="nvme_setup_cmd" and "sector" in ar:
                 nvme.append((int(ar.get("corr_id",-1)),int(ar["sector"]),int(ar.get("size",0))))
     # requested bytes per class: A from cuFile (GDS) events, B from POSIX-bypassed reads
@@ -74,8 +74,12 @@ def main():
     print(f"requested  A={req['A']/2**20:6.1f} MiB (GDS)   B={req['B']/2**20:6.1f} MiB (POSIX-bypassed)")
     print(f"device     A={dev['A']/2**20:6.1f} MiB         B={dev['B']/2**20:6.1f} MiB ({devc['B']} cmds)")
     print()
-    print(f"gds_stats view  : {cuf_ops['A']+cuf_ops['B']} cuFileRead, all class A -> reports 'GDS healthy'.")
-    print(f"                  class B ({devc['B']} device cmds) is INVISIBLE to gds_stats (silently POSIX).")
+    print(f"gds_stats view  : {cuf_ops['A']+cuf_ops['B']} cuFileRead on GDS (A={cuf_ops['A']}, B={cuf_ops['B']}); "
+          f"{posix_n} class-B reads went POSIX.")
+    if cuf_ops['B']==0 and posix_n>0:
+        print(f"                  class B ({devc['B']} device cmds) is INVISIBLE to gds_stats (silently POSIX).")
+    elif posix_n==0 and cuf_ops['B']>0:
+        print(f"                  class B is now ON the GDS path ({cuf_ops['B']} cuFileRead) -> visible + P2P.")
     print(f"(1) AGGREGATE device/app = {dev_tot/reqT:.3f}x   <- iostat-vs-app: looks BENIGN")
     print(f"(2) corr_id on class B   : {100*b_correct/devc['B'] if devc['B'] else 0:.1f}% correct "
           f"({b_correct}/{devc['B']}); {100*b_wrong/devc['B'] if devc['B'] else 0:.0f}% MIS-billed to class A "

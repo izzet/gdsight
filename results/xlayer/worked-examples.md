@@ -17,7 +17,7 @@ specific, correct, *measured* fix. Numbers are measured on this node (A100 + NVM
 | timing tracer (`corr_id`) | 87% unattributed → *no signal* | **0% correct, 94% mis-billed to large class** → *optimize the large reads (WRONG)* | mis/!attributes async → *no signal* |
 | p50/mean dashboards | — | — | "p50 141 µs, healthy" → *do nothing* |
 | **GDS-Trace (ours)** | effective grid = **4096 B**, class-B **3.2×** | **91% of ops bypass GDS → POSIX**, 2.67× | class-B **p99 19×** via HoL behind large reads |
-| **→ solution** | align/pad/coalesce to measured 4096 → **1.0×, 1.8× goodput** (measured) | coalesce small reads above threshold → P2P + 1.0× (prescribed) | segregate classes → **p99 4080→216 µs** (measured) |
+| **→ solution** | align/pad/coalesce to measured 4096 → **1.0×, 1.8× goodput** (measured) | coalesce B above threshold → **POSIX→GDS, 2.67→1.0×, 2000→94 cmds** (measured) | segregate classes → **p99 4080→216 µs** (measured) |
 
 ---
 
@@ -56,10 +56,21 @@ on input; loaders busy.
 **What GDS-Trace adds.** Per-op LBA shows **2000 of 2200 ops (91%) never entered GDS** — they fell below
 kvikio's 16 KiB threshold and ran as POSIX `pread` (CPU-staged, no P2P) — *and* those reads amplify
 **2.67×** at the device. The aggregate (1.05×) and the API view (healthy) both hide this; timing actively
-mis-points you at the wrong class.
-**Solution (prescribed; mechanism measured).** Coalesce the small embedding/KV reads into ≥-threshold,
-aligned chunks so they take the P2P path *and* stop amplifying (the same coalescing lever measured in
-UC-A: → GDS, `A_byte`→1.0×). Kvikio-specific before/after validation is a quick follow-up.
+mis-points you at the wrong class (0% correct, 95% mis-billed to class A).
+**Solution (measured).** Coalesce the small embedding/KV reads into ≥-threshold, 4K-aligned chunks. Real
+kvikio, same class-A workload, only class B coalesced (`tools/run_ucb_kvikio_fix.sh`):
+
+| class-B metric | baseline (default) | fixed (coalesce 64 KiB) |
+|---|--:|--:|
+| path | **2000 reads → POSIX** (silent bypass) | **94 reads → GDS P2P** |
+| device amplification (LBA) | **2.67×** (15.6 MiB) | **1.00×** (5.9 MiB) |
+| device commands | 2000 | **94** (21× fewer) |
+| corr_id correctness | 0% (95% mis-billed) | 100% |
+
+The fix moves B onto the fast path *and* eliminates the amplification; the very tool that was blind to
+the problem (`gds_stats`) now sees class B (294 cuFileRead vs 200), because the fix that GDS-Trace
+prescribed put it on GDS. Wall-clock is ~1.2× here (B is a small byte-share; the win is larger under a
+heavier small-read mix or bandwidth contention).
 
 ---
 

@@ -25,18 +25,33 @@ def main():
     ap.add_argument("--sa", type=int, default=1<<20)
     ap.add_argument("--nb", type=int, default=2000)  # small embedding/KV reads
     ap.add_argument("--sb", type=int, default=3072)
+    # UC-B fix knob: coalesce class-B reads into contiguous 4K-aligned chunks of this size (>=16 KiB
+    # GDS threshold) instead of scattered sub-threshold sb reads. 0 = baseline (silent POSIX bypass).
+    ap.add_argument("--coalesce", type=int, default=0)
     a = ap.parse_args()
     # build the interleaved op list: (offset, size)
     ops = []
-    for i in range(a.nb):
-        ops.append((BBASE + i*65536 + 3072, a.sb))   # unaligned, scattered, spans 2 blocks
-        if i % (max(1, a.nb//a.na)) == 0 and len(ops) < a.na+a.nb:
-            j = i // max(1, a.nb//a.na)
-            if j < a.na: ops.append((ABASE + j*(4<<20), a.sa))
+    if a.coalesce > 0:
+        total_b = a.nb * a.sb
+        nchunks = (total_b + a.coalesce - 1) // a.coalesce
+        a_ops = [(ABASE + j*(4<<20), a.sa) for j in range(a.na)]          # SAME class-A workload as baseline
+        b_ops = [(BBASE + k*a.coalesce, a.coalesce) for k in range(nchunks)]  # contiguous, aligned, >=threshold->GDS
+        ia = ib = 0; ratio = max(1, len(b_ops) // max(1, len(a_ops)))     # interleave B-per-A
+        while ia < len(a_ops) or ib < len(b_ops):
+            for _ in range(ratio):
+                if ib < len(b_ops): ops.append(b_ops[ib]); ib += 1
+            if ia < len(a_ops): ops.append(a_ops[ia]); ia += 1
+    else:
+        for i in range(a.nb):
+            ops.append((BBASE + i*65536 + 3072, a.sb))   # unaligned, scattered, spans 2 blocks -> POSIX bypass
+            if i % (max(1, a.nb//a.na)) == 0 and len(ops) < a.na+a.nb:
+                j = i // max(1, a.nb//a.na)
+                if j < a.na: ops.append((ABASE + j*(4<<20), a.sa))
+    bsz = max(a.sb, a.coalesce)
     # split ops across threads
     chunks = [ops[t::a.threads] for t in range(a.threads)]
     bufA = [cupy.empty(a.sa, dtype=cupy.uint8) for _ in range(a.threads)]
-    bufB = [cupy.empty(a.sb, dtype=cupy.uint8) for _ in range(a.threads)]
+    bufB = [cupy.empty(bsz, dtype=cupy.uint8) for _ in range(a.threads)]
     def work(t, f):
         for off, sz in chunks[t]:
             buf = bufA[t] if sz == a.sa else bufB[t]
