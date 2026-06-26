@@ -9,15 +9,15 @@ specific, correct, *measured* fix. Numbers are measured on this node (A100 + NVM
 
 ## Summary matrix
 
-| | **UC-A: KV pipeline bandwidth-starved** | **UC-B: GDS on, but no speedup** | **UC-C: p99 SLO breaches, p50 fine** |
-|---|---|---|---|
-| `gds_stats`/cuFile | "all GDS, healthy" → *do nothing* | "200 reads, all GDS, healthy" → *do nothing* | "API latency normal" → *do nothing* |
-| `iostat`/device agg | "device busy" → *add concurrency / faster drive* | "1.05×, storage light" → *look at GPU* | "util moderate" → *do nothing* |
-| spec sheet / `sysfs` | "512-B blocks, 2560 B aligned, 1.0×" → *do nothing* | — | — |
-| timing tracer (`corr_id`) | 87% unattributed → *no signal* | **0% correct, 94% mis-billed to large class** → *optimize the large reads (WRONG)* | mis/!attributes async → *no signal* |
-| p50/mean dashboards | — | — | "p50 141 µs, healthy" → *do nothing* |
-| **GDS-Trace (ours)** | effective grid = **4096 B**, class-B **3.2×** | **91% of ops bypass GDS → POSIX**, 2.67× | class-B **p99 19×** via HoL behind large reads |
-| **→ solution** | align/pad/coalesce to measured 4096 → **1.0×, 1.8× goodput** (measured) | coalesce B above threshold → **POSIX→GDS, 2.67→1.0×, 2000→94 cmds** (measured) | segregate classes → **p99 4080→216 µs** (measured) |
+| | **UC-A: KV pipeline bandwidth-starved** | **UC-B: GDS on, but no speedup** | **UC-C: p99 SLO breaches, p50 fine** | **UC-D: high NVMe command rate** *(inverse)* |
+|---|---|---|---|---|
+| `gds_stats`/cuFile | "all GDS, healthy" → *do nothing* | "200 reads, all GDS, healthy" → *do nothing* | "API latency normal" → *do nothing* | — |
+| `iostat`/blktrace/device | "device busy" → *add concurrency / faster drive* | "1.05×, storage light" → *look at GPU* | "util moderate" → *do nothing* | **"many cmds/read, high IOPS"** → *raise `max_sectors_kb` / merge I/O* |
+| spec sheet / `sysfs` / lore | "512-B blocks, 2560 B aligned, 1.0×" → *do nothing* | — | — | **"bigger I/O is better"** → *raise cap to MDTS (2048)* |
+| timing tracer (`corr_id`) | 87% unattributed → *no signal* | **0% correct, 94% mis-billed to large class** → *optimize the large reads (WRONG)* | mis/!attributes async → *no signal* | — |
+| p50/mean dashboards | — | — | "p50 141 µs, healthy" → *do nothing* | — |
+| **GDS-Trace (ours)** | effective grid = **4096 B**, class-B **3.2×** | **91% of ops bypass GDS → POSIX**, 2.67× | class-B **p99 19×** via HoL behind large reads | `A_cmd`=⌈S/1280⌉ but **conserved-occupancy** |
+| **→ solution** | align/pad/coalesce to measured 4096 → **1.0×, 1.8× goodput** (measured) | coalesce B above threshold → **POSIX→GDS, 2.67→1.0×, 2000→94 cmds** (measured) | segregate classes → **p99 4080→216 µs** (measured) | **DON'T raise the cap — throughput/tail-neutral here** (2.44→2.39 GiB/s; p99 4080→4058); only helps on cmd-rate-bound HW (measured) |
 
 ---
 
@@ -94,10 +94,32 @@ recovery; the "alone" column). (`interference.md`)
 
 ---
 
+## UC-D *(inverse)* — "iostat shows a high NVMe command rate" — when our tool says *don't bother*
+**Symptom.** Large GDS reads each fan out into several NVMe commands — a 4 MiB read issues **4** device
+commands; `iostat`/`blktrace` show a high command/IOPS rate. The natural storage-tuning move is to cut
+the command count.
+
+| Tool | What it shows (true) | Fix it leads to | Outcome |
+|---|---|---|---|
+| `iostat` / `blktrace` | many commands per read, high IOPS | **raise `max_sectors_kb` / merge I/O** | seems obviously good |
+| NVMe tuning lore / docs | soft cap 1280 KiB < hardware MDTS 2048 | **raise the cap to 2048** | "bigger I/O, fewer cmds, faster" |
+
+**What GDS-Trace adds.** Per-op, `A_cmd = ⌈S / 1280 KiB⌉` — the block-layer *soft* cap (1280) binds,
+below the hardware MDTS (2048) — *and* `A_byte = 1.000` (command splitting moves no extra bytes). Raising
+the cap 1280→2048 halves the command count (4 MiB: 4→2 cmds), but measured it is **throughput- and
+tail-neutral**: 2.443→2.388 GiB/s, p99 4080→4058 µs. Command chunking is **conserved-occupancy** — the
+same bytes hold the device for the same time; slow ops merely overlap fewer-but-larger commands
+(7.96→4.96) for the identical tail. The device is bandwidth-bound; per-command overhead is fully hidden.
+**Solution.** *Do not raise the cap* — the obvious fix is futile on this single drive. The same per-op
+occupancy view scopes *where* it would matter (command-rate-bound multi-device / PCIe-fabric hardware),
+so the effort is spent only when it pays. (`findings.md` R1/R3, `interference.md`.)
+
 ## The throughline
 In every case the existing tools are *not lying* — they report a correct aggregate or single-layer fact.
-But that fact supports only generic moves (add hardware, add concurrency, "look elsewhere") or, for
-timing correlation, an actively wrong one. GDS-Trace's per-op cross-layer attribution is the piece that,
-**on this system**, converts those true-but-insufficient observations into the one correct, specific,
-measured fix — and, as UC-A shows, even the corrective *parameter* (4096, not the documented 512) is a
-measured quantity no single layer reports.
+But that fact supports only generic moves (add hardware, add concurrency, "look elsewhere"), or — for a
+command-rate symptom — a *plausible but futile* one. GDS-Trace's per-op cross-layer attribution is the
+piece that, **on this system**, converts those true-but-insufficient observations into the right call:
+the correct, specific, measured fix when there is one (UC-A/B/C — even the *parameter*, 4096 not the
+documented 512, is measured), and a confident **"don't bother"** when there is not (UC-D). The value is
+correct *prioritization* in both directions — fixing real problems and ruling out false ones — which no
+single-layer or aggregate view can provide.
