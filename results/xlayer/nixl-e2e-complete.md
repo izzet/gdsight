@@ -70,6 +70,38 @@ tuning artifact.
 
 ---
 
+## 2b. Mechanism decomposition — the two observer failures have *different* causes (batch sweep)
+
+`tools/run_nixl_batchsweep.sh` varies NIXL's GDS batch size at fixed KV size (2560 B, PP8) and isolates
+*why* each standard observer fails:
+
+| batch | cuFileBatchIOSubmit (API ops) | device reads | **API coarsening** | **B A_byte (ours)** | corr_id correct | corr_id unattr |
+|--:|--:|--:|--:|--:|--:|--:|
+| 1 | 2200 | 2206 | **1×** | 3.200 | 0% | **100%** |
+| 8 | 275 | 2206 | 8× | 3.200 | 3% | 97% |
+| 32 | 69 | 2206 | 32× | 3.200 | 6% | 93% |
+| 64 | 35 | 2206 | 63× | 3.200 | 9% | 90% |
+| 128 | 18 | 2207 | **123×** | 3.200 | 8% | 91% |
+
+Three things fall out, and together they are the necessity argument:
+1. **cuFile-API coarsening is batch-driven** — the API-to-device op ratio tracks batch size exactly
+   (1×→123×). A per-call API profiler (`cuFileGetStats`/Nsight) is only as fine as the batch.
+2. **corr_id collapse is async-driven, *not* batch-driven** — it is ~90–100% unattributed at *every*
+   batch size, **including batch=1, where the API is 1:1 with the device** (2200 submits, 2206 reads).
+   Even one read per submit cannot be timing-attributed, because the GDS batch submit is asynchronous:
+   it returns (and the per-thread correlation window closes) before the NVMe command is issued. Batching
+   is not what breaks timing — *asynchrony* is; batching only additionally breaks the API layer.
+3. **Address-based attribution is invariant** — class-B A_byte is exactly 3.200× at every batch size.
+
+**Why this clinches necessity (not convenience).** The two failure axes are independent and you cannot
+tune your way out: drive batch=1 to make the API fine-grained, and timing still fails (async, 100%
+unattributed); raise the batch for throughput (the production default — NIXL uses 64–128), and the API
+also goes blind (63–123× coarse). Only per-NVMe-command physical-address attribution is orthogonal to
+*both* the API surface and the submit/issue timing, so it is the only observer that survives the real
+engine's async-batched regime.
+
+---
+
 ## 3. Robustness
 - **Per-class LBA is deterministic** — A=1.000×, B=3.200× identical across 3 repeats (closed-form;
   same offsets → same device rounding).
