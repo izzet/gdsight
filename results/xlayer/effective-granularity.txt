@@ -5,7 +5,7 @@
   /sys/block/nvme1n1/queue/max_sectors_kb = 1280
   /sys/block/nvme1n1/queue/max_hw_sectors_kb = 2048
   ext4 Block size = 4096
-=== EFFECTIVE granularity, MEASURED by GDS-Trace (device bytes per aligned read) ===
+=== EFFECTIVE granularity, MEASURED by GDSight (device bytes per aligned read) ===
   req=512  B aligned -> MEASURED device/read=4089 B | if 512-block: 512  B | if 4096-block: 4096 B
   req=2048 B aligned -> MEASURED device/read=4089 B | if 512-block: 2048 B | if 4096-block: 4096 B
   req=2560 B aligned -> MEASURED device/read=4089 B | if 512-block: 2560 B | if 4096-block: 4096 B

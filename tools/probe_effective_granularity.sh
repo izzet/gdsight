@@ -2,7 +2,7 @@
 # Evidence that the EFFECTIVE device read granularity (what sets the amplification) is NOT what any
 # layer's documentation reports, and is only knowable by cross-layer measurement.
 #   documented (device LBA / NVMe spec / sysfs): printed below
-#   effective (measured by GDS-Trace on the true-P2P path): device bytes per aligned read
+#   effective (measured by GDSight on the true-P2P path): device bytes per aligned read
 set -u
 PREFIX=$HOME/dc-prefix; NIXL_PY=${NIXL_PY:-$HOME/nixl-test-venv/bin/python}
 CUDALIB=/usr/local/cuda-12.6/targets/x86_64-linux/lib:/usr/local/cuda-12.6/lib64
@@ -14,7 +14,7 @@ for p in logical_block_size physical_block_size minimum_io_size max_sectors_kb m
   echo "  /sys/block/$dev/queue/$p = $(cat /sys/block/$dev/queue/$p 2>/dev/null)"
 done
 echo "  ext4 Block size = $(sudo tune2fs -l /dev/$dev 2>/dev/null | awk -F: '/Block size/{gsub(/ /,"",$2);print $2}')"
-echo "=== EFFECTIVE granularity, MEASURED by GDS-Trace (device bytes per aligned read) ==="
+echo "=== EFFECTIVE granularity, MEASURED by GDSight (device bytes per aligned read) ==="
 echo 1 | sudo tee /sys/module/nvidia_fs/parameters/rw_stats_enabled >/dev/null 2>&1
 for S in 512 2048 2560 4096 6144; do
   sudo pkill -9 -f 'sbin/datacrumbs run' >/dev/null 2>&1 || true

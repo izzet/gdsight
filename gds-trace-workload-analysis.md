@@ -1,4 +1,4 @@
-# GDS-Trace — Real GDS workloads + benchmarks, and the per-op gap they reveal
+# GDSight — Real GDS workloads + benchmarks, and the per-op gap they reveal
 
 Answers to: is `nixlbench` like `gdsio`? could you get per-function bandwidth from `gds_stats`
 instead of hand-timing? are ESPN/Tutti/TeraIO GDS workloads, and what are they? Grounded in the actual
@@ -50,7 +50,7 @@ These are **exactly cross-layer, per-op** (one cuFile op → N P2P-DMA/NVMe requ
 *symptom* — low BW — not the *amplification factor* per op). **We already glimpsed it:** our unaligned
 `.npy` did **468 kernel reads for ~300 logical reads** (1.56×). This is GDS-intrinsic and is the
 cleanest motivation: *"for this cuFile op, how many NVMe requests did it become, and why (alignment /
-page / threshold / topology)?"* — the per-op cross-layer attribution GDS-Trace would provide.
+page / threshold / topology)?"* — the per-op cross-layer attribution GDSight would provide.
 
 ## The workloads (all small/random SSD→GPU — where this bites)
 | workload | GDS role | use case | code |
@@ -89,7 +89,7 @@ Reads-only (writes are the risky path on this node). Amplification vs aligned ba
 - **gdsio**: its own aggregate per-run BW. **gds_stats**: per-process/GPU aggregate counters.
 - ⇒ Every tool reports an **aggregate per-config number**; **none** attributes a single cuFile op down
   to its NVMe requests (the amplification) or tells you the per-op path. That absence — not "GDS is
-  broken" — is the GDS-Trace wedge.
+  broken" — is the GDSight wedge.
 
 ## Bottom line for the motivation
 The strongest honest evidence set = **(a)** cross-layer per-op attribution is missing everywhere

@@ -35,7 +35,7 @@ attach uprobes/kprobes, eBPF maps, a ring buffer, system-wide `trace-all`, and `
 DFAnalyzer is reused). Out of the box it has **no notion** of GDS, cuFile, nvidia-fs, NVMe, or
 cross-layer correlation — it is a substrate, the way LLVM is to a compiler.
 
-**What is ours** (the GDS-Trace plugins + analysis, none of which exists in DataCrumbs or DFTracer):
+**What is ours** (the GDSight plugins + analysis, none of which exists in DataCrumbs or DFTracer):
 1. the **probe set** — the cuFile uprobe (offset/size) and the `nvidia-fs`/`nvme_setup_cmd` kprobes
    (P2P markers; `req->__sector`/`__data_len` via CO-RE) — i.e. *what* to probe across the GDS path;
 2. the **three-map `corr_id` correlation** (`gdstrace_corr`: same-thread exact + worker-thread fallback)
@@ -43,12 +43,12 @@ cross-layer correlation — it is a substrate, the way LLVM is to a compiler.
 3. the **LBA/FIEMAP address basis** in the analyzer — the time-independent attribution that survives
    async — and its composition with `corr_id` (disjoint failure modes).
 
-DataCrumbs answers "how do I attach an eBPF probe and emit an event"; GDS-Trace answers "*what* to probe
+DataCrumbs answers "how do I attach an eBPF probe and emit an event"; GDSight answers "*what* to probe
 on the GDS path and *how* to attribute each NVMe command to its causing op, by time **and** address."
 
 ## 3. Capability + fix comparison
 
-| | DFTracer (today) | DFTracer + cuFile GOTCHA (steelman) | **GDS-Trace (ours)** |
+| | DFTracer (today) | DFTracer + cuFile GOTCHA (steelman) | **GDSight (ours)** |
 |---|:--:|:--:|:--:|
 | POSIX `read`/`pread` per op | ✅ | ✅ | ✅ |
 | cuFile call (offset/size) per op | ❌ | ✅ | ✅ |
@@ -75,4 +75,4 @@ Everything below the syscall line, which is where the *actionable, system-specif
 **One-line related-work claim:** bypass *detection* is reachable by a (hypothetical) user-space
 cuFile+POSIX interceptor; **device-grounded amplification, P2P confirmation, interference root-cause,
 async attribution, and the negative results are not** — they need per-NVMe-command probes linked to the
-causing op, which is the GDS-Trace contribution on the DataCrumbs eBPF substrate.
+causing op, which is the GDSight contribution on the DataCrumbs eBPF substrate.

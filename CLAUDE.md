@@ -1,10 +1,10 @@
-# CLAUDE.md — GDS-Trace project context
+# CLAUDE.md — GDSight project context
 
 Orientation for a Claude Code session working in this repo. (Replaces the per-machine `~/.claude`
 memory, which is deliberately kept out of the snapshot image for security.)
 
 ## What this is
-**GDS-Trace** — a per-operation, cross-layer tracer correlating cuFile (user) ↔ nvidia-fs (kernel)
+**GDSight** — a per-operation, cross-layer tracer correlating cuFile (user) ↔ nvidia-fs (kernel)
 ↔ NVMe, to attribute GPUDirect Storage pathologies (silent POSIX fallback, I/O amplification, GPU
 stall) to the causing app op. Extends DFTracer/DFAnalyzer. Full pitch: `gds-trace-brief.md`.
 

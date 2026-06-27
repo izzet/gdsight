@@ -1,6 +1,6 @@
 # Related work: cross-layer I/O tracing, eBPF storage analysis, and GDS — and the gap we fill
 
-Survey of the prior work nearest to GDS-Trace (read 2026-06-08), to position the contribution and find an
+Survey of the prior work nearest to GDSight (read 2026-06-08), to position the contribution and find an
 angle. Two questions per paper: **(a) what layers does it span / how**, and **(b) does it propose a
 mitigation, or stop at tracing + characterization?**
 
@@ -44,7 +44,7 @@ mitigation, or stop at tracing + characterization?**
 | Recorder / DFTracer / Darshan | ✓ (to POSIX) | ✗ | ✗ | ✗ (stops at POSIX) | ✗ |
 | zns-tools / IOscope (eBPF) | ✗ | ✓ (VFS/block) | ✓ | by LBA/zone, not app-op | ✗ (CPU/ZNS) |
 | Ravi HDF5-GDS-VFD | — (enabling) | — | — | — | ✓ (enables) |
-| **GDS-Trace (this work)** | **✓ (cuFile)** | **✓ (nvidia-fs)** | **✓ (NVMe)** | **✓ per-op (corr_id)** | **✓** |
+| **GDSight (this work)** | **✓ (cuFile)** | **✓ (nvidia-fs)** | **✓ (NVMe)** | **✓ per-op (corr_id)** | **✓** |
 
 No prior tool does **per-op cross-layer attribution down the GPUDirect Storage path (cuFile↔nvidia-fs↔
 NVMe)**: the userspace tracers stop at POSIX and never see GDS's P2P path; the eBPF cross-layer tools

@@ -4,7 +4,7 @@ directly into GPU memory via cuFile (cufile-python). A row is one embedding vect
 `--rowbytes` (e.g. 768-dim fp32 = 3072 B, which is NOT 4 KiB-aligned). Most row offsets then land
 off a 4 KiB boundary, so the device must read the 4 KiB-aligned superset -> BYTE amplification: the
 genuine wasted-bandwidth overhead in the small-random-read regime GDS is sold for (retrieval,
-embeddings, ESPN). Pick `--rowbytes 4096` for the aligned contrast (no waste). Run under GDS-Trace.
+embeddings, ESPN). Pick `--rowbytes 4096` for the aligned contrast (no waste). Run under GDSight.
 
 Opens the table ONCE and reuses one GPU buffer (register-once; contrast with DALI/ESPN/LMCache per-op
 handle churn). Usage: embedding_gather.py [--path FILE] [--rowbytes N] [--nreads N] [--seed N]

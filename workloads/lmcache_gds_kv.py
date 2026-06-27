@@ -2,7 +2,7 @@
 """LMCache-style GDS KV-cache offload, driven via cufile-python (the exact module LMCache's GdsBackend
 imports and calls in _save_gds / _load_gds). Replicates LMCache's GDS path: a 4 KiB POSIX metadata
 header per chunk + a GPUDirect cuFileWrite of the KV tensor at offset 4096 (offload), then a cuFileRead
-back into a GPU buffer (reload). Run under GDS-Trace to get per-op cuFile(write/read) <-> nvidia-fs <->
+back into a GPU buffer (reload). Run under GDSight to get per-op cuFile(write/read) <-> nvidia-fs <->
 NVMe attribution for the inference-time KV-spill path.
 
 NOTE: the full lmcache.v1.storage_backend.GdsBackend can't run here — lmcache 0.4.6 ships a CUDA-13

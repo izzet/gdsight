@@ -1,4 +1,4 @@
-# GDS-Trace — Smoke Test Results (Chameleon bare-metal A100) — **TRUE GDS ACHIEVED**
+# GDSight — Smoke Test Results (Chameleon bare-metal A100) — **TRUE GDS ACHIEVED**
 
 **Run by:** Claude (driven by Izzet Yildirim) · **Date:** 2026-06-07
 **Node:** Chameleon bare-metal (CHI@TACC `compute_liqid`-class), PowerEdge R6525

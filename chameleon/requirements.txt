@@ -1,4 +1,4 @@
-# GDS-Trace Python env (kvikio / DALI / cupy) — install into /opt/gds-venv
+# GDSight Python env (kvikio / DALI / cupy) — install into /opt/gds-venv
 # Needs both NVIDIA indexes:
 --extra-index-url https://pypi.nvidia.com
 --extra-index-url https://developer.download.nvidia.com/compute/redist

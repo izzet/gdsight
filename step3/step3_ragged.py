@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""step3_ragged.py — Step 3 of the GDS-Trace Appendix-A plan.
+"""step3_ragged.py — Step 3 of the GDSight Appendix-A plan.
 
 Drive kvikio (cuFile/GDS) over a dataset of records (offset,size) read into GPU memory, in three
 modes:

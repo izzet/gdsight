@@ -39,7 +39,7 @@ nvidia-fs.ko"; `gds_stats` and `/proc/driver/nvidia-fs` give aggregate counters 
 | NVTX → Nsight | ✓ | ✗ | ✗ | ✗ | n/a (built-in, API only) |
 | gds_stats / nvidia-fs /proc | agg | agg | ✗ | ✗ | n/a (aggregate) |
 | NVIDIA-guide eBPF (funccount/funclatency) | ✗ | per-fn² | ✗ | ✗ | n/a |
-| **GDS-Trace (eBPF, this work)** | **✓** | **✓** | **✓** | **✓ (corr_id + LBA)** | — |
+| **GDSight (eBPF, this work)** | **✓** | **✓** | **✓** | **✓ (corr_id + LBA)** | — |
 
 ¹ a per-op cuFile hook is *feasible* in GOTCHA (we prototyped one) but sees only the API. ² NVIDIA's
 guide demonstrates BCC `funccount`/`funclatency` on *individual* nvidia-fs/p2p functions in isolation
@@ -63,7 +63,7 @@ less than our uprobe.** We report this directly rather than hide it:
 | LD_PRELOAD / GOTCHA (userspace GOT) | ~tens of ns | GOTCHA; LD_PRELOAD ≈6.8 ns (arXiv:2412.05784) |
 | userspace eBPF (bpftime uprobe) | ~0.31 µs | bpftime (arXiv:2311.07923) |
 | kernel eBPF uprobe (our cuFile probe) | ~3.2 µs | bpftime (arXiv:2311.07923) |
-| **GDS-Trace cuFile uprobe — measured here** | `[MEASURE]` | this work |
+| **GDSight cuFile uprobe — measured here** | `[MEASURE]` | this work |
 
 `[MEASURE]` = a `gdsio`/kvikio API-call microbench: GOTCHA-hooked cuFile vs our uprobe-hooked cuFile,
 ns/call. Expected outcome: GOTCHA wins at the API layer; we state it plainly.

@@ -1,9 +1,9 @@
-# Worked examples: same problem, what each tool tells you to do, what GDS-Trace adds
+# Worked examples: same problem, what each tool tells you to do, what GDSight adds
 
 For each use case: the **symptom**, the **fix a practitioner derives from each existing tool** (and why it
-is wrong, incomplete, or mis-directed), then **what GDS-Trace adds on top** and **the solution that
+is wrong, incomplete, or mis-directed), then **what GDSight adds on top** and **the solution that
 unlocks**. The pattern is consistent — current tools report *true but incomplete* facts (an aggregate, or
-one layer); GDS-Trace adds the missing **per-op cross-layer link** that turns those facts into a
+one layer); GDSight adds the missing **per-op cross-layer link** that turns those facts into a
 specific, correct, *measured* fix. Numbers are measured on this node (A100 + NVMe, ext4 `data=ordered`);
 "measured" = we ran the fix, "prescribed" = the fix follows directly from the attributed mechanism.
 
@@ -16,7 +16,7 @@ specific, correct, *measured* fix. Numbers are measured on this node (A100 + NVM
 | spec sheet / `sysfs` / lore | "512-B blocks, 2560 B aligned, 1.0×" → *do nothing* | — | — | **"bigger I/O is better"** → *raise cap to MDTS (2048)* |
 | timing tracer (`corr_id`) | 87% unattributed → *no signal* | **0% correct, 94% mis-billed to large class** → *optimize the large reads (WRONG)* | mis/!attributes async → *no signal* | — |
 | p50/mean dashboards | — | — | "p50 141 µs, healthy" → *do nothing* | — |
-| **GDS-Trace (ours)** | effective grid = **4096 B**, class-B **3.2×** | **91% of ops bypass GDS → POSIX**, 2.67× | class-B **p99 19×** via HoL behind large reads | `A_cmd`=⌈S/1280⌉ but **conserved-occupancy** |
+| **GDSight (ours)** | effective grid = **4096 B**, class-B **3.2×** | **91% of ops bypass GDS → POSIX**, 2.67× | class-B **p99 19×** via HoL behind large reads | `A_cmd`=⌈S/1280⌉ but **conserved-occupancy** |
 | **→ solution** | align/pad/coalesce to measured 4096 → **1.0×, 1.8× goodput** (measured) | coalesce B above threshold → **POSIX→GDS, 2.67→1.0×, 2000→94 cmds** (measured) | segregate classes → **p99 4080→216 µs** (measured) | **DON'T raise the cap — throughput/tail-neutral here** (2.44→2.39 GiB/s; p99 4080→4058); only helps on cmd-rate-bound HW (measured) |
 
 ---
@@ -32,7 +32,7 @@ efficiency); the GPU waits on storage.
 | device `sysfs` / NVMe spec | block size **512 B** → 2560 B is 5 aligned sectors | none — "already aligned, 1.0×" | wrong: real cost is 3.2× |
 | Nsight / cuFile API | batch submits normal | none | problem persists |
 
-**What GDS-Trace adds.** Per-op, requested-vs-device bytes on the true-P2P path: the **effective** read
+**What GDSight adds.** Per-op, requested-vs-device bytes on the true-P2P path: the **effective** read
 granularity is **4096 B** (measured — every aligned read moves 4096 B, not the documented 512), so the KV
 class amplifies **3.2×**, with offsets at `off mod 4K = 3072`. The closed form names the cause and the
 fix granularity (4096, not the spec's 512).
@@ -53,7 +53,7 @@ on input; loaders busy.
 | `nvidia-smi` | GPU idle, waiting on input | more prefetch / loader threads | doesn't touch the bypass |
 | timing tracer (`corr_id`) | **0% correct on small class; 94% MIS-billed to the large class** | **"optimize the large reads"** | **WRONG target** — large reads are already optimal |
 
-**What GDS-Trace adds.** Per-op LBA shows **2000 of 2200 ops (91%) never entered GDS** — they fell below
+**What GDSight adds.** Per-op LBA shows **2000 of 2200 ops (91%) never entered GDS** — they fell below
 kvikio's 16 KiB threshold and ran as POSIX `pread` (CPU-staged, no P2P) — *and* those reads amplify
 **2.67×** at the device. The aggregate (1.05×) and the API view (healthy) both hide this; timing actively
 mis-points you at the wrong class (0% correct, 95% mis-billed to class A).
@@ -68,7 +68,7 @@ kvikio, same class-A workload, only class B coalesced (`tools/run_ucb_kvikio_fix
 | corr_id correctness | 0% (95% mis-billed) | 100% |
 
 The fix moves B onto the fast path *and* eliminates the amplification; the very tool that was blind to
-the problem (`gds_stats`) now sees class B (294 cuFileRead vs 200), because the fix that GDS-Trace
+the problem (`gds_stats`) now sees class B (294 cuFileRead vs 200), because the fix that GDSight
 prescribed put it on GDS. Wall-clock is ~1.2× here (B is a small byte-share; the win is larger under a
 heavier small-read mix or bandwidth contention).
 
@@ -84,7 +84,7 @@ while p50 and device utilization look normal.
 | `iostat` | device util moderate, no saturation | none | dead end |
 | `gds_stats` | aggregate API latency normal | none | dead end |
 
-**What GDS-Trace adds.** Per-op tail attribution: the small class's **p99 inflates 19×** (216→4080 µs,
+**What GDSight adds.** Per-op tail attribution: the small class's **p99 inflates 19×** (216→4080 µs,
 p50 untouched) and the cause is **head-of-line blocking** — slow small ops are precisely those whose
 `[ts,ts+dur]` window overlaps a large-region NVMe command (FAST ops: 0 overlapping large cmds; SLOW ops:
 stuck behind a large read). The cost is attributed per op to the specific large reads it queued behind.
@@ -104,7 +104,7 @@ the command count.
 | `iostat` / `blktrace` | many commands per read, high IOPS | **raise `max_sectors_kb` / merge I/O** | seems obviously good |
 | NVMe tuning lore / docs | soft cap 1280 KiB < hardware MDTS 2048 | **raise the cap to 2048** | "bigger I/O, fewer cmds, faster" |
 
-**What GDS-Trace adds.** Per-op, `A_cmd = ⌈S / 1280 KiB⌉` — the block-layer *soft* cap (1280) binds,
+**What GDSight adds.** Per-op, `A_cmd = ⌈S / 1280 KiB⌉` — the block-layer *soft* cap (1280) binds,
 below the hardware MDTS (2048) — *and* `A_byte = 1.000` (command splitting moves no extra bytes). Raising
 the cap 1280→2048 halves the command count (4 MiB: 4→2 cmds), but measured it is **throughput- and
 tail-neutral**: 2.443→2.388 GiB/s, p99 4080→4058 µs. Command chunking is **conserved-occupancy** — the
@@ -117,7 +117,7 @@ so the effort is spent only when it pays. (`findings.md` R1/R3, `interference.md
 ## The throughline
 In every case the existing tools are *not lying* — they report a correct aggregate or single-layer fact.
 But that fact supports only generic moves (add hardware, add concurrency, "look elsewhere"), or — for a
-command-rate symptom — a *plausible but futile* one. GDS-Trace's per-op cross-layer attribution is the
+command-rate symptom — a *plausible but futile* one. GDSight's per-op cross-layer attribution is the
 piece that, **on this system**, converts those true-but-insufficient observations into the right call:
 the correct, specific, measured fix when there is one (UC-A/B/C — even the *parameter*, 4096 not the
 documented 512, is measured), and a confident **"don't bother"** when there is not (UC-D). The value is

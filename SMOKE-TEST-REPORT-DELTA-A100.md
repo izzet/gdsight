@@ -1,4 +1,4 @@
-# GDS-Trace — Pre-proposal Smoke Test Results (NCSA **Delta**, A100)
+# GDSight — Pre-proposal Smoke Test Results (NCSA **Delta**, A100)
 
 **Run by:** Claude (interactive, driven by Izzet Yildirim) · **Date:** 2026-06-06
 **Node:** `gpua054.delta.ncsa.illinois.edu` (NCSA **Delta**, *not* DeltaAI), Slurm job `18923989`

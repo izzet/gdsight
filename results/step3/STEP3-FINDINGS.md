@@ -69,12 +69,12 @@ latency-bound at ~1.2 GiB/s — same for every mode.)
 4. **It can't be forced off.** `KVIKIO_COMPAT_MODE=OFF` does not push ragged reads onto GDS and does
    not error — the per-read fallback is silent and unavoidable from config.
 
-## Why this validates the GDS-Trace premise / architecture
+## Why this validates the GDSight premise / architecture
 
 The pathology the project predicted — *a realistic vendor reader silently servicing a subset of ops
 off the GDS path, invisible to coarse tools* — reproduces here **without trying to break anything**.
 Critically, it is invisible to both throughput **and** `gds_stats`, because the decision is made at
-the **kvikio↔cuFile boundary**. That is precisely the layer GDS-Trace proposes to instrument via
+the **kvikio↔cuFile boundary**. That is precisely the layer GDSight proposes to instrument via
 **GOTCHA/LD_PRELOAD over the cuFile API** (the DFTracer interposer prototyped on DeltaAI), which
 would attribute, per operation, *which app read / which dataset chunk* took POSIX vs GDS — the
 attribution neither bandwidth nor `gds_stats` provides.
@@ -179,7 +179,7 @@ it **`dlsym`'s cuFile** (so LD_PRELOAD, which only interposes dynamic-linker res
 it) **and uses the async/batch API** (`cuFileReadAsync`, `cuFileBatchIOSubmit`), **not** plain
 `cuFileRead`. The bypassed (`.npy`) reads surface as neither cuFile nor libc `pread64`.
 
-**This is the architectural finding for GDS-Trace:**
+**This is the architectural finding for GDSight:**
 1. The tracer must use **GOTCHA** (binary GOT patching, wraps `dlsym`'d symbols when installed before
    the reader resolves them) — **LD_PRELOAD alone is insufficient.** This is exactly why DFTracer/
    brahma use GOTCHA. → fold the hooks into `external/dftracer/src/dftracer/core/brahma/cufile.cpp`.

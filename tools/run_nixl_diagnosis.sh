@@ -41,7 +41,7 @@ run_arm() { # label fix_source batch align coalesce
 echo "reqB (useful KV bytes) = $(awk "BEGIN{printf \"%.2f\",$reqB/1048576}") MiB"
 run_arm "BASELINE"          "--"      64  3072 0
 run_arm "OBVIOUS:batch2x"   "gds_stats/iostat" 128 3072 0
-run_arm "OURS:align4K"      "GDS-Trace" 64 0    0
-run_arm "OURS:coalesce"     "GDS-Trace" 64 0    65536
+run_arm "OURS:align4K"      "GDSight" 64 0    0
+run_arm "OURS:coalesce"     "GDSight" 64 0    65536
 sudo pkill -9 -f 'sbin/datacrumbs run' >/dev/null 2>&1 || true
 echo "DONE -> $CSV"

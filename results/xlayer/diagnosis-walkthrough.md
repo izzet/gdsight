@@ -43,7 +43,7 @@ establish across batch 1→128 (all 3.20×, `nixl-e2e-complete.md` §2b). **You 
 this with anything the current tools suggest, because they never revealed what the wasted bytes are.**
 
 ## Step 4 — What *our* tool additionally shows, and how the fix falls out of it
-GDS-Trace attributes per op, across layers, so it reports not a device total but a per-class law:
+GDSight attributes per op, across layers, so it reports not a device total but a per-class law:
 
 > class-B KV reads: **A_byte = 3.20×** — each 2560 B `cuFileBatchIOSubmit` op maps to an **8192 B** span
 > of `nvme_setup_cmd`s, with `nvfs_get_p2p_dma_mapping` firing (true P2P, not staging), at file offsets
@@ -63,8 +63,8 @@ hypotheses they support are "more parallelism" or "more hardware," both of which
 |---|--:|--:|--:|---|
 | baseline | 15.62 MiB | 3.20× | 94.7 MiB/s | — |
 | obvious: batch 2× (current tools) | 15.62 MiB | 3.20× | 65.5 | **no help** |
-| **align 4K (GDS-Trace)** | **7.81 MiB** | **1.60×** | 94.0 | **device bandwidth halved** (free layout change) |
-| **coalesce (GDS-Trace)** | **4.94 MiB** | **1.01×** | **170.1** | **amplification eliminated + 1.8× goodput** |
+| **align 4K (GDSight)** | **7.81 MiB** | **1.60×** | 94.0 | **device bandwidth halved** (free layout change) |
+| **coalesce (GDSight)** | **4.94 MiB** | **1.01×** | **170.1** | **amplification eliminated + 1.8× goodput** |
 
 Coalescing collapses both the wasted bytes (3.2×→1.0×, the drive now reads only what is used) and the
 command count (2000 tiny reads → large aligned reads), yielding a measured **1.8× goodput** on the same
@@ -88,7 +88,7 @@ answers **512 B** (logical and, on this drive, physical), which predicts *no pro
 | device LBA (`/sys/.../logical_block_size`) | **512 B** | 5×512 = exact → **1.00× ("aligned, fine")** |
 | NVMe `physical_block_size` / `minimum_io_size` | **512 B** | **1.00×** |
 | ext4 block size (`tune2fs`) | 4096 B | 1.60× |
-| **measured effective, GDS path (GDS-Trace)** | **4096 B** | **1.60× aligned / 3.20× as laid out** |
+| **measured effective, GDS path (GDSight)** | **4096 B** | **1.60× aligned / 3.20× as laid out** |
 
 (Reproducible: `tools/probe_effective_granularity.sh` → `results/xlayer/effective-granularity.txt`,
 which measures device-bytes-per-aligned-read = 4096 for every request size 512…4096 B, 8192 for 6144 B —
@@ -104,7 +104,7 @@ queryable a priori is the **per-op amplification**: that the KV class lands sub-
 access geometry × file layout, and **only per-op cross-layer measurement gives it**. It is also
 **different on another system** (a 4Kn device, a 1 KiB/2 KiB-block FS, XFS, or a larger controller mapping
 unit change the grid; the access pattern changes the factor). On such a system the amplification — and the
-right fix — changes; GDS-Trace re-derives
+right fix — changes; GDSight re-derives
 it by measurement, documentation cannot.
 
 And the **magnitude is equally a measured, per-(size×system) quantity, not a constant**: across the same
@@ -118,7 +118,7 @@ Three observers, three wrong moves, one correct fix — and the correct fix is *
 system-specific*:
 - **gds_stats / iostat** → "device busy, GDS healthy" → *add concurrency* → A_byte stays 3.20×, no gain.
 - **the spec sheet / device block size (512 B)** → "2560 B is aligned, 1.00×" → *do nothing* → 3.2× waste persists.
-- **GDS-Trace** (requested-vs-device, per op, cross-layer) → "effective granularity is **4096 B**, this
+- **GDSight** (requested-vs-device, per op, cross-layer) → "effective granularity is **4096 B**, this
   class amplifies **3.20×**" → *align/pad to the measured 4096 and coalesce* → A_byte 1.0×, 1.8× goodput.
 
 The contribution is not the textbook lever. It is the cross-layer measurement that, **on this specific

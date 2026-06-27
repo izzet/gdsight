@@ -3,7 +3,7 @@
 to GPU via cuFile/GDS (set LIBCUDF_CUFILE_POLICY=ALWAYS|GDS|KVIKIO). A Parquet file is row-groups x
 column-chunks of wildly varying size (KB..MB) + per-column encodings, so cuDF issues a heterogeneous
 mix of cuFile reads — exactly where per-op/per-column attribution could surface a non-obvious waste that
-aggregate counters blend. Run under GDS-Trace. Usage: cudf_read_parquet.py [--path P] [--iters N]"""
+aggregate counters blend. Run under GDSight. Usage: cudf_read_parquet.py [--path P] [--iters N]"""
 import argparse, os, time
 
 

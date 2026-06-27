@@ -1,4 +1,4 @@
-# GDS-Trace — Motivating evidence: the silent sub-threshold POSIX fallback that GDS tools can't see
+# GDSight — Motivating evidence: the silent sub-threshold POSIX fallback that GDS tools can't see
 
 **A rigorous, reproducible scenario** (Chameleon A100, true GDS) where a *realistic* workload silently
 runs a large fraction of its reads on POSIX instead of GDS, and **`gds_stats` — NVIDIA's GDS
@@ -69,7 +69,7 @@ restore (Tutti), metadata-heavy or variable-chunk (Zarr/Parquet) datasets — wh
 the 16 KiB line. A user configures GDS, `gdscheck`/`gds_stats` look clean (`posix=0`), and a large
 fraction of their I/O is silently on POSIX at a fraction of the bandwidth.
 
-## What would fix it (→ GDS-Trace)
+## What would fix it (→ GDSight)
 Per-operation, cross-layer attribution at the **reader↔cuFile boundary** (GOTCHA over the full cuFile
 API surface incl. async/batch — LD_PRELOAD is insufficient, see `results/step3/STEP3-FINDINGS.md`),
 **reconciled with the kernel nvidia-fs counters**, emitting per-op: GDS-DMA vs POSIX, size, file/chunk,

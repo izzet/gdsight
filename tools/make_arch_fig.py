@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GDS-Trace architecture diagram -> results/figures/fig_arch.{pdf,png}.
+"""GDSight architecture diagram -> results/figures/fig_arch.{pdf,png}.
 Layered GDS data path (one read) + 3 probe taps + corr_id eBPF maps + offline two-basis analyzer."""
 import os, matplotlib
 matplotlib.use("Agg")

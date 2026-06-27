@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Drive DFAnalyzer (datacrumbs/stack preset) on a GDS-Trace cross-layer trace and surface the
+"""Drive DFAnalyzer (datacrumbs/stack preset) on a GDSight cross-layer trace and surface the
 per-op cuFile -> NVMe hierarchy (the amplification). Usage: dfa_drive.py <trace_dir> [tmp_dir]"""
 import sys
 import pandas as pd

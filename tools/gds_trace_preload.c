@@ -4,7 +4,7 @@
  * others via libc POSIX (pread/read) — bypassing GDS — and gds_stats (cuFile-only) can't see the
  * POSIX ones. This LD_PRELOAD interposer hooks BOTH layers and logs every read on the dataset, so
  * each operation is attributed GDS vs POSIX-bypass with file/offset/size = the per-op cross-layer
- * view GDS-Trace proposes (to be folded into DFTracer's brahma cuFile module; see external/dftracer).
+ * view GDSight proposes (to be folded into DFTracer's brahma cuFile module; see external/dftracer).
  *
  *   cc -shared -fPIC -O2 -o libgdstrace.so gds_trace_preload.c -ldl -lpthread
  *   GDS_TRACE_OUT=trace.tsv GDS_TRACE_FILTER=gdstrace-smoke LD_PRELOAD=./libgdstrace.so <app>

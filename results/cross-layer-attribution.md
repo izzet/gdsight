@@ -19,7 +19,7 @@ regimes (A100, CUDA 12.6, nvidia-fs 2.28; `dataset.bin` on raw `nvme1n1`; `tools
 We traced **NIXL** — the transfer library under NVIDIA Dynamo disaggregated inference (`external/nixl`,
 `nixl-cu12` wheel) — reading file→GPU (VRAM) through its **GDS backend**. NIXL drives GDS via the cuFile
 **batch API** (`cuFileBatchIOSubmit`; the `GDS_MT` backend uses `cuFileRead`/`Write`), one entry per
-transfer here. GDS-Trace observes it end-to-end: **2000 `cuFileBatchIOSubmit` → 2000 `nvfs_io` (true P2P)
+transfer here. GDSight observes it end-to-end: **2000 `cuFileBatchIOSubmit` → 2000 `nvfs_io` (true P2P)
 → 2003 NVMe**, and attributes per-op **both ways — corr_id 99.9%, LBA 97.2%, agreeing 97.3%**: the tool
 attributes the *real engine's* device traffic per logical transfer, validated two independent ways.
 Notes/gotchas: NIXL resolves cuFile from torch's **bundled** libcufile, so catching the cuFile side needs
@@ -28,8 +28,8 @@ BACKEND`, ≤16 ok); and because NIXL submits **count=1 batches** at modest in-f
 collapse here (the collapse is the high-in-flight `cuFileReadAsync` regime above). Reproduce:
 `workloads/nixl_gds_read.py`.
 
-### Cross-check: current tools vs GDS-Trace (NIXL, measured)
-| signal | nvidia-fs / gds_stats (GDS aggregate) | iostat / diskstats (device) | GDS-Trace |
+### Cross-check: current tools vs GDSight (NIXL, measured)
+| signal | nvidia-fs / gds_stats (GDS aggregate) | iostat / diskstats (device) | GDSight |
 |---|---|---|---|
 | GDS engaged | **sees it**: 2000 reads, +125 MiB | — | — |
 | device IOs | — | **+2008 IOs, +125 MiB** | — |
@@ -38,7 +38,7 @@ collapse here (the collapse is the high-in-flight `cuFileReadAsync` regime above
 As with DeepNVMe, the aggregates give totals (GDS reads / device IOs) but **neither ties a device command to
 a logical transfer.** For NIXL that gap is sharper because it's an **async, concurrent** engine: when many
 KV-transfers overlap on the device, *"which transfer caused this command / latency"* is structurally
-unanswerable from aggregates — GDS-Trace attributes it per-op (corr_id 99.9%, with LBA 97.2% as the
+unanswerable from aggregates — GDSight attributes it per-op (corr_id 99.9%, with LBA 97.2% as the
 deterministic backup for the decoupled path). (64 KiB transfers ≈ 1 device cmd each, so there's no
 block_size/device-cmd-count axis here as there is for DeepNVMe; NIXL's distinctive axis is the async
 per-op attribution.)

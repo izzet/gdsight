@@ -6,7 +6,7 @@ looks like one healthy GDS stream. The question: can per-op below-cuFile attribu
 B silently wastes half its NVMe bandwidth, when Nsight (uniform cuFile latency) and gds_stats (aggregate)
 cannot? The two tables are distinguishable in a trace by cuFileRead size (4096 vs 3072).
 
-Run under: nsys (NVTX), GDS-Trace, and alongside gds_stats/nvidia-fs/iostat. Usage:
+Run under: nsys (NVTX), GDSight, and alongside gds_stats/nvidia-fs/iostat. Usage:
   mixed_retrieval.py [--path FILE] [--nreads N] [--seed N]
 """
 import argparse, ctypes, os, random, time

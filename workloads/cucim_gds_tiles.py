@@ -3,7 +3,7 @@
 pathology GDS use case. Reads level-0 JPEG tiles of an Aperio SVS directly to GPU with kvikio (the path
 cuCIM's gds_whole_slide benchmark uses). WSI tiles are small (~2-34 KB) and strided, so they sit *below*
 kvikio's default 16 KiB GDS threshold -> they silently use POSIX, not GDS, unless KVIKIO_GDS_THRESHOLD=0.
-Run under GDS-Trace to see, per-tile, which reads actually hit GDS vs silently fall to POSIX, and the
+Run under GDSight to see, per-tile, which reads actually hit GDS vs silently fall to POSIX, and the
 byte-amplification of the small/unaligned tiles. Usage: --ntiles 4000 [env KVIKIO_GDS_THRESHOLD=0 to force]"""
 import argparse, os, time
 import numpy as np

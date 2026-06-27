@@ -34,7 +34,7 @@ gdsio `-i 4M` trace. The **stack preset nests events by time-containment per (pi
 - **cross-layer: all 256 `nvme_setup_cmd` → `root_func = cuFileRead`.**
 - **AMPLIFICATION: 64 cuFileRead → 256 NVMe cmds = 4.00× (mean 4.0/op, min 4, max 4).**
 
-⇒ **GDS-Trace = DataCrumbs (cuFile + NVMe plugins) → DFTracer trace → DFAnalyzer (stack hierarchy) →
+⇒ **GDSight = DataCrumbs (cuFile + NVMe plugins) → DFTracer trace → DFAnalyzer (stack hierarchy) →
 per-op cross-layer GDS attribution + amplification.** No NVIDIA tool produces this.
 
 Driving it surfaced + fixed **3 pandas≥2.2 bugs** in the `feat/datacrumbs` branch:
@@ -184,7 +184,7 @@ Upgraded the nvidiafs plugin: `nvfs_io_start_op`→`nvfs_io_complete` fire on th
 - GDS read: cuFileRead 0.338 s = **self 0.9% (cuFile/userspace) + child 99.1% (nvidia-fs+device via
   nvfs_io)**; overlap factor 3.97× (4 workers, 0 idle).
 - **Bounce/compat induction:** reading a non-GDS mount (root ext4, no `data=ordered`) → cuFile compat;
-  gdsio still prints `XferType: GPUD`, but GDS-Trace shows `cuFileRead` with **0 nvfs_io** → `pread64`,
+  gdsio still prints `XferType: GPUD`, but GDSight shows `cuFileRead` with **0 nvfs_io** → `pread64`,
   kernel `nvidia-fs Reads` Δ = **0**, and **5.7× slower** per op (0.338→1.919 s). Unaligned `-U` does
   NOT bounce (still true P2P, byte-amplified only).
 - DFAnalyzer fix: `fix_dtypes` swept `size_bin_*_mean` (fractional) into Int64 int_cols → crashed on the
@@ -227,7 +227,7 @@ args.corr_id -> a column; dfa_drive.py attributes by corr_id.
 
 ## Real HF model (Qwen2.5-3B) + concurrent-loader limitation (2026-06-08)
 Loaded a real 2-shard model (5.75 GiB, 434 tensors) via fastsafetensors_load.py --path <dir> (now
-supports a model dir = all *.safetensors, vLLM-style). GDS-Trace: 2 cuFileRead + 2 cuFileHandleRegister
+supports a model dir = all *.safetensors, vLLM-style). GDSight: 2 cuFileRead + 2 cuFileHandleRegister
 -> 5168 NVMe, true P2P, 2584x amplification, 5886 MiB conserved, 2.78 GiB/s. Works on a genuine model.
 LIMITATION: fastsafetensors loads shards CONCURRENTLY (2 overlapping cuFileReads + shared worker pool),
 so corr_id attribution drops to ~36% (count>1 -> fallback refuses to guess which read a worker op serves;
@@ -267,13 +267,13 @@ genuine workload, not gdsio -U.
 
 ## Rigor check on the byte-amp result (2026-06-08)
 Validated the 2x byte-amp 4 independent ways: (1) first-principles 4KiB-block math per row size
-{1024:4,2048:2,3072:2,4096:1,6144:1.33,8192:1}x matches measurement; (2) GDS-Trace corr_id 2.000x;
+{1024:4,2048:2,3072:2,4096:1,6144:1.33,8192:1}x matches measurement; (2) GDSight corr_id 2.000x;
 (3) nvidia-fs readMiB 47/23.4=2.0x (oracle, independent of our kprobe); (4) /proc/diskstats 23.58/11.72
 =2.0x (independent of tracer AND nvidia-fs). ALIGNED baseline = exactly 1.000x rules out readahead
 (would inflate aligned) AND double-counting (would scale aligned to 2x). HONEST: the effect is textbook
 O_DIRECT/4KiB-alignment (cuFile requires 4KiB-aligned offsets) - NOT a new phenomenon. Contribution =
 automatic PER-OP attribution of a known-but-silent effect. Side-by-side: gds_stats/throughput see
-requested only (blind); nvidia-fs/iostat see device total (aggregate, no per-op); GDS-Trace = per-op
+requested only (blind); nvidia-fs/iostat see device total (aggregate, no per-op); GDSight = per-op
 requested-vs-device exact. To detect it today you manually diff two counters from two layers + never get
 per-op.
 
@@ -283,7 +283,7 @@ workloads/mixed_retrieval.py: 4000 interleaved cuFile reads from table A (1024d/
 - gds_stats/nvidia-fs aggregate: 14 req -> 19 device = 1.36x BLENDED (can't localize).
 - Nsight NVTX (nsys, profile.nvtx=true): 4000 cuFileRead ~142us lumped by name, NO device bytes -> blind.
 - iostat/diskstats: ~19MiB device-wide, no attribution.
-- GDS-Trace + dfa_drive byte-amp-by-size: B(3072)=2.015x WASTE, A(4096)=1.000x -> CULPRIT PINPOINTED.
+- GDSight + dfa_drive byte-amp-by-size: B(3072)=2.015x WASTE, A(4096)=1.000x -> CULPRIT PINPOINTED.
 On-par check: our cuFileRead latency 131us ~= Nsight 142us (we add below-cuFile, don't lose cuFile view).
 dfa_drive.py gained a "byte amplification BY cuFile op size" view (corr_id-attributed). Honest: effect
 known (alignment); waste latent on BW-unsaturated drive (cost/scaling issue); size-keyed attribution
@@ -296,20 +296,20 @@ per-op cuFile but stops at the API (no nvfs/nvme).
 gap converges on the 2x byte-amp: device reads 512 vs 256 MiB (2x) for the same 256MiB requested, delivers
 ~2x less useful throughput. Fixing alignment ~doubles throughput on the SAME drive. Cross-check: at
 saturation gds_stats/iostat show device busy + low useful -> wrong conclusion "buy faster storage";
-GDS-Trace shows byte-amp 2x -> "align/pack, ~2x free"; Nsight sees uniform per-op cuFile latency, no
+GDSight shows byte-amp 2x -> "align/pack, ~2x free"; Nsight sees uniform per-op cuFile latency, no
 device bytes. So the waste is LATENT at low load (earlier framing) but BITES at serving concurrency.
 Grounded: DLRM-on-SSD (512B-of-4KB read amplification; FlashEmbedding APSys'21, arXiv:2110.11489) +
-ESPN (arXiv:2312.05417, manually aligns embeddings 2 blocks->1 = the fix GDS-Trace flags automatically).
+ESPN (arXiv:2312.05417, manually aligns embeddings 2 blocks->1 = the fix GDSight flags automatically).
 Our 4KiB-unaligned = conservative 2x; documented sub-block embedding case up to 8x.
 
 ## CORRECTION (honesty): who can see the byte-amp discrepancy? (2026-06-08)
 Re-checked: in the HOMOGENEOUS saturation run, existing tools DO see the aggregate 2x -- iostat device
 1.18 GB/s vs app useful 0.59 GB/s = 2x; diskstats 4096 MiB device vs 2048 MiB requested = 2x. So
-GDS-Trace is NOT uniquely needed to DETECT the 2x in a uniform workload (an admin diffing iostat vs app
+GDSight is NOT uniquely needed to DETECT the 2x in a uniform workload (an admin diffing iostat vs app
 throughput catches it). (Earlier 'buy faster storage trap' framing overclaimed.) The UNIQUE value is
 ATTRIBUTION in a MIXED workload (mixed_retrieval): iostat/gds_stats show one blended 1.36x and cannot say
 which table; only per-op size/corr_id attribution pinpoints B=2.015x vs A=1.000x. Detection of aggregate
-= existing tools; per-op/per-tensor attribution in heterogeneous workloads = GDS-Trace. Docs corrected.
+= existing tools; per-op/per-tensor attribution in heterogeneous workloads = GDSight. Docs corrected.
 
 ## Grounded real workload: ESPN multi-vector retrieval (2026-06-08)
 Survey (actually searched, not from memory): runnable cuFile/GDS benchmarks are homogeneous (gdsio,
@@ -318,9 +318,9 @@ stack. Real heterogeneous cuFile workload = ESPN (arXiv:2312.05417, published GD
 params: CLS 128-dim fp16 = 256B + BOW ~2KB (32-dim fp16/token), 4KiB blocks, ~1000 docs/query, latency-
 bound; authors packed CLS+BOW (2 blocks -> 1/doc). workloads/espn_retrieval.py (naive vs aligned over
 dataset.bin). naive 3763 docs/s, 8000 ops, 31 MiB device; aligned 7646 docs/s (2.03x), 4000 ops, 15 MiB.
-GDS-Trace per-read-class: naive CLS(256B)=16.0x WASTE, BOW(2KB)=2.0x; aligned packed(2304B)=1.78x.
+GDSight per-read-class: naive CLS(256B)=16.0x WASTE, BOW(2KB)=2.0x; aligned packed(2304B)=1.78x.
 RIGOR cross-check: existing tools see the 2x AGGREGATE (docs/s app; nvidia-fs n= ops 2x; readMiB/iostat
-device 2x; /proc/PID/io per-process; Nsight lumped). ONLY GDS-Trace names the 256B CLS class as the 16x
+device 2x; /proc/PID/io per-process; Nsight lumped). ONLY GDSight names the 256B CLS class as the 16x
 redundant fix-target from the trace alone. Honest scope: automated per-class diagnosis (which class), not
 revealing an invisible effect; ESPN already found it manually; CLS is obvious to an expert -> tool value
 grows where the wasteful class is NON-OBVIOUS (still to be found). Also re-confirmed /proc/self/io
@@ -328,7 +328,7 @@ read_bytes DOES count GDS reads (300MiB) -> per-process attribution is NOT a gap
 
 ## Real workload: RAPIDS cuDF read_parquet -- HONEST NEGATIVE (2026-06-08)
 cuDF 26.04 read_parquet (NYC taxi, 2.96M rows x 19 cols x 3 row-groups, 47.6MiB) via cuFile (GDS engages
-even at LIBCUDF_CUFILE_POLICY=OFF; readMiB +48). workloads/cudf_read_parquet.py. GDS-Trace: 58
+even at LIBCUDF_CUFILE_POLICY=OFF; readMiB +48). workloads/cudf_read_parquet.py. GDSight: 58
 per-column-chunk cuFileReads, heterogeneous 17KB-4MB (match parquet column-chunk sizes; >4MB sliced to
 4MiB). Per-op byte-amp: small cols 1.1-1.4x, large ~1.0x; AGGREGATE ~1.0x (48=48 MiB). device-cmd amp
 2.05x (MDTS, bytes conserved). corr_id 94% (cuDF thread-pool -> some concurrent reads -> count>1 ambig).
@@ -342,7 +342,7 @@ Built elbencho v3.1-6 with cufile/gds (deps: libboost-all-dev, libaio-dev). Subm
 (was wrongly cloned to ~/ first -> moved; convention: external tools under external/). Links SYSTEM
 libcufile -> traceable with NO LD_PRELOAD trick (unlike torch/cudf bundled libcufile).
 - --gds read of 4GB dataset.bin: 2970 MiB/s (drive ceiling), readMiB=4096=1.0x byte-amp (O_DIRECT aligned).
-- Full GDS-Trace (512MB, -b 1M -t4 --gds): 512 cuFileRead + 1 cuFileHandleRegister -> 512 nvfs_io ->
+- Full GDSight (512MB, -b 1M -t4 --gds): 512 cuFileRead + 1 cuFileHandleRegister -> 512 nvfs_io ->
   768 p2p/nvme, corr_id attribution 100%, device-cmd amp 1.5x (MDTS), bytes conserved (512=512). Validates
   the tool on a standard 3rd-party benchmark, clean cross-check.
 - bufreg test: --gds (bufreg) = true P2P (p2p 768, shadow 4); --cufile WITHOUT --gdsbufreg = 0 nvfs
@@ -370,11 +370,11 @@ misconfigured deployment -- not this clean node. Reinforces: tool value = per-op
 results/curated-pathologies.md + tools/run_curated_suite.sh: 3 realistic curated GDS anti-patterns where
 the STANDARD-TOOL DECISION is wrong and per-op attribution gives the right fix.
 - Case 1 'buy faster storage' (unaligned layout): gdsio 4K randread -w64 aligned 1.18 vs -U 0.43 GiB/s
-  (~2.8x); iostat/gds_stats -> "buy faster drive"; GDS-Trace byte-amp 2x -> "align data, 2.8x free".
+  (~2.8x); iostat/gds_stats -> "buy faster drive"; GDSight byte-amp 2x -> "align data, 2.8x free".
 - Case 2 'GDS is healthy' (kvikio 16KiB threshold): 4000 reads 60% small -> nvidia-fs n+1617 (large only);
-  gds_stats "GDS working"; GDS-Trace 1617 cuFileRead + 2385 pread64 -> "60% silently POSIX, batch them".
+  gds_stats "GDS working"; GDSight 1617 cuFileRead + 2385 pread64 -> "60% silently POSIX, batch them".
   workloads/kvikio_threshold.py.
-- Case 3 'which tensor' (mixed 768d+1024d): aggregate 1.36x; GDS-Trace per-read-class B(3072)=2.015x,
+- Case 3 'which tensor' (mixed 768d+1024d): aggregate 1.36x; GDSight per-read-class B(3072)=2.015x,
   A(4096)=1.000x -> "fix table B". workloads/mixed_retrieval.py.
 HONEST: curated motivating examples on a robust modern stack -> prove the capability + the gap exists,
 NOT demand (each effect is known to experts; the value is automatic per-op attribution -> the fix).
@@ -445,7 +445,7 @@ driver -> use nixl-cu12; import as nixl_cu12). workloads/nixl_gds_read.py: file-
 Findings:
 - NIXL's default GDS backend uses the cuFile BATCH API (cuFileBatchIOSetUp/Submit/GetStatus; symbol scan);
   GDS_MT uses cuFileRead/Write. Real engines drive GDS via batch/async, not plain cuFileRead.
-- GDS-Trace observes it END-TO-END: 2000 cuFileBatchIOSubmit -> 2000 nvfs_io (true P2P) -> 2003 NVMe.
+- GDSight observes it END-TO-END: 2000 cuFileBatchIOSubmit -> 2000 nvfs_io (true P2P) -> 2003 NVMe.
   Per-op attribution: corr_id 99.9%, LBA 97.2%, agreement 97.3% -> real engine attributed, validated 2 ways.
   -> results/cross-layer-attribution.md (NIXL row + section).
 GOTCHAS (for the partner/repro): (1) nixl-cu12 wheel, not `nixl` (cu13). (2) NIXL resolves cuFile from
@@ -474,7 +474,7 @@ overlap_events/intra_op_parallelism) -> per-config device pattern (explain-the-a
 
 ## DeepNVMe Phase 2: explain-the-autotuner + GDS-vs-AIO (2026-06-09) -> results/deepnvme.md
 GDS-vs-AIO A/B (same API): GDS=1024 p2p (true zero-copy), AIO=0 p2p (CPU bounce, libaio->host->cudaMemcpy);
-same device bytes, only GDS-Trace shows which is actually P2P vs host-staged. block_size sweep (1GB):
+same device bytes, only GDSight shows which is actually P2P vs host-staged. block_size sweep (1GB):
 256K->4101 nvme/2.46 GB/s; >=1M->~1024 nvme/2.87 GB/s (saturates; DeepNVMe caps chunks at ~MDTS). Throughput
 gated by device-command count, which block_size controls to a ~1MiB/MDTS floor -> explains why the autotuner
 picks ~1MiB (device-level mechanism, invisible to throughput-only tuning). intra_op_parallelism 1 vs 8: no
@@ -494,20 +494,20 @@ NET (Phases 1-3): trace GDS path + explain autotuner (block_size->device-cmd->MD
 detection + real ZeRO-Inference per-op attribution 98.6%. Honest: DeepNVMe clean+sync -> real-workload
 attribution + explained tuning, NOT a pathology/LBA-win.
 
-## DeepNVMe cross-check: current tools vs GDS-Trace (measured) (2026-06-09)
+## DeepNVMe cross-check: current tools vs GDSight (measured) (2026-06-09)
 Ran the standard tools side-by-side (was missing). nvidia-fs(GDS aggregate) + diskstats(device, =iostat):
 - GDS vs AIO: GDS readMiB +5120 / AIO +0 (nvidia-fs DISTINGUISHES); diskstats IDENTICAL 5125 IOs / 5120 MiB
   for both (iostat BLIND to P2P-vs-bounce).
 - block_size: nvidia-fs SAME (3 cuFile reads, +3072 MiB) for 256K and 4M (BLIND to device-cmd count);
   diskstats device-IOs 12293(256K) vs 3077(4M) (iostat SEES the count).
 => each aggregate tool sees ONE axis, blind to the other (nvidia-fs: GDS-engaged; iostat: device-cmd count);
-NEITHER attributes per-op. GDS-Trace spans both axes + ties to the causing op (P3: 350 reads->25864 cmds 98.6%).
+NEITHER attributes per-op. GDSight spans both axes + ties to the causing op (P3: 350 reads->25864 cmds 98.6%).
 HONEST CORRECTION to Phase 2a wording: nvidia-fs aggregate ALREADY distinguishes GDS-vs-bounce for separate
 runs; our unique value there is PER-OP in a MIXED run, not the distinction itself. -> results/deepnvme.md.
 REMINDER: always run current-tools cross-check alongside our tool (the be-rigorous rule) -- it both tempers
 overclaims and sharpens the contribution (here: the two-axis blindness of the aggregates).
 
-## NIXL cross-check backfill: current tools vs GDS-Trace (measured) (2026-06-09)
+## NIXL cross-check backfill: current tools vs GDSight (measured) (2026-06-09)
 Ran nvidia-fs(GDS aggregate)+diskstats(device) on the NIXL GDS workload (2000x64KiB, inflight 8):
 - nvidia-fs: 2000 GDS reads, +125 MiB. iostat/diskstats: +2008 device IOs, +125 MiB. (64KiB ~= 1 cmd each.)
 - ours (from trace): 2000 cuFileBatchIOSubmit -> 2003 device cmds, corr_id 99.9% + LBA 97.2%.
@@ -526,7 +526,7 @@ tiles>=16KB) + 3289 pread64 (silent POSIX, tiles<16KB) = 82% of WSI tiles SILENT
 kvikio's 16KB threshold). Non-obvious: WSI is the GDS marketing workload but tile size defeats it.
 CROSS-CHECK: gds_stats/cuFileGetStats sees 712 cuFile reads -> "GDS healthy" (BLIND: the 3289 POSIX reads
 never enter cuFile); nvidia-fs readMiB +19 (GDS tiles only, BLIND to POSIX); diskstats +3788 device IOs
-(both paths, can't split). ONLY GDS-Trace (traces cuFileRead AND pread64 per-tile) names the 82% bypass.
+(both paths, can't split). ONLY GDSight (traces cuFileRead AND pread64 per-tile) names the 82% bypass.
 FIX: coalesce tiles to >=16KB (recommended) OR KVIKIO_GDS_THRESHOLD=0 (all GDS but 25.5->42 MiB = 1.65x
 byte-amp). This is the demand proof: a flagship GDS workload where GDS silently doesn't apply to 82% of I/O
 and the GDS health tool says fine. Caveat: kvikio threshold path (cuCIM's benchmark path); read_region
@@ -537,7 +537,7 @@ Rigor check: forcing GDS (KVIKIO_GDS_THRESHOLD=0) was SLOWER (0.82 vs 0.75s) + 1
 bypass is LARGELY CORRECT (GDS doesn't help sub-16KB tiles; that's why the threshold exists). So the finding
 is NOT "flip a flag". It is: (1) the flagship GDS workload barely uses GDS (only 18% of tiles), and gds_stats
 can't tell you (sees 712 reads -> healthy); (2) to actually benefit from GDS on WSI you must RESTRUCTURE
-(coalesce tiles to >=16KB), not flip the threshold. GDS-Trace reveals the gap + the real lever (per-tile
+(coalesce tiles to >=16KB), not flip the threshold. GDSight reveals the gap + the real lever (per-tile
 sizes); standard tools blind. Softened "pathology" -> "GDS-vs-reality gap / under-delivery". Tempered the
 doc title + fix sections. This is honest demand: a recognized workload where GDS silently under-delivers and
 tools are blind to why -- but the fix is restructuring, and forcing GDS is counter-productive.
@@ -547,7 +547,7 @@ workloads/cucim_coalesce_test.py: 4000 contiguous tiles (0% gap), per-tile (4000
 0.395s/+20MiB GDS vs coalesced 1MiB GDS reads (26 reads) 0.020s/+26MiB GDS = 19.5x speedup + true GDS.
 Honest: speedup combines fewer/larger ops + GDS engagement (both from restructure); SEQUENTIAL only (random
 patch gather can't coalesce -> GDS genuinely under-delivers there). So the cuCIM default per-tile path leaves
-19.5x on the table for region scans, and GDS-Trace shows why (small POSIX reads vs coalesced GDS). NEXT:
+19.5x on the table for region scans, and GDSight shows why (small POSIX reads vs coalesced GDS). NEXT:
 investigate read_region(device=cuda) hang, then update GDS-TRACE-PITCH.md.
 
 ## read_region investigation -> CORRECTS the cuCIM finding (2026-06-09)

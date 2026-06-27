@@ -1,6 +1,6 @@
 # gdstrace
 
-Research workspace for **GDS-Trace** — a per-operation, cross-layer tracer correlating **cuFile**
+Research workspace for **GDSight** — a per-operation, cross-layer tracer correlating **cuFile**
 (userspace) ↔ **nvidia-fs** (kernel) ↔ **NVMe**, to attribute GPUDirect Storage (GDS) pathologies
 (silent POSIX fallback, I/O amplification, GPU stall) to the causing application operation. Extends
 DFTracer / DFAnalyzer.

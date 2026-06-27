@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Reproduce the GDS-Trace demos end-to-end: DataCrumbs (cuFile + NVMe plugins) -> DFTracer trace ->
+# Reproduce the GDSight demos end-to-end: DataCrumbs (cuFile + NVMe plugins) -> DFTracer trace ->
 # DFAnalyzer (per-op cross-layer attribution + amplification).
 # Prereqs (see DATACRUMBS-GDS-BUILD-LOG.md): DataCrumbs built/installed in ~/dc-prefix, DFAnalyzer in
 # ~/dfa-venv (dftracer-utils==0.0.5), kvikio/DALI in /opt/gds-venv, GDS mounted, dataset + npy staged.

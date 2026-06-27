@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# setup_pyenv.sh — recreate the GDS-Trace build + Python env (idempotent).
+# setup_pyenv.sh — recreate the GDSight build + Python env (idempotent).
 #   C++/CMake toolchain via apt (system); Python GDS readers in an isolated venv.
 #   Everything lands on the OS root, so it's captured by `cc-snapshot`.
 set -euo pipefail

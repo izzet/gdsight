@@ -1,4 +1,4 @@
-# Prior-art check: "why eBPF" / tracer-overhead comparison for GDS-Trace
+# Prior-art check: "why eBPF" / tracer-overhead comparison for GDSight
 
 Deep-research pass (2026-06-24, adversarially verified — 23/25 claims confirmed 2–3 votes) to decide
 whether the proposed evaluation *"use DFTracer/Recorder/Score-P/TAU/Darshan-DXT to also capture cuFile

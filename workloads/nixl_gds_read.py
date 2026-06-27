@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """Real transfer engine: NVIDIA NIXL (the data-mover under Dynamo disaggregated inference) reading a file
 into GPU memory via its GPUDirect Storage backend (cuFile, VRAM). NIXL transfers are async (post +
-check_xfer_state), so with --inflight>1 many transfers overlap on the device — the regime where GDS-Trace's
-LBA matcher attributes and the timing/thread heuristic degrades. Run under GDS-Trace to attribute the real
+check_xfer_state), so with --inflight>1 many transfers overlap on the device — the regime where GDSight's
+LBA matcher attributes and the timing/thread heuristic degrades. Run under GDSight to attribute the real
 engine's device traffic per logical transfer. GPU buffers via ctypes cudaMalloc (no torch). Usage:
 --nreads 2000 --inflight 32"""
 import argparse, ctypes, os, random, time

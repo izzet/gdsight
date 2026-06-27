@@ -1,4 +1,4 @@
-# GDS-Trace tracer — validated end-to-end results + cross-checks
+# GDSight tracer — validated end-to-end results + cross-checks
 
 The working tracer: **DataCrumbs** (eBPF; cuFile uprobe plugin sync+async+batch with per-op
 size/offset/count, NVMe `nvme_setup_cmd` kprobe with size/sector, TGID worker-thread fix) →
@@ -21,7 +21,7 @@ size/offset/count, NVMe `nvme_setup_cmd` kprobe with size/sector, TGID worker-th
 
 **Amplification is a size-dependent *device* effect, not reader-specific** (NVMe MDTS ~1.25 MiB splits
 larger reads): kvikio ragged (~546 KiB, <MDTS) = **1.0×**, but kvikio 4 MiB = **4.05×** (300 cuFileRead
-→ 1214 NVMe), DALI whole-file = 2.47×, gdsio -i4M = ~4×. GDS-Trace surfaces it per-op for any reader.
+→ 1214 NVMe), DALI whole-file = 2.47×, gdsio -i4M = ~4×. GDSight surfaces it per-op for any reader.
 
 **What no NVIDIA tool shows here:** per-op `cuFileRead{size,offset}` → the exact set of NVMe commands
 it became (with sizes), the device-command amplification, kvikio's dlsym'd/worker-thread reads, and
@@ -36,7 +36,7 @@ The brief's pitch is **cuFile ↔ nvidia-fs ↔ NVMe**; the middle layer is now 
 - **`nvfs_mgroup_pin_shadow_pages`** — the op **staged through a host shadow/bounce buffer** (not
   zero-copy) — i.e. "GDS configured but silently bouncing", the core correctness pathology.
 
-So GDS-Trace now gives a **per-op verdict: was this read actually zero-copy, or bounced?** Validated
+So GDSight now gives a **per-op verdict: was this read actually zero-copy, or bounced?** Validated
 gdsio `-i1M`: 256 cuFileRead → 256 `nvfs_io_start_op` → 320 `nvfs_get_p2p_dma_mapping`, only 4
 `pin_shadow_pages` → **true P2P**. **Correction to an earlier inference:** kvikio with `BufRegister=0`
 also does true P2P (`p2p_mapping`=3003, `pin_shadow`=1 over 2000 reads) — *no pre-registration ≠
@@ -67,7 +67,7 @@ overlap via `get_job_time`), surfaced by `tools/dfa_drive.py`. *No custom trace 
 
 This needs `nvfs_io` as a **duration** op (`nvfs_io_start_op`→`nvfs_io_complete`, same thread) so
 DFAnalyzer's hierarchy attributes time across cuFile→nvidia-fs→device. Honest note: `gds_stats` has an
-aggregate `posix` counter that *can* flag compat in bulk; GDS-Trace adds the **per-op** verdict, the
+aggregate `posix` counter that *can* flag compat in bulk; GDSight adds the **per-op** verdict, the
 **5.7× latency cost**, and the fact the kernel GDS counter shows **nothing** while 256 MiB moved.
 
 ## Real workload: vLLM's fastsafetensors GDS weight loader
@@ -107,7 +107,7 @@ I/O *shape* differs completely (1 zero-copy read vs 2050 staged POSIX reads).
    longer reported (cuFileRead latency still is); recovering it needs correct per-layer async durations.
 
 **Real HF model (Qwen2.5-3B-Instruct, 2 safetensors shards, 5.75 GiB, 434 tensors).** Loaded via
-`fastsafetensors_load.py --path <model_dir>` (vLLM-style, all shards). GDS-Trace: **2 `cuFileRead` +
+`fastsafetensors_load.py --path <model_dir>` (vLLM-style, all shards). GDSight: **2 `cuFileRead` +
 2 `cuFileHandleRegister`** (register-once per shard) → **5168 NVMe** commands, true P2P (5159
 `p2p_dma_mapping`, 0 shadow), **2584× device-cmd amplification**, 5886 MiB cuFile == 5886 MiB NVMe
 (bytes conserved), 2.78 GiB/s. Confirms the tool on a genuine model, not a synthetic shard.
@@ -180,14 +180,14 @@ So a realistic retrieval/embedding gather **silently reads 2× the bytes off NVM
 because 3072 = ¾·4096 makes half the rows straddle a block. It's **register-once + true P2P** (not
 bounced), so this is *pure alignment waste at the device*, not handle churn or staging; and it's
 **invisible to `gds_stats`/throughput** (both report clean GDS at the same bandwidth). The fix is
-actionable — pad rows to a 4 KiB multiple (or coalesce gathers) — and GDS-Trace is what makes the waste
+actionable — pad rows to a 4 KiB multiple (or coalesce gathers) — and GDSight is what makes the waste
 visible and exact, per op, in the small-read regime GDS is actually deployed in.
 
 ### Rigor: is the 2× real, and what's actually novel?
 **Validated four independent ways** (so it's not a tracer artifact or double-count):
 1. **First-principles block-alignment math** per row size — predicted {1024:4.0, 2048:2.0, 3072:2.0,
    4096:1.0, 6144:1.33, 8192:1.0}× — matches measurement across all six sizes.
-2. **GDS-Trace** (corr_id-clean): 2.000×.
+2. **GDSight** (corr_id-clean): 2.000×.
 3. **nvidia-fs `/proc` `readMiB`** (kernel oracle, independent of our kprobe): 47 MiB / 23.4 MiB = 2.0×.
 4. **`/proc/diskstats`** (device counter, independent of *both* our tracer and nvidia-fs): 23.58 / 11.72 = 2.0×.
 
@@ -203,7 +203,7 @@ What shipped tooling lacks, shown side-by-side (same 3072 B / 4000-read gather, 
 | app throughput / `gds_stats` (cuFile-API) | 11.72 MiB, "GDS ok" | no (requested only) | no |
 | nvidia-fs `/proc readMiB` | 23 MiB device, n=4000 | only via manual diff vs requested | no (aggregate) |
 | `iostat` / `/proc/diskstats` | 23.58 MiB device-wide | only via manual diff | no (not GDS/op-specific) |
-| **GDS-Trace** | per cuFileRead 3072→6144 B = **2.000×** | **yes, directly** | **yes, exact, per op** |
+| **GDSight** | per cuFileRead 3072→6144 B = **2.000×** | **yes, directly** | **yes, exact, per op** |
 
 So the contribution is **automatic per-op attribution/visibility of a known-but-silent effect**: today you
 must manually diff a cuFile-level counter against a device-level counter (two layers, two tools) and still
@@ -226,10 +226,10 @@ NOT 4 KiB-aligned)**. The aggregate looks like one healthy GDS stream. Every too
 | `gds_stats`/nvidia-fs (aggregate) | 14 req → 19 device = **1.36× blended** | no (which table?) |
 | **Nsight NVTX** (per-op cuFile) | 4000 `cuFileRead` ~142µs, all GDS; ranges lumped by name; **no device bytes** | **no — structurally blind** |
 | `iostat`/`diskstats` | ~19–20 MiB device-wide | no (no GDS/op/table) |
-| **GDS-Trace** (per-op, corr_id) | **B (3072 B) = 2.015× WASTE; A (4096 B) = 1.000×** | **yes — pinpointed** |
+| **GDSight** (per-op, corr_id) | **B (3072 B) = 2.015× WASTE; A (4096 B) = 1.000×** | **yes — pinpointed** |
 
-Only GDS-Trace separates the culprit: **table B silently reads 2× its bytes off NVMe; table A is clean.**
-Cross-checks (always on the lookout for who's on par / who misses): GDS-Trace's per-op `cuFileRead`
+Only GDSight separates the culprit: **table B silently reads 2× its bytes off NVMe; table A is clean.**
+Cross-checks (always on the lookout for who's on par / who misses): GDSight's per-op `cuFileRead`
 latency (avg **131µs**) is **on par with Nsight's NVTX** (142µs) — so we don't *lose* the cuFile-op view,
 we *add* the below-cuFile device-byte attribution Nsight lacks. The aggregate counters *do* see the total
 device bytes (19 MiB) but blend the two tables into one 1.36× number; Nsight sees per-op cuFile latency
@@ -262,18 +262,18 @@ useful throughput**. **Fixing alignment ≈ doubles throughput on the *same driv
 **Why this matters — and the honest scope of who can see it.** This homogeneous run shows the waste has a
 real throughput cost (~2×). But **existing tools *can* detect the aggregate 2× here**: `iostat` device
 read rate (1.18 GB/s) vs the app's useful throughput (0.59 GB/s) = 2×, or `diskstats`/nvidia-fs `readMiB`
-(4096 MiB device) vs cuFile-requested (2048 MiB). So GDS-Trace is **not** uniquely needed to *detect* the
+(4096 MiB device) vs cuFile-requested (2048 MiB). So GDSight is **not** uniquely needed to *detect* the
 2× when the whole workload is uniform — an admin diffing iostat against app throughput catches it.
 **The uniqueness is attribution in a *mixed* workload** (next section): when table A (aligned) and table B
 (unaligned) are interleaved, iostat/gds_stats show one **blended 1.36×** and cannot say *which* table is
 the culprit; only per-op (size/corr_id) attribution pinpoints B=2.015×, A=1.000×. Detection of the
-aggregate = existing tools; per-op/per-tensor attribution = GDS-Trace.
+aggregate = existing tools; per-op/per-tensor attribution = GDSight.
 
 **Grounded in published work** (per the brief's bar): DLRM-on-SSD documents this exact pattern — embedding
 vectors are 128–512 B, so "from each 4 KB block only 512 B (or 128 B) is relevant" (FlashEmbedding,
 APSys'21; *Supporting Massive DLRM Inference*, arXiv:2110.11489), i.e. 8–32× read amplification for tiny
 vectors. **ESPN** (the real GDS retrieval system, arXiv:2312.05417) *manually* "aligns embeddings …
-reduces blocks from 2 to 1 per document" — exactly the fix GDS-Trace flags **automatically, per op**.
+reduces blocks from 2 to 1 per document" — exactly the fix GDSight flags **automatically, per op**.
 Our 4 KiB-unaligned test is the conservative 2× case; the documented sub-block embedding case (512 B of
 4 KB) is up to 8×.
 
@@ -284,7 +284,7 @@ plus a **BOW multi-vector blob (~2–10 KB, 32-dim fp16/token)**, 16-bit, **4 Ki
 top-64) docs/query, latency-bound. Its authors explicitly **packed CLS+BOW** to cut "2 blocks to 1 per
 document." `workloads/espn_retrieval.py` reproduces both layouts over our real 4 GB file:
 
-| layout | docs/s | cuFile ops | device bytes | per-read-class byte-amp (GDS-Trace) |
+| layout | docs/s | cuFile ops | device bytes | per-read-class byte-amp (GDSight) |
 |---|---:|---:|---:|---|
 | **naive** (CLS & BOW separate) | **3763** | 8000 (2/doc) | 31 MiB | **CLS 256 B = 16.0×**, BOW 2 KB = 2.0× |
 | **aligned** (ESPN's pack) | **7646** (2.03×) | 4000 (1/doc) | 15 MiB | packed 2304 B = 1.78× |
@@ -299,10 +299,10 @@ sees what (honest):**
 | 2× device bytes / 3.56× aggregate amp | nvidia-fs `readMiB`, `iostat`, `diskstats` | no (aggregate) |
 | device bytes per process | `/proc/PID/io read_bytes`, `iotop` | no (per-process total) |
 | per-op cuFile latency | Nsight NVTX (lumped by range name) | no (no size/device) |
-| **CLS class = 16× waste (the fix target)** | **GDS-Trace per-read-class (by size)** | **yes** |
+| **CLS class = 16× waste (the fix target)** | **GDSight per-read-class (by size)** | **yes** |
 
 **Honest scope.** Existing tools show *that* naive ESPN wastes ~2× (throughput, op count, device bytes —
-all aggregate); only GDS-Trace **names the 256 B CLS reads as the 16× redundant class to pack**, from the
+all aggregate); only GDSight **names the 256 B CLS reads as the 16× redundant class to pack**, from the
 trace alone with no layout foreknowledge — i.e. the exact optimization ESPN's authors derived by hand.
 So the contribution is **automated per-class diagnosis** (which class to fix), not revealing an otherwise
 invisible effect — and ESPN already found this manually, so it's a diagnostic aid for those who *don't*
@@ -311,7 +311,7 @@ the tool's value grows where the wasteful class is *non-obvious* — still to be
 
 ## Cross-check vs ground-truth tools (the rigor) — gdsio `-i 4M -s 256M -x 0`
 **Same run**, three independent measurements:
-| layer | GDS-Trace | kernel `/proc/driver/nvidia-fs/stats` | bpftrace (independent kprobe) |
+| layer | GDSight | kernel `/proc/driver/nvidia-fs/stats` | bpftrace (independent kprobe) |
 |---|---:|---:|---:|
 | cuFile reads | cuFileRead = **64** | Reads `n` = **64** | — |
 | cuFile bytes | **256 MiB** | readMiB = **256** | — |
@@ -321,33 +321,33 @@ the tool's value grows where the wasteful class is *non-obvious* — still to be
 tool's per-op capture matches the kernel oracle and an independent kprobe with **zero drift in a single
 run**. kvikio cross-checked the same way: cuFileRead 3000 ≈ kernel Reads `n`, bytes 1601 MiB ≈ readMiB.
 
-## Pathologies GDS-Trace diagnoses that coarse tools miss
+## Pathologies GDSight diagnoses that coarse tools miss
 Each is a per-op cross-layer effect invisible to `gds_stats` (aggregate, cuFile-only), `nvidia-smi`
-(PCIe only), throughput, or Darshan (no cuFile) — but GDS-Trace pinpoints it per op.
+(PCIe only), throughput, or Darshan (no cuFile) — but GDSight pinpoints it per op.
 
 1. **kvikio sub-16 KiB path divergence (silent POSIX).** Bimodal kvikio workload (60% reads <16 KiB):
-   GDS-Trace shows **13529 `cuFileRead` (GDS, sizes ≥64 KiB) + 20472 `pread64` (POSIX, the small
+   GDSight shows **13529 `cuFileRead` (GDS, sizes ≥64 KiB) + 20472 `pread64` (POSIX, the small
    reads kvikio routed off GDS, ~166 MiB)**. Cross-check, same class of run: **`gds_stats` reports
    `posix=0`** ("GDS perfect") and the kernel `nvidia-fs Reads n` counts **only the large reads** — i.e.
-   60% of reads silently took POSIX and no GDS tool shows it; GDS-Trace shows *which* reads and how much.
+   60% of reads silently took POSIX and no GDS tool shows it; GDSight shows *which* reads and how much.
 2. **DALI device-command amplification.** DALI numpy GPU reader: **9137 `cuFileRead` → 22568
    `nvme_setup_cmd` = 2.47×** (whole-file ~1–1.8 MB reads split at the ~1.25 MB MDTS into 2–3 commands),
    plus a **`cuFileHandleRegister` per read** (9137 — handle-reg overhead) and a `cuFileRead`(GDS)/
-   `pread64`(POSIX header) mix. `gds_stats` shows aggregate GDS bandwidth (looks fine); GDS-Trace shows
+   `pread64`(POSIX header) mix. `gds_stats` shows aggregate GDS bandwidth (looks fine); GDSight shows
    the per-op IOPS cost + the handle churn.
 3. **Unaligned byte amplification.** gdsio 64 KiB random read, aligned vs `-U` unaligned: op count
    identical, but device **bytes go 128 MiB → 136 MiB = 1.06× byte amplification** (cuFile reads the
    4 KiB-aligned superset). Still reported as `GPUD` (GDS), so `gds_stats`/throughput look clean;
-   GDS-Trace shows cuFileRead requested 128 MiB while NVMe moved 136 MiB — 6% wasted device bandwidth.
+   GDSight shows cuFileRead requested 128 MiB while NVMe moved 136 MiB — 6% wasted device bandwidth.
 4. **Redundant per-read handle registration (ESPN).** ESPN's batch reader registers a `cuFileHandle`
-   **per read** (4096 `cuFileHandleRegister` for 4096 reads of one file) — GDS-Trace shows it spends
+   **per read** (4096 `cuFileHandleRegister` for 4096 reads of one file) — GDSight shows it spends
    **more wall-time registering handles (0.115 s) than on the batch reads themselves (0.053 s)**. A
    diagnosable GDS-usage inefficiency (register once, not per op) that `gds_stats` (no per-op
    HandleRegister timing) cannot surface.
 
 **Why this is the contribution:** these are exactly the "is GDS actually doing what I think, per op?"
 questions from the demand evidence (forum users `fuyao3860`/`pandeyshweta2401`; Muradli's hand-rolled
-timers). GDS-Trace answers them with per-op, cross-layer ground truth that no shipped tool provides.
+timers). GDSight answers them with per-op, cross-layer ground truth that no shipped tool provides.
 
 ## Drift notes (why numbers differ where they do)
 1. **NVMe-command count varies run-to-run** (256 / 259 / 375 for identical gdsio `-i4M`). Cause:
@@ -357,7 +357,7 @@ timers). GDS-Trace answers them with per-op, cross-layer ground truth that no sh
 2. **~0.3% of `nvme_setup_cmd` fire in non-process (softirq/kworker) context** (bpftrace saw 376 total
    vs 375 in `gdsio`), which the TGID filter does not attribute — a negligible undercount, and those
    completions aren't attributable to a process op anyway.
-3. **`iostat` (device-wide) ≥ GDS-Trace (process-scoped):** iostat counts all I/O incl. other tenants/
-   background; GDS-Trace counts only the traced process — by design.
+3. **`iostat` (device-wide) ≥ GDSight (process-scoped):** iostat counts all I/O incl. other tenants/
+   background; GDSight counts only the traced process — by design.
 4. **`gds_stats` per-GPU `n` is misleading** (showed 0 while the kernel DMA'd, see STEP3-FINDINGS) —
-   trust GLOBAL `Read: ok` / kernel counters; GDS-Trace matches those.
+   trust GLOBAL `Read: ok` / kernel counters; GDSight matches those.

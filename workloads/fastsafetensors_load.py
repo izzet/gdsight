@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Load a safetensors shard via fastsafetensors (vLLM's --load-format fastsafetensors loader),
 which uses GPUDirect Storage (cuFile) to DMA tensors NVMe->GPU. --nogds switches to the CPU-staged
-fallback. Run under GDS-Trace (datacrumbs) to get per-op cuFile<->nvidia-fs<->NVMe attribution +
+fallback. Run under GDSight (datacrumbs) to get per-op cuFile<->nvidia-fs<->NVMe attribution +
 the GDS-vs-fallback cross-layer timing. Usage: fastsafetensors_load.py [--nogds] [--path P]"""
 import argparse, glob, os, time
 import torch

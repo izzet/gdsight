@@ -7,7 +7,7 @@ document, a small CLS vector (128-dim fp16 = 256 B) plus a BOW multi-vector blob
                    4 KiB block (16x byte-amp); BOW 2 KB -> 1 block. (the un-optimized layout)
   --mode aligned : ESPN's optimization -- CLS+BOW packed contiguous in one 4 KiB-aligned slot -> 1 read/doc.
 
-Run under GDS-Trace: per-read-CLASS attribution (by size: 256 B CLS vs 2 KB BOW vs 2304 B packed) flags
+Run under GDSight: per-read-CLASS attribution (by size: 256 B CLS vs 2 KB BOW vs 2304 B packed) flags
 the CLS reads as the redundant/wasteful class to pack -- the fix ESPN's authors made by hand. Reads from
 a real allocated file (dataset.bin) so the device actually fetches blocks. Usage:
   espn_retrieval.py --mode {naive,aligned} [--docs-per-query K] [--queries N]

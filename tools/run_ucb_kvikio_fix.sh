@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # UC-B closed loop: real kvikio RAG-mix, BASELINE (small reads silently bypass GDS -> POSIX, amplify)
-# vs the fix GDS-Trace prescribes (coalesce class-B above the 16 KiB threshold -> takes the GDS P2P
+# vs the fix GDSight prescribes (coalesce class-B above the 16 KiB threshold -> takes the GDS P2P
 # path AND aligns away the amplification). Traced, analyzed with mixed_score.py.
 set -u
 PREFIX=$HOME/dc-prefix

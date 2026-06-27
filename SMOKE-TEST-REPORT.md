@@ -1,4 +1,4 @@
-# GDS-Trace — Pre-proposal Smoke Test Results (DeltaAI)
+# GDSight — Pre-proposal Smoke Test Results (DeltaAI)
 
 **Run by:** Claude (autonomous), on behalf of Izzet Yildirim · **Date:** 2026-06-06
 **Node:** `gh151.hsn.cm.delta.internal.ncsa.edu` (NCSA DeltaAI), Slurm job `2426676`

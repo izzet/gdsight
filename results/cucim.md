@@ -1,9 +1,9 @@
-# cuCIM whole-slide imaging (digital pathology) under GDS-Trace
+# cuCIM whole-slide imaging (digital pathology) under GDSight
 
 **Honest one-liner:** the *naive per-tile* WSI GDS read path (which cuCIM's own `gds_whole_slide`
 **benchmark** uses, and a naive user might write) silently bypasses GDS for ~82% of tiles and is ~19.5×
 slower than coalescing — while cuCIM's **production `read_region(device="cuda")` API coalesces and is clean.**
-GDS-Trace reveals *which path your code is on* and the lever; `gds_stats`/`iostat` can't.
+GDSight reveals *which path your code is on* and the lever; `gds_stats`/`iostat` can't.
 
 ## Workload (real, recognized GDS use case)
 Real **Aperio SVS** (`CMU-1.svs`, 46000×32914, 23220 JPEG tiles, 256×256, **mean 6.7 KB/tile**, range
@@ -21,7 +21,7 @@ Real **Aperio SVS** (`CMU-1.svs`, 46000×32914, 23220 JPEG tiles, 256×256, **me
 
 **Cross-check (measured):** `gds_stats`/cuFileGetStats sees 712 cuFile reads → *"GDS healthy"* (the 3289 POSIX
 reads never enter cuFile); nvidia-fs +19 MiB (GDS tiles only); iostat +3788 device IOs (both paths, can't
-split). **Only GDS-Trace, tracing both paths per-tile, names the 82% bypass.**
+split). **Only GDSight, tracing both paths per-tile, names the 82% bypass.**
 
 ## Finding 2 — the production API coalesces (well-engineered, no bypass)
 `read_region(device="cuda")`, 4000 patches: **108 `nvfs_io` (GDS) + 1 `pread64`** — it reads tiles in
@@ -44,7 +44,7 @@ under-delivers there, and forcing it (`KVIKIO_GDS_THRESHOLD=0`) is *worse* (1.65
 ## Honest scope
 The 82% bypass is a **real anti-pattern** — but in the **naive per-tile path** (cuCIM's benchmark + naive
 user code), **not** the production `read_region` API, which coalesces and is clean. This is consistent with
-our recurring pattern: *well-engineered code is clean; naive code under-delivers.* GDS-Trace's value here is
+our recurring pattern: *well-engineered code is clean; naive code under-delivers.* GDSight's value here is
 diagnostic: it shows **which path your code takes** (per-tile bypass vs coalesced GDS) and the 19.5× lever —
 which `gds_stats` (reports "healthy" either way) and `iostat` (can't split GDS vs POSIX) cannot. Reproduce:
 `workloads/{cucim_gds_tiles,cucim_coalesce_test,read_region_test}.py` + `CMU-1.svs` (openslide-testdata).
