@@ -68,8 +68,8 @@ arrow(2.3, 3.25, 2.3, 2.7, lw=1.6)
 box(0.4, 0.5, 11.2, 2.1, "", ANALY)
 ax.text(6.0, 2.35, "DFAnalyzer (offline)  —  per-op cross-layer attribution", ha="center", fontsize=9, fontweight="bold")
 box(0.9, 1.25, 5.0, 0.85, "TIME basis: group device events by corr_id\n→ SYNC: exact (100%, incl. 16-thread)", "#e7f0ff", 7.8)
-box(6.3, 1.25, 5.0, 0.85, "ADDRESS basis: nvme.sector —FIEMAP→ file\noffset → op  → ASYNC: robust (overlap=blind)", "#ffeef0", 7.8)
-ax.text(6.0, 0.78, "complementary, disjoint failure modes → cover every regime but async+identical-overlap",
+box(6.3, 1.25, 5.0, 0.85, "ADDRESS basis: nvme.sector —FIEMAP→ op\n(expanded coverage) → ASYNC: robust (overlap→cmd-to-set)", "#ffeef0", 7.8)
+ax.text(6.0, 0.78, "complementary, disjoint failure modes → cover every regime but async overlapping-coverage (→ command-to-set)",
         ha="center", fontsize=7.2, style="italic", color="#444")
 
 ax.text(0.1, 0.12, "plugins only · statically linked into one datacrumbs.bpf.o · no cuFile/nvidia-fs/kernel changes · "
