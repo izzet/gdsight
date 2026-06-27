@@ -8,8 +8,17 @@ Transfers are issued in BATCHES (NIXL packs each initialize_xfer's descriptors i
 GDS batch), giving the real async/batched regime. Class is encoded by file region so the
 tracer's LBA attribution (keystone_gds_score.py) can split per class.
 
+Class-B layout knobs (two equivalent interfaces, both supported):
+  --layout {scatter,aligned,packed}  (O1/O2 optimization lever): scatter = sub-4K-misaligned naive
+     paged KV (high amplification); aligned = 4K-aligned one-read-per-entry (the "obvious" fix);
+     packed = contiguous + bulk-read in 1 MiB chunks (coalesced -> ~1.0x).
+  --kv-align / --kv-coalesce (diagnosis knobs used by run_nixl_diagnosis/kvsweep): kv-align = byte
+     offset within the per-entry slot (3072 = misaligned, 0 = 4K-aligned); kv-coalesce>0 = read the
+     KV class as contiguous chunks of that size.
+(kv-coalesce takes precedence; else --layout; a plain scatter with --kv-align 0 == aligned.)
+
 Run under DATACRUMBS trace-all (no injection). Usage:
-  nixl_gds_kv.py --file F [--na 200 --sa 1048576 --nb 2000 --sb 2560 --batch 64]
+  nixl_gds_kv.py --file F [--na 200 --nb 2000 --sb 2560 --batch 64 --layout scatter]
 """
 import argparse, os, time
 import cupy
@@ -26,37 +35,34 @@ def main():
     ap.add_argument("--na", type=int, default=200); ap.add_argument("--sa", type=int, default=1 << 20)
     ap.add_argument("--nb", type=int, default=2000); ap.add_argument("--sb", type=int, default=2560)
     ap.add_argument("--batch", type=int, default=64)
-    # --- diagnosis knobs (the fixes our attribution prescribes) ---
-    # kv-align: byte offset of each KV read within its 64K slot. 3072 = sub-4K misaligned (baseline,
-    #   spans 2 blocks -> 3.2x); 0 = 4K-aligned (1 block per 2560B -> 1.6x).
-    ap.add_argument("--kv-align", type=int, default=3072)
-    # kv-coalesce: if >0, read the KV class as contiguous 4K-aligned chunks of this size instead of
-    #   scattered sb reads (models storing KV contiguously) -> A_byte 1.0x. Same total useful bytes.
-    ap.add_argument("--kv-coalesce", type=int, default=0)
+    # O1/O2 optimization lever (class-B layout)
+    ap.add_argument("--layout", default="scatter", choices=["scatter", "aligned", "packed"])
+    ap.add_argument("--stride", type=int, default=65536)
+    # diagnosis knobs (run_nixl_diagnosis / run_nixl_kvsweep / probe_effective_granularity)
+    ap.add_argument("--kv-align", type=int, default=3072)   # offset within slot; 0 = 4K-aligned
+    ap.add_argument("--kv-coalesce", type=int, default=0)   # >0 = contiguous chunks of this size
     a = ap.parse_args()
 
-    # interleaved op list (file_offset, size); scattered, non-overlapping per class
-    ops = []
-    ia = ib = 0
-    if a.kv_coalesce > 0:
-        total_b = a.nb * a.sb
-        chunk = a.kv_coalesce
-        nchunks = (total_b + chunk - 1) // chunk
-        b_ops = [(BBASE + k * chunk, chunk) for k in range(nchunks)]   # contiguous, 4K-aligned
-        nb_eff = nchunks; ratio = max(1, nb_eff // max(1, a.na))
-        kb = 0
-        while ia < a.na or kb < nb_eff:
-            for _ in range(ratio):
-                if kb < nb_eff: ops.append(b_ops[kb]); kb += 1
-            if ia < a.na: ops.append((ia * (4 << 20), a.sa)); ia += 1
-    else:
-        ratio = max(1, a.nb // max(1, a.na))
-        while ia < a.na or ib < a.nb:
-            for _ in range(ratio):
-                if ib < a.nb:
-                    ops.append((BBASE + ib * 65536 + a.kv_align, a.sb)); ib += 1  # KV read, alignment=knob
-            if ia < a.na:
-                ops.append((ia * (4 << 20), a.sa)); ia += 1                  # large page, 4 MiB stride
+    # ---- class-B (KV) op list ----
+    if a.kv_coalesce > 0:                                   # diagnosis coalesce path
+        total = a.nb * a.sb; chunk = a.kv_coalesce
+        bops = [(BBASE + k * chunk, chunk) for k in range((total + chunk - 1) // chunk)]
+    elif a.layout == "packed":                             # O1/O2 packed+coalesced (1 MiB bulk)
+        total = a.nb * a.sb; chunk = 1 << 20
+        bops = [(BBASE + j, min(chunk, total - j)) for j in range(0, total, chunk)]
+    else:                                                  # scatter / aligned
+        mis = 0 if a.layout == "aligned" else a.kv_align   # aligned -> 0; scatter -> kv_align (3072 default)
+        bops = [(BBASE + i * a.stride + mis, a.sb) for i in range(a.nb)]
+    aops = [(i * (4 << 20), a.sa) for i in range(a.na)]     # class-A large pages, 4 MiB stride
+
+    # interleave (ratio B per A) so a batch mixes classes; pure-B when na=0
+    ops = []; ia = ib = 0
+    ratio = max(1, len(bops) // max(1, len(aops)))
+    while ia < len(aops) or ib < len(bops):
+        for _ in range(ratio):
+            if ib < len(bops): ops.append(bops[ib]); ib += 1
+        if ia < len(aops): ops.append(aops[ia]); ia += 1
+    useful = a.nb * a.sb + a.na * a.sa                      # application-requested bytes (same across layouts)
 
     agent = nixl_agent("NIXLKV", nixl_agent_config(backends=[]))
     assert "GDS" in agent.get_plugin_list()
@@ -74,8 +80,8 @@ def main():
     file_reg = agent.register_memory([(0, fsz, fd, "")], "FILE")
     assert file_reg is not None
 
-    done_ops = 0; useful = sum(sz for _, sz in ops)
-    t0 = time.perf_counter()
+    done_ops = 0
+    t0 = time.monotonic()
     for base in range(0, len(ops), a.batch):
         wave = ops[base:base + a.batch]
         gpu = [(vptr + j * slot, sz, 0) for j, (_, sz) in enumerate(wave)]
@@ -92,13 +98,15 @@ def main():
             if st == "DONE": break
         agent.release_xfer_handle(h)
         done_ops += len(wave)
-    dt = time.perf_counter() - t0
+    dt = time.monotonic() - t0
 
     agent.deregister_memory(vram_reg); agent.deregister_memory(file_reg); os.close(fd)
-    gp = useful / dt / (1 << 20)
-    print(f"NIXL_GDS_KV ops={done_ops} (A={a.na}x{a.sa}B large, B={a.nb}x{a.sb}B KV) "
-          f"batch={a.batch} align={a.kv_align} coalesce={a.kv_coalesce} | "
-          f"useful={useful/(1<<20):.2f}MiB elapsed={dt*1e3:.1f}ms goodput={gp:.1f}MiB/s")
+    # emit BOTH throughput formats so all analyzers parse (goodput= for diagnosis, useful_GiBps= for opt)
+    gp_mibs = useful / dt / (1 << 20)
+    print(f"NIXL_GDS_KV ops={done_ops} layout={a.layout} align={a.kv_align} coalesce={a.kv_coalesce} "
+          f"(A={a.na}x{a.sa}B, B={a.nb}x{a.sb}B KV) batch={a.batch} | "
+          f"useful={useful/(1<<20):.2f}MiB elapsed={dt*1e3:.1f}ms "
+          f"goodput={gp_mibs:.1f}MiB/s useful_GiBps={useful/dt/(1<<30):.3f}")
 
 if __name__ == "__main__":
     main()
