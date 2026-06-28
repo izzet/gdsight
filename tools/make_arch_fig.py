@@ -36,7 +36,7 @@ box(0.5, 4.7, 3.6, 0.7, "NVMe SSD", KERN, 9, True)
 for y in (9.5, 8.3, 7.1, 5.9):  # data flow down the stack
     arrow(2.3, y, 2.3, y-0.5)
 # P2P DMA to GPU
-box(9.4, 4.7, 2.2, 0.7, "GPU memory (BAR1)", GPU, 8.5, True)
+box(9.4, 4.7, 2.2, 0.7, "GPU device memory\n(BAR1 on our stack)", GPU, 8.0, True)
 arrow(4.1, 5.05, 9.4, 5.05, style="-|>", color="#7a4fb0", lw=2.6)
 ax.text(6.9, 5.25, "P2P DMA (no CPU bounce)", ha="center", fontsize=7.5, color="#7a4fb0")
 
