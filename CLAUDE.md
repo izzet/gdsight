@@ -18,12 +18,19 @@ stall) to the causing app op. Extends DFTracer/DFAnalyzer. Full pitch: `gds-trac
   *silent* per-op fallback, and show coarse tools are blind to it (the motivating Figure 1).
 
 ## Relaunch a GDS node (from the snapshot image)
+Two per-instance steps the snapshot can't bake (a fresh disk + tmpfs/xattr state, see below):
 ```bash
-/opt/gds-tools/mount_gds_nvme.sh        # the only per-instance step (mount local NVMe -o data=ordered)
+/opt/gds-tools/mount_gds_nvme.sh        # 1. mount local NVMe -o data=ordered (GDS gate)
 /usr/local/cuda-12.6/gds/tools/gdscheck -p | grep -E 'NVMe |IOMMU:'   # expect NVMe: Supported | IOMMU: disabled
 source /opt/gds-venv/bin/activate
+# 2. ONLY if running the DataCrumbs tracer / experiments (re-applies eBPF caps + /var/run/datacrumbs):
+bash ~/projects/gdstrace/chameleon/setup_datacrumbs_runtime.sh
 ```
-Details: `chameleon/launch-from-snapshot-README.md` and `chameleon/README.md`.
+The tracer step is **mandatory before any traced run** — without it `datacrumbs_setup` dies silently
+under `set -e` and traced runs yield 0-byte traces / 0.000 GiB/s. (`setup_datacrumbs_runtime.sh` lives
+in the repo's `chameleon/`, not yet in the image's `/opt/gds-tools`.) On a *reused* physical node, old
+`/mnt/nvme1/gdstrace-smoke/dc-traces/YY/MM` date-dirs may be root-owned from a prior boot →
+`sudo chown -R cc:cc .../dc-traces`. Details: `chameleon/launch-from-snapshot-README.md` and `chameleon/README.md`.
 
 ## Conventions / hard-won gotchas
 - **Commits:** do NOT add `Co-Authored-By` or any AI-attribution trailers.

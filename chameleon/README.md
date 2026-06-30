@@ -4,12 +4,13 @@ GPUDirect Storage bring-up + smoke-test toolkit for the Chameleon A100 snapshot
 **`grc-ub2404-nvk-gds-a100-cu126-v2`**. Everything here is captured in the image and is
 group-accessible. (Also symlinked at `~/projects/gdstrace/chameleon`.)
 
-## TL;DR — make a relaunched node GDS-ready (one per-instance step)
+## TL;DR — make a relaunched node GDS-ready (per-instance steps)
 ```bash
 /opt/gds-tools/mount_gds_nvme.sh                                  # mount local NVMe -o data=ordered
 /usr/local/cuda-12.6/gds/tools/gdscheck -p | grep -E 'NVMe |IOMMU:'   # expect: NVMe: Supported | IOMMU: disabled
 source /opt/gds-venv/bin/activate                                 # kvikio / cupy / DALI
 KVIKIO_COMPAT_MODE=OFF python /opt/gds-tools/verify_kvikio.py     # true-GDS read sanity
+bash setup_datacrumbs_runtime.sh                                  # ONLY for tracer/experiments: eBPF caps + /var/run/datacrumbs
 ```
 Step-by-step relaunch guide: **`launch-from-snapshot-README.md`**.
 
@@ -20,13 +21,19 @@ Step-by-step relaunch guide: **`launch-from-snapshot-README.md`**.
 - **Python env `/opt/gds-venv`**: kvikio-cu12, cupy-cuda12x, nvidia-dali-cuda120.
 - **C++/CMake toolchain**: cmake, ninja, gcc/g++, CUDA 12.6 `nvcc`, `libcufile-dev`.
 
-## Per-instance (NOT in the image — the local NVMe is a different physical disk each launch)
-- Mount the local NVMe `-o data=ordered` → `mount_gds_nvme.sh` (the snapshot can't bake a disk mount).
+## Per-instance (NOT in the image)
+- **GDS:** mount the local NVMe `-o data=ordered` → `mount_gds_nvme.sh` (a different physical disk each launch; the snapshot can't bake a disk mount).
+- **Tracer/experiments:** `setup_datacrumbs_runtime.sh` re-applies the eBPF file-caps (the `security.capability`
+  xattr is dropped by cc-snapshot's tar) and creates `/var/run/datacrumbs` (tmpfs `/run`, wiped each boot).
+  Skipping it makes `datacrumbs_run` fail silently (0-byte traces / 0.000 GiB/s). Idempotent.
 
 ## Files
 | file | purpose |
 |---|---|
 | `mount_gds_nvme.sh` | mount local NVMe `data=ordered` (safe; `FORMAT=1` to mkfs a raw disk) |
+| `setup_datacrumbs_runtime.sh` | **per-instance tracer runtime**: eBPF caps + `/var/run/datacrumbs` (required before any traced run) |
+| `build_datacrumbs.sh` | build the DataCrumbs eBPF tracer + DFAnalyzer on a fresh node (not banked) |
+| `setup_nixl_venv.sh` | rebuild `~/nixl-venv` (nixl-cu12 + cupy) for the real-NIXL cross-check (not banked) |
 | `post_reboot_smoke.sh` | full gate + Step-1 ceiling + Step-2 + `gds_stats` |
 | `verify_kvikio.py` | kvikio true-GDS read sanity (`KVIKIO_COMPAT_MODE=OFF`) |
 | `setup_pyenv.sh` | rebuild `/opt/gds-venv` from `requirements*.txt` |

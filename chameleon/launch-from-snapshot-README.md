@@ -6,8 +6,9 @@ patches), `amd_iommu=off`, nvidia_fs autoload, the C++ toolchain, and the Python
 `/opt/gds-venv` (kvikio/cupy/DALI). **Toolkit scripts live in `/opt/gds-tools`** (also symlinked at
 `~/projects/gdstrace/chameleon`). See `CHAMELEON-GDS-BRINGUP-LOG.md` for how it was built.
 
-**The only per-instance step is the local NVMe mount** (`data=ordered`) — the snapshot captures the
-OS root, not the physical NVMe, so each new instance prepares its own disk in one command.
+**Per-instance steps** (the snapshot captures the OS root, not the physical NVMe nor tmpfs/xattr state):
+1. the **local NVMe mount** (`data=ordered`) — §3 below;
+2. for tracing/experiments, the **DataCrumbs runtime setup** (eBPF caps + `/var/run/datacrumbs`) — §5b below.
 
 ---
 
@@ -43,6 +44,22 @@ source /opt/gds-venv/bin/activate
 KVIKIO_COMPAT_MODE=OFF python /opt/gds-tools/verify_kvikio.py
 #   expect: is_compat_mode_preferred=False, DATA CORRECT, "TRUE-GDS kvikio read OK"
 ```
+
+## 5b. DataCrumbs tracer runtime (required before any traced run / experiment)
+The snapshot's tar drops two pieces of tracer runtime state, so re-apply them once per instance:
+```bash
+bash ~/projects/gdstrace/chameleon/setup_datacrumbs_runtime.sh
+#   re-applies: (1) eBPF file-caps on ~/dc-prefix/sbin/datacrumbs (security.capability xattr, not
+#   preserved by cc-snapshot), (2) /var/run/datacrumbs (tmpfs /run, wiped each boot). Idempotent.
+```
+**Without this, `datacrumbs_setup` fails silently under `set -e` and `datacrumbs_run` produces 0-byte
+traces / 0.000 GiB/s** (probes never attach). Verify with one traced gdsio read:
+```bash
+N=1 PATTERNS=seq bash ~/projects/gdstrace/tools/overhead_bench.sh   # traced col should be non-zero
+```
+> On a **reused physical node**, old `/mnt/nvme1/gdstrace-smoke/dc-traces/YY/MM` date-dirs can be
+> root-owned from a prior boot (the tracer ran as root) → today's mkdir is denied. Fix once:
+> `sudo chown -R cc:cc /mnt/nvme1/gdstrace-smoke/dc-traces`.
 
 ---
 
