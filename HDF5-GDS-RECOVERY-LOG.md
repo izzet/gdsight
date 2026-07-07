@@ -79,6 +79,25 @@ is *slower* than compat (0.81) — per-chunk P2P submission overhead — while c
 So the fix isn't "force GDS on the chunked layout"; the lever is layout (contiguous/large extents).
 Need a chunk-size sweep + CPU numbers for a clean cost story.
 
-## Next
-- Task 4: trace both cache-ON/OFF with GDSight (authoritative cuFileRead>0 vs nvfs_io=0/N cross-layer
-  evidence); chunk-size sweep + CPU for the "so what". Task 5: `results/xlayer/hdf5-gds.md` + commit.
+## 2026-07-07 — Bucket 1 complete: GDSight trace evidence + "so what"
+**Cross-layer trace (`tools/trace_hdf5_gds.sh`, 64 MiB / 256 KiB, `results/xlayer/hdf5_gds_trace.csv`):**
+chunked cache-ON = `cuFileRead=262, nvfs_io=0` (silent compat); cache-OFF = `cuFileRead=262, nvfs_io=256`
+(true GDS); contiguous = `cuFileRead=8, nvfs_io=72`. **App layer identical (262 either way); only the
+kernel layer differs** — no API tool can separate them. (Trace gotcha: `datacrumbs_run` still SIGKILLs
+on cleanup and cascades to the loop → wrap in `setsid` per case; trace flushes fine.)
+
+**Threshold (chunk sweep, `hdf5_gds_sweep.csv`):** silent bypass ⟺ chunk ≤ chunk-cache size (1 MiB
+default). ≤1 MiB → compat; ≥2 MiB → true GDS even with cache on. So the bypass is exactly the
+small-chunk (compressed/partial-access) regime.
+
+**So-what (`hdf5_gds_cpu.csv`, 512 MiB, median/3):** the cost is CPU, not throughput. compat 1.28 s /
+54% CPU vs true-GDS 1.01 s / 38% (same 512 MiB → +27% CPU bounce tax). "Disable cache to force GDS" is a
+**trap** (0.582 < 0.885 GiB/s at 256 K — submission-bound). Real lever = **layout**: contiguous 1.912
+GiB/s / 35% CPU (true GDS + 2× BW + lowest CPU). Only per-op cross-layer supplies all three facts.
+
+Written up: **`results/xlayer/hdf5-gds.md`**. Magnitudes are single-drive/modest (honest scope in doc).
+
+## Status
+- ✅ Bucket 0 (instance verify), ✅ Bucket 1 (HDF5 keystone: built, reproduced, traced, costed, packaged).
+- ⏭ Bucket 2 (POMACS cite already in bib; add intro/RW + §1 reframe + async repositioning).
+- ⏭ Bucket 3 (development-history voice rewrite of `gdsight.tex`).

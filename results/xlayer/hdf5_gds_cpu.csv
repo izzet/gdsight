@@ -1,0 +1,4 @@
+case,path,cpu_user_sys_s,pct_cpu,BW_GiBps,verdict
+chunked256K_cacheON,compat_bounce,1.28,54,0.885,silent_compat
+chunked256K_cacheOFF,true_GDS,1.01,38,0.582,true_GDS
+contiguous,true_GDS,0.72,35,1.912,true_GDS

@@ -1,0 +1,4 @@
+case,cuFileRead,nvfs_io,p2p_map,nvme_setup_cmd,posix_pread_read,verdict
+chunked_cacheON,262,0,0,284,17919,silent_compat
+chunked_cacheOFF,262,256,257,272,16951,true_GDS
+contiguous,8,72,136,145,17379,true_GDS

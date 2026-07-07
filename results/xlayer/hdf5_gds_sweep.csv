@@ -1,0 +1,6 @@
+chunk_KiB,cacheON_gds_reads,cacheON_BW_GiBps,cacheOFF_gds_reads,cacheOFF_BW_GiBps,cacheON_verdict
+64,0,0.504,4096,0.135,silent_compat
+256,0,0.874,1024,0.582,silent_compat
+1024,0,1.368,512,1.123,silent_compat
+2048,384,1.463,384,1.457,true_GDS
+4096,320,1.402,320,1.744,true_GDS
