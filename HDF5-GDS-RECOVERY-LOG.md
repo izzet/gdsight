@@ -97,7 +97,18 @@ GiB/s / 35% CPU (true GDS + 2× BW + lowest CPU). Only per-op cross-layer suppli
 
 Written up: **`results/xlayer/hdf5-gds.md`**. Magnitudes are single-drive/modest (honest scope in doc).
 
+## 2026-07-07 — Bucket 2 (partial): POMACS cites + HDF5 folded into the paper
+Applied to `gdsight.tex`/`gdsight.bib` (owner approved drafts; §1/abstract reframe + async repositioning
+deferred to Bucket 3 since they touch the same sentences the voice pass rewrites):
+- POMACS `sedaghatgooScalableStorageArchitectures2026` cited in §1 (workload-dependent-GDS hook) + §6 RW.
+- **New §5 subsection `sec:hdf5`** — the HDF5 chunk-cache silent-bypass keystone, drafted declaratively
+  (already in the Bucket-3 voice). Added bib entries `raviGPUDirectIO2020` (PDSW'20) + `hdfVFDGDS`.
+- Trimmed the §5.1 kvikio threshold digression to offset the add.
+- Validated: all 23 \cite keys resolve, braces balanced, no dup labels. **Page count NOT verified** (no
+  LaTeX on this instance) — net ~+11 lines may nudge past 6.0 pp; Bucket 3 reclaims space. Build to confirm.
+
 ## Status
 - ✅ Bucket 0 (instance verify), ✅ Bucket 1 (HDF5 keystone: built, reproduced, traced, costed, packaged).
-- ⏭ Bucket 2 (POMACS cite already in bib; add intro/RW + §1 reframe + async repositioning).
-- ⏭ Bucket 3 (development-history voice rewrite of `gdsight.tex`).
+- ◑ Bucket 2 (POMACS cites + HDF5-in-paper done; §1/abstract reframe + async → folded into Bucket 3).
+- ⏭ Bucket 3 (development-history voice rewrite of `gdsight.tex`, incl. the deferred §1/abstract/async).
+- ⚠ TODO: build the PDF (`paper/build.sh`, needs LaTeX) to confirm ≤6 pages.
