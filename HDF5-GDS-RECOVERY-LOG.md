@@ -50,7 +50,35 @@ end-to-end; known result reproduced.**
 pipe SIGKILLs the wrapper, but the trace still flushes (the SIGINT-first stop fix holds). Find + score
 the trace separately rather than trusting the wrapper's stdout in a pipe.
 
+## 2026-07-07 — Bucket 1: HDF5+GDS built + chunk-cache finding REPRODUCED
+Built HDF5 **1.14.5** (serial) → `~/hdf5-gds` and **`nv-legate/vfd-gds`** (production fork; opens
+O_DIRECT + device-pointer branch) → `~/vfd-gds` via `chameleon/build_hdf5_gds.sh`. Build gotcha: the
+VFD's bundled `examples/` + `test/gds_test` don't link the CUDA runtime (undefined `cudaMalloc`) and
+`gds_test` uses parallel-HDF5 collective calls absent in serial HDF5 → `-DBUILD_EXAMPLES=OFF
+-DBUILD_TESTING=OFF` (only `libhdf5_vfd_gds.so` is needed). Workload `workloads/hdf5_gds.c` (reads-only;
+file created host-side with default SEC2 VFD; GDS VFD only on read; toggles `H5Pset_chunk_cache`).
+
+**Signal gotcha:** `/proc/driver/nvidia-fs/stats` needs **`rw_stats_enabled=1`** (per-boot:
+`echo 1 | sudo tee /sys/module/nvidia_fs/parameters/rw_stats_enabled`) or all counters read 0 even for
+genuine GDS. The live counter is the **`Reads : n=… readMiB=…`** line; the `Ops: Read=` line is a dead
+legacy field (always 0) — do not parse it.
+
+**A/B (64 MiB dataset, 256 KiB chunks), `tools/run_hdf5_gds.sh`:**
+| case | nvfs Reads Δ | verdict |
+|---|---|---|
+| chunked, chunk-cache **ON** (HDF5 default) | **+0** | **silent compat — zero P2P** |
+| chunked, chunk-cache **OFF** (fix) | +256 (+65 MiB) | true GDS (all 256 chunks P2P) |
+| contiguous | +72 (+64 MiB) | true GDS |
+
+Matches the lost session exactly: **the HDF5 raw-data chunk cache silently defeats GPUDirect Storage.**
+A chunked "GDS" read issues normal `cuFileRead` calls but 0 device P2P — invisible to `gds_stats`
+(sees cuFile activity) and `iostat` (sees device reads); only the cross-layer `nvfs_io=0` names it.
+
+Perf wrinkle (the honest "so what", to quantify next): at 256 KiB chunks true-GDS chunked (0.58 GiB/s)
+is *slower* than compat (0.81) — per-chunk P2P submission overhead — while contiguous (1.58) beats both.
+So the fix isn't "force GDS on the chunked layout"; the lever is layout (contiguous/large extents).
+Need a chunk-size sweep + CPU numbers for a clean cost story.
+
 ## Next
-- Bucket 1: build HDF5 ≥1.14.5 + `nv-legate/vfd-gds`; recreate `hdf5_gds.c`; reproduce the chunk-cache
-  A/B and trace it; measure the throughput/CPU "so what"; package into repo (`workloads/`,
-  `chameleon/build_hdf5_gds.sh`, `results/xlayer/hdf5-gds.md`). Commit+push each verified step.
+- Task 4: trace both cache-ON/OFF with GDSight (authoritative cuFileRead>0 vs nvfs_io=0/N cross-layer
+  evidence); chunk-size sweep + CPU for the "so what". Task 5: `results/xlayer/hdf5-gds.md` + commit.
