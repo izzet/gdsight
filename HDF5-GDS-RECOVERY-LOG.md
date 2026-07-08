@@ -107,8 +107,17 @@ deferred to Bucket 3 since they touch the same sentences the voice pass rewrites
 - Validated: all 23 \cite keys resolve, braces balanced, no dup labels. **Page count NOT verified** (no
   LaTeX on this instance) — net ~+11 lines may nudge past 6.0 pp; Bucket 3 reclaims space. Build to confirm.
 
-## Status
-- ✅ Bucket 0 (instance verify), ✅ Bucket 1 (HDF5 keystone: built, reproduced, traced, costed, packaged).
-- ◑ Bucket 2 (POMACS cites + HDF5-in-paper done; §1/abstract reframe + async → folded into Bucket 3).
-- ⏭ Bucket 3 (development-history voice rewrite of `gdsight.tex`, incl. the deferred §1/abstract/async).
-- ⚠ TODO: build the PDF (`paper/build.sh`, needs LaTeX) to confirm ≤6 pages.
+## 2026-07-08 — Bucket 3 done: declarative voice pass + length trim
+Rewrote `gdsight.tex` §1–§7 into the declarative first-principles voice (owner-approved via
+`paper/VOICE-REWRITE-SAMPLE.md`). Removed the development/review-history phrasings and the adversarial §5
+spine, folded in the §1/abstract diagnosis-not-fix reframe and async repositioning, demoted C4/S4
+(trace-all) into §3 Design. **Stripped all em dashes and prose semicolons** per
+[[writing-style-no-emdash-semicolon]] (only the Alg. 1 pseudocode statement separator remains). Then a
+length trim (cut the "operator's day" vignette, merged §7 items, tightened §5–§7) to bring the **body to
+6 pages** (References on p7). Installed TeX Live on the node; `bash paper/build.sh` → `paper/out/gdsight.pdf`
+builds clean. Validated: 0 em dashes, 0 prose semicolons, all cites resolve, braces balanced, no dup labels.
+
+## Status — all recovery buckets complete
+- ✅ Bucket 0 (instance verify), ✅ Bucket 1 (HDF5 keystone), ✅ Bucket 2 (POMACS + HDF5 in paper),
+  ✅ Bucket 3 (voice rewrite + 6pp fit). Everything committed and pushed.
+- Build the PDF with `bash paper/build.sh` (TeX Live now installed on the node) → `paper/out/` (gitignored).
