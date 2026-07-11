@@ -1,0 +1,6 @@
+chunk_KiB,rdcc_KiB,gds_reads,gds_MiB,BW_GiBps,verdict
+256,0,512,130,0.622,true_GDS
+256,128,512,130,0.618,true_GDS
+256,256,0,0,0.835,silent_compat
+256,512,0,0,0.841,silent_compat
+256,1024,0,0,0.831,silent_compat

@@ -44,7 +44,7 @@ def parse(path):
             if n in ("cuFileRead","cuFileReadAsync","cuFileBatchIOSubmit") and "offset" in a:
                 cufile[int(a.get("corr_id",-1))]=int(a["offset"])
             elif n=="nvme_setup_cmd" and "sector" in a:
-                nvme.append((int(a.get("corr_id",-1)),int(a["sector"])))
+                nvme.append((int(a.get("corr_id",-1)),int(a["sector"]),int(a.get("size",0))))
     return cufile,nvme
 
 def main():
@@ -60,16 +60,24 @@ def main():
     from collections import Counter
     slot_ops=Counter(off//args.slot for off in cufile.values())  # NOTE: corr_id-keyed, 1 entry/op
     tot=corr_ok=corr_missing=lba_unique=0
-    for cid,sector in nvme:
-        pb=sector*args.sec//args.bs
-        lb=phys_to_logical(exts,starts,pb)
-        if lb is None: continue
-        foff=lb*args.bs
-        oslot=foff//args.slot
+    for cid,sector,size in nvme:
+        # map every 4 KiB block the command's full [sector*sec, +size) range covers, not just the first
+        # sector, so a command straddling two ops' slots resolves to a set (command-to-set), not a
+        # false-unique first-block hit. sec/bs are parameters (queried per device), not hardcoded.
+        b0=sector*args.sec
+        nblocks=max(1,(b0%args.bs+size+args.bs-1)//args.bs) if size else 1
+        pb0=b0//args.bs
+        slots=set(); mapped=False
+        for pb in range(pb0,pb0+nblocks):
+            lb=phys_to_logical(exts,starts,pb)
+            if lb is None: continue
+            mapped=True; slots.add((lb*args.bs)//args.slot)
+        if not mapped: continue
         tot+=1
-        if slot_ops.get(oslot,0)==1: lba_unique+=1      # LBA can pin the op only if 1 op read this slot
+        oslot=next(iter(slots)) if len(slots)==1 else None   # >1 slot => command-to-set
+        if oslot is not None and slot_ops.get(oslot,0)==1: lba_unique+=1  # LBA pins the op only if 1 op read this slot
         if cid in cufile:
-            if cufile[cid]//args.slot==oslot: corr_ok+=1
+            if oslot is not None and cufile[cid]//args.slot==oslot: corr_ok+=1
         else:
             corr_missing+=1
     lba_pct=100*lba_unique/tot if tot else 0

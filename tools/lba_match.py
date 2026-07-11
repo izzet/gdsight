@@ -72,35 +72,43 @@ def main():
     starts = [c[1] for c in reads]
     maxsz = max((c[2] for c in reads), default=0)
 
-    def covering(file_off):
-        """cuFileReads whose [offset, offset+size) contains file_off."""
+    def covering_range(lo, hi):
+        """cuFileReads whose [offset, offset+size) intersects [lo, hi)."""
         hits = []
-        i = bisect.bisect_right(starts, file_off)
-        j = i - 1
-        while j >= 0 and starts[j] > file_off - maxsz:
-            cid, off, sz = reads[j]
-            if off <= file_off < off + sz:
+        j = max(0, bisect.bisect_left(starts, lo - maxsz))
+        k = bisect.bisect_right(starts, hi)
+        for idx in range(j, k):
+            cid, off, sz = reads[idx]
+            if off < hi and off + sz > lo:
                 hits.append(cid)
-            j -= 1
         return hits
 
     n = len(nvme)
     lba_unique = lba_ambig = lba_unmapped = corrid_ok = agree = 0
-    for cid, sector, _ in nvme:
-        phys_block = (sector * args.sec) // args.bs
-        logical = phys_to_logical(exts, phys_starts, phys_block)
-        if logical is None:
-            lba_unmapped += 1
-            lba_cid = None
+    for cid, sector, size in nvme:
+        # union over every 4 KiB block the command's full [sector*sec, +size) range covers, so a command
+        # spanning two ops' extents resolves to a set (command-to-set), not a false-unique first-block hit.
+        # sec/bs are parameters (queried per device), not baked-in constants.
+        b0 = sector * args.sec
+        nblocks = max(1, (b0 % args.bs + size + args.bs - 1) // args.bs) if size else 1
+        pb0 = b0 // args.bs
+        ops = set(); mapped = False
+        for pb in range(pb0, pb0 + nblocks):
+            logical = phys_to_logical(exts, phys_starts, pb)
+            if logical is None:
+                continue
+            mapped = True
+            lo = logical * args.bs
+            for h in covering_range(lo, lo + args.bs):
+                ops.add(h)
+        if not mapped:
+            lba_unmapped += 1; lba_cid = None
+        elif len(ops) == 1:
+            lba_unique += 1; lba_cid = next(iter(ops))
+        elif len(ops) > 1:
+            lba_ambig += 1; lba_cid = None  # command spans >1 op -> command-to-set (address can't disambiguate)
         else:
-            file_off = logical * args.bs + (sector * args.sec) % args.bs
-            hits = covering(file_off)
-            if len(hits) == 1:
-                lba_unique += 1; lba_cid = hits[0]
-            elif len(hits) > 1:
-                lba_ambig += 1; lba_cid = None  # same file range read by >1 op: address can't disambiguate
-            else:
-                lba_unmapped += 1; lba_cid = None
+            lba_unmapped += 1; lba_cid = None
         if cid in corr_ids:
             corrid_ok += 1
             if lba_cid is not None and lba_cid == cid:

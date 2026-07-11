@@ -55,16 +55,19 @@ static int do_create(const char *file, const char *layout, long size_mib, long c
     return 0;
 }
 
-static int do_read(const char *file, int cache_on){
+static int do_read(const char *file, int cache_on, long rdcc_bytes){
     /* open with the GDS VFD */
     hid_t fapl = H5Pcreate(H5P_FILE_ACCESS); CK(fapl);
     /* H5Pset_fapl_gds(fapl, alignment, block_size, cbuf_size) — 4K alignment, 16MiB copy buffer */
     CK(H5Pset_fapl_gds(fapl, 4096, 4096, (size_t)16*1024*1024));
     hid_t fid = H5Fopen(file, H5F_ACC_RDONLY, fapl); CK(fid);
 
-    /* dataset access plist: toggle the raw-data chunk cache */
+    /* dataset access plist: set the raw-data chunk cache. rdcc_bytes>=0 sweeps the cache SIZE at a
+     * fixed chunk (the causal test: the P2P transition should move with the cache size, proving the
+     * chunk cache is the cause); otherwise on=HDF5 default cache, off=disabled. */
     hid_t dapl = H5Pcreate(H5P_DATASET_ACCESS); CK(dapl);
-    if (!cache_on) CK(H5Pset_chunk_cache(dapl, 0, 0, 0.0));   /* disable -> direct file->GPU */
+    if (rdcc_bytes >= 0)  CK(H5Pset_chunk_cache(dapl, 12421, (size_t)rdcc_bytes, 0.75));
+    else if (!cache_on)   CK(H5Pset_chunk_cache(dapl, 0, 0, 0.0));   /* disable -> direct file->GPU */
     hid_t dset = H5Dopen2(fid, DSET, dapl); CK(dset);
 
     hid_t space = H5Dget_space(dset);
@@ -79,8 +82,12 @@ static int do_read(const char *file, int cache_on){
     double dt = now_s()-t0;
 
     double mib = (double)n/(1024*1024);
-    printf("read %s cache=%s bytes=%.1fMiB time=%.4fs BW=%.3f GiB/s\n",
-           file, cache_on?"on":"off", mib, dt, mib/1024.0/dt);
+    if (rdcc_bytes >= 0)
+        printf("read %s rdcc=%ldKiB bytes=%.1fMiB time=%.4fs BW=%.3f GiB/s\n",
+               file, rdcc_bytes/1024, mib, dt, mib/1024.0/dt);
+    else
+        printf("read %s cache=%s bytes=%.1fMiB time=%.4fs BW=%.3f GiB/s\n",
+               file, cache_on?"on":"off", mib, dt, mib/1024.0/dt);
 
     cudaFree(dbuf);
     H5Dclose(dset); H5Sclose(space); H5Pclose(dapl); H5Pclose(fapl); H5Fclose(fid);
@@ -91,10 +98,11 @@ int main(int argc, char **argv){
     if (argc>=6 && strcmp(argv[1],"create")==0)
         return do_create(argv[2], argv[3], atol(argv[4]), atol(argv[5]));
     if (argc>=4 && strcmp(argv[1],"read")==0)
-        return do_read(argv[2], strcmp(argv[3],"on")==0);
+        return do_read(argv[2], strcmp(argv[3],"on")==0, argc>=5 ? atol(argv[4]) : -1);
     fprintf(stderr,
         "usage:\n"
         "  %s create <file> <contig|chunk> <size_MiB> <chunk_KiB>\n"
-        "  %s read   <file> <on|off>\n", argv[0], argv[0]);
+        "  %s read   <file> <on|off> [rdcc_nbytes]   # rdcc_nbytes sweeps the cache size at fixed chunk\n",
+        argv[0], argv[0]);
     return 1;
 }
