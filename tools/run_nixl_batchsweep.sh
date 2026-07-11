@@ -10,7 +10,7 @@ CUDALIB=/usr/local/cuda-12.6/targets/x86_64-linux/lib:/usr/local/cuda-12.6/lib64
 SYSCUFILE=/usr/local/cuda-12.6/targets/x86_64-linux/lib/libcufile.so.0
 export PATH="$PREFIX/sbin:$PREFIX/bin:$PATH" LD_LIBRARY_PATH="$PREFIX/lib"
 F=/mnt/nvme1/gdstrace-smoke/ovh.dat; TRACEDIR=/mnt/nvme1/gdstrace-smoke/dc-traces
-NA=200; SA=1048576; NB=2000; SB=2560
+NA=200; SA=1048576; NB=2000; SB=${SB:-2560}
 OUT=/home/cc/projects/gdstrace/results/xlayer; CSV="$OUT/nixl_batchsweep.csv"
 echo "batch,batch_ops,device_reads,api_coarsening,B_A_byte,corr_id_correct_pct,corr_id_unattr_pct" > "$CSV"
 echo 1 | sudo tee /sys/module/nvidia_fs/parameters/rw_stats_enabled >/dev/null
