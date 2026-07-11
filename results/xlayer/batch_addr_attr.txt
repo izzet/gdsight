@@ -1,0 +1,9 @@
+# Per-entry batch (NIXL) address attribution (tools/batch_addr_attr.py), 2026-07-11
+# trace: trace-cc-20260711172920-izzet-gdstrace-node-izzet-gdstrace-node.pfw.gz  (batch=64, 2000x2560B KV, cufile plugin batchentry events)
+
+batch entries (address ops)   : 2000
+distinct batch corr_ids (time): 32
+NVMe commands                 : 2003
+ADDRESS -> unique batch entry : 2000   ambiguous: 0   unmapped: 3
+
+=> address pins each command to 1 of 2000 entries; the time basis distinguishes only 32 batches (62x coarser).
