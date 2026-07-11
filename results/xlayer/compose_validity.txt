@@ -1,0 +1,15 @@
+# Sound composition via the same-thread validity bit (tools/compose_score.py), 2026-07-11
+# The block probe emits sync=1 iff the corr_id came from the same-thread active_op path (provably valid);
+# time breaks an address tie ONLY when sync=1, so an aliased fallback key can never wrongly resolve an overlap.
+
+## async, overlapping coverage (4000x64KiB over 64 slots):
+nvme cmds scored          : 4000
+NVMe cmds: 4002 | sync=1 (same-thread valid): 0 | unique-coverage: 0 | overlap: 4002
+SOUND compose: address(unique)=0  valid-time-tiebreak=0  command-to-set=4000
+NAIVE would return a single op for 63 overlap cmds; SOUND returns single op for 0 (sync=1) -> 63 would-be aliased wrong attributions become command-to-set.
+
+## sync, 16 threads:
+nvme cmds scored          : 4000
+NVMe cmds: 4001 | sync=1 (same-thread valid): 4000 | unique-coverage: 4000 | overlap: 1
+SOUND compose: address(unique)=4000  valid-time-tiebreak=0  command-to-set=0
+NAIVE would return a single op for 0 overlap cmds; SOUND returns single op for 0 (sync=1) -> 0 would-be aliased wrong attributions become command-to-set.
