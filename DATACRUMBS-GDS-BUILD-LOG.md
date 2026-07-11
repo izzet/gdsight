@@ -657,3 +657,14 @@ probes.json `functions[5]` -> `start_event_id`+5 = 200005. Four gotchas hit, in 
    The generated `build/data/{categories,probes}-<host>.json` must be copied to
    `~/dc-prefix/etc/datacrumbs/data/`. After that, `pread` events carry offset.
 Result: address attributes all 2000 POSIX device commands to their exact pread (results/xlayer/posix_addr_attr.txt).
+
+## Per-entry batch capture + the skeleton-embed gotcha (2026-07-11)
+Added `batch_emit()` to the cufile plugin: cuFileBatchIOSubmit's uprobe walks iocbp[0..nr-1] and emits
+one 'batchentry' event (200006) per entry with its own offset/size + the shared batch corr_id, so the
+address basis attributes each device command to its exact batch entry (NIXL: 2000/2000). **Gotcha (cost
+an iteration):** datacrumbs EMBEDS the BPF object as a compiled skeleton (`datacrumbs.skel.h` in
+server.cpp) -- editing a plugin and only rebuilding/copying `datacrumbs.bpf.o` does NOTHING at runtime
+(events silently absent). You MUST rebuild the datacrumbs BINARY (`ninja -k 0 -C build` regenerates the
+skeleton), then re-link the bpf.o manually (clean-race) + re-install the category map + re-setcap. Also:
+new BPF program function names must be globally unique across plugins (link-time `bpftool gen object`
+fails on duplicates), and a new event_id needs its name in probes.json (positional -> start_event_id+idx).
