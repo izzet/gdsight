@@ -1,0 +1,12 @@
+# NIXL KV transfer size derivation + measured amplification (2026-07-11)
+# Llama-3.1-70B: num_kv_heads=8, head_dim=128, hidden=8192, 80 layers.
+# Per-token, per-layer KV (K+V) = 2 * num_kv_heads * head_dim * bytes_per_elt:
+#   fp8  (1B): 2*8*128*1 = 2048 B   <- clean, sub-4KiB -> amplifies
+#   fp16 (2B): 2*8*128*2 = 4096 B   <- equals the grid -> no amplification
+# 2560 B (current paper value) does NOT derive from this geometry (only 2*10*128, an odd per-head/PP-stage form).
+#
+# Measured (nixl_gds_kv, na=0 nb=2000, batch=64, misaligned offset=3072), one 4KiB grid:
+#   sb=2048: requested 3.91 MiB, device 15.62 MiB, A_byte = 4.000x  (predicted 4.00x)  <- clean derivation
+#   sb=2560: requested 4.88 MiB, device 15.62 MiB, A_byte = 3.200x  (predicted 3.20x)  <- current paper value
+# Both move the same 15.62 MiB device bytes (each read spans 2 cells = 8192 B); amplification differs by requested size.
+# => switching to 2048 gives a clean Llama fp8 derivation but changes the headline 3.2x -> 4.0x (in sec:nixl, Table 3, Fig 3, sec:1).
