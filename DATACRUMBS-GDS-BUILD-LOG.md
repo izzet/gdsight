@@ -638,3 +638,22 @@ defaults `-DDATACRUMBS_TRACE_ALL_PROCESSES_OPT=OFF` and SILENTLY drops trace-all
 empty 23-byte traces while pid-filter/oracle still work) -> always pass `...=ON`, then re-run
 `chameleon/setup_datacrumbs_runtime.sh` to re-setcap. Also: never pipe `datacrumbs_run` through
 head/grep (SIGPIPE kills it before it flushes); redirect to a file (setsid + `> log 2>&1 < /dev/null`).
+
+## POSIX pread offset capture for per-op attribution (2026-07-11)
+Added a signature-aware `SEC("uprobe/libc:pread")` to the cufile plugin (cufile.bpf.c) capturing
+(count, offset) via a NON-corr entry/exit (POSIX bypasses cuFile, so it must not register a corr_id),
+emitting a `cufile_event_t` (type 4 -> get_data_4 already prints offset). Event named via cufile
+probes.json `functions[5]` -> `start_event_id`+5 = 200005. Four gotchas hit, in order:
+1. **BPF symbol collision:** the program name must be globally unique across plugins. sys_io generates a
+   `pread64_entry`; naming mine `pread64_entry` too -> `bpftool gen object: conflicting non-weak symbol`.
+   Renamed to `pread_gds_entry/exit`.
+2. **Explorer name-dedup:** the probe explorer skips a duplicate function name across plugins ("Function
+   name 'pread64' already processed"). sys_io owns `pread64`; use the libc alias **`pread`** (same address
+   as pread64/__pread64) so the name is unique.
+3. **bpf.o clean-race** (known): the default `ninja -C build` zeroes datacrumbs.bpf.o. Workaround that
+   worked: build component `.o`s, then link manually -- `bpftool gen object out.bpf.o common.o init.o
+   custom1.o cufile.o block.o nvidiafs.o` -- and `cp` it over the installed one.
+4. **category map not installed:** events fired but dropped with `No category found for event_id 200005`.
+   The generated `build/data/{categories,probes}-<host>.json` must be copied to
+   `~/dc-prefix/etc/datacrumbs/data/`. After that, `pread` events carry offset.
+Result: address attributes all 2000 POSIX device commands to their exact pread (results/xlayer/posix_addr_attr.txt).
