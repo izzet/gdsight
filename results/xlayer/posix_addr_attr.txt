@@ -1,15 +1,17 @@
-# POSIX address-attribution (tools/posix_addr_attr.py) — kvikio RAG-mix baseline, 2026-07-11
-# trace: trace-cc-20260711093252-izzet-gdstrace-node-izzet-gdstrace-node.pfw.gz
+# Per-op POSIX address attribution (tools/posix_addr_attr.py) — kvikio RAG-mix baseline, 2026-07-11
+# trace: trace-cc-20260711103547-izzet-gdstrace-node-izzet-gdstrace-node.pfw.gz  (pread offset captured by the cufile plugin's libc:pread uprobe)
 
-class-B POSIX pread64(3072B) ops in trace : 2000
-NVMe commands total                       : 2201
+NVMe commands            : 2201
+app ops in unified table : 200 cuFile + 2000 POSIX
 
-ADDRESS basis (sector -> FIEMAP -> region):
-  A(cuFile/GDS)     : 200 commands  <- attributed by address
-  B(POSIX-bypass)   : 2000 commands  <- attributed by address
+ADDRESS basis, per individual op (sector -> FIEMAP -> the op whose range contains it):
+  attributed to a unique POSIX pread : 2000
+  attributed to a unique cuFile read : 200
+  ambiguous (cuFile+POSIX overlap)   : 0
+  unmapped                           : 1
 
-corr_id (time) basis:
-  attributed -> A(cuFile/GDS)     : 2045
-  UNATTRIBUTED (no live cuFile id), truly B(POSIX-bypass)   : 155
+TIME basis (corr_id) on the same POSIX-region commands:
+  mis-billed to a clean cuFile op    : 1700
+  dropped (no id)                    : 300
 
-=> address attributes the 2000 POSIX-bypassed class-B commands; corr_id leaves 155 of them unattributed (POSIX carries no cuFile corr_id).
+=> address attributes 2000 POSIX device commands to their EXACT pread; time mis-bills/drops all 2000.
