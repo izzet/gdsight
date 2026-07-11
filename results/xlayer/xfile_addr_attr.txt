@@ -1,0 +1,8 @@
+# Multi-file address attribution (tools/xfile_addr_attr.py), 2026-07-11
+# workload: kvikio 64KiB reads, 200 from ovh.dat + 200 from ovh2.dat, one process
+
+reverse physical->file index: 22 extents over 2 files
+NVMe commands: 402
+  -> ovh.dat: 200 commands
+  -> ovh2.dat: 200 commands
+  -> unmapped: 2
