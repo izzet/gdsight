@@ -625,3 +625,16 @@ target races a "clean BPF artifacts" step that deletes datacrumbs.bpf.o before i
 then re-setcap. Two tracer modes now: pid-filter (default, targeted, low overhead) vs trace-all
 (unmodified processes; filter the trace by the workload's file extents / pid). Used for the real
 kvikio RAG-mix necessity result (results/xlayer/necessity.md Result 2).
+
+## corr_id fallback made sound (XOR) + rebuild-drops-trace-all reminder (2026-07-11)
+External review flagged the process-level corr_id fallback as unsound: when a device command fires
+off-thread it read `proc[tgid]` (a plain last-writer), but `cnt[tgid]==1` does NOT imply proc holds the
+surviving op (an op that entered+exited during another's flight overwrites it). Fix in
+`plugins/custom_probes/gdstrace_corr.bpf.h`: replace proc with `cufile_active_xor[tgid]`, the XOR of all
+active ids, toggled on begin/exit -> when count==1 the XOR equals the sole active op's id (sound under
+interleave). Sync (active_op[tid]) unaffected. Oracle re-run IDENTICAL (sync 100%, async corr_id 1.6% /
+LBA 100%), so the fix is sound-not-number-moving. **Rebuild reminder (re-hit today):** a plain rebuild
+defaults `-DDATACRUMBS_TRACE_ALL_PROCESSES_OPT=OFF` and SILENTLY drops trace-all (kvikio capture returns
+empty 23-byte traces while pid-filter/oracle still work) -> always pass `...=ON`, then re-run
+`chameleon/setup_datacrumbs_runtime.sh` to re-setcap. Also: never pipe `datacrumbs_run` through
+head/grep (SIGPIPE kills it before it flushes); redirect to a file (setsid + `> log 2>&1 < /dev/null`).
