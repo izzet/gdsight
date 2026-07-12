@@ -2,7 +2,8 @@
 # Mechanism depth: vary NIXL's GDS batch size and show that BOTH failure modes of the standard
 # observers are batch-driven -- the cuFile-API granularity coarsens (fewer batch ops for the same
 # device reads) and corr_id collapses harder (more device cmds fire async after each submit returns),
-# while our per-NVMe-cmd LBA per-class amplification is invariant. Fixed KV size = 2560 B (Llama-70B PP8).
+# while our per-NVMe-cmd LBA per-class amplification is invariant. Fixed KV size = 2048 B (Llama-3.1-70B
+# fp8: 2 (K,V) x 8 KV heads x 128 elem). Table V (KV-only) is: NA=0 SB=2048 bash run_nixl_batchsweep.sh
 set -u
 PREFIX=$HOME/dc-prefix
 NIXL_PY=${NIXL_PY:-$HOME/nixl-test-venv/bin/python}
@@ -10,7 +11,7 @@ CUDALIB=/usr/local/cuda-12.6/targets/x86_64-linux/lib:/usr/local/cuda-12.6/lib64
 SYSCUFILE=/usr/local/cuda-12.6/targets/x86_64-linux/lib/libcufile.so.0
 export PATH="$PREFIX/sbin:$PREFIX/bin:$PATH" LD_LIBRARY_PATH="$PREFIX/lib"
 F=/mnt/nvme1/gdstrace-smoke/ovh.dat; TRACEDIR=/mnt/nvme1/gdstrace-smoke/dc-traces
-NA=200; SA=1048576; NB=2000; SB=${SB:-2560}
+NA=${NA:-200}; SA=1048576; NB=2000; SB=${SB:-2048}
 OUT=/home/cc/projects/gdstrace/results/xlayer; CSV="$OUT/nixl_batchsweep.csv"
 echo "batch,batch_ops,device_reads,api_coarsening,B_A_byte,corr_id_correct_pct,corr_id_unattr_pct" > "$CSV"
 echo 1 | sudo tee /sys/module/nvidia_fs/parameters/rw_stats_enabled >/dev/null
