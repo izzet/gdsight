@@ -25,7 +25,7 @@ da = {r["arm"]: r for r in csv.DictReader(open(os.path.join(HERE,"results/xlayer
 ucaA = [float(da[k]["A_byte"]) for k in ("BASELINE","OBVIOUS:batch2x","OURS:align4K","OURS:coalesce")]
 ucaG = [float(da[k]["goodput_MiBps"]) for k in ("BASELINE","OBVIOUS:batch2x","OURS:align4K","OURS:coalesce")]
 
-fig, ax = plt.subplots(1, 3, figsize=(9.2, 2.9))
+fig, ax = plt.subplots(1, 4, figsize=(12.4, 2.9))
 
 # (a) UC-A
 labs = ["baseline", "obvious:\n2× batch", "ours:\nalign", "ours:\ncoalesce"]
@@ -59,6 +59,19 @@ ax[2].text(2, 4080+90, "19×", color=BAD, fontsize=9, ha="center", fontweight="b
 ax[2].axhline(141, ls=":", lw=0.9, color="k", alpha=.6)
 ax[2].text(0.05, 280, "p50 ≈141 µs (flat)", fontsize=6.5, color="k")
 ax[2].set_ylim(0, 4600)
+
+# (d) UC-D HDF5: obvious fix (disable cache) is slower; attributed fix (contiguous layout) doubles BW
+hd = {r["case"]: r for r in csv.DictReader(open(os.path.join(HERE,"results/xlayer/hdf5_gds_cpu.csv")))}
+hbw = [float(hd[k]["BW_GiBps"]) for k in ("chunked256K_cacheON","chunked256K_cacheOFF","contiguous")]
+b4 = ax[3].bar(["baseline\n(chunk cache)", "obvious:\ncache off", "attributed:\ncontiguous"], hbw,
+               color=[BASE, BAD, GOOD])
+ax[3].set_ylabel("read bandwidth (GiB/s)")
+ax[3].set_title("(d) HDF5 — silent chunk-cache bypass", fontsize=9)
+for r, note, mc in zip(b4, ["0 P2P (silent)", "GDS, slower ✗", "2× BW ✓"], [BASE, BAD, GOOD]):
+    ax[3].text(r.get_x()+r.get_width()/2, r.get_height()+0.03, note, ha="center", va="bottom",
+               fontsize=6.5, color=mc)
+ax[3].set_ylim(0, 2.3)
+
 fig.tight_layout()
 save(fig, "fig1_diagnosis")
 
