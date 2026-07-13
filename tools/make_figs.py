@@ -11,7 +11,9 @@ import matplotlib.pyplot as plt
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(HERE, "results", "figures"); os.makedirs(OUT, exist_ok=True)
-GRAY, BAD, GOOD, BASE = "#9e9e9e", "#d1495b", "#2e8540", "#5b6b8c"
+# Okabe-Ito colorblind-safe palette: vermillion (bad), bluish-green (good), blue (baseline), gray (neutral).
+# Bars also carry x-axis labels and text annotations, so meaning never rests on color alone.
+GRAY, BAD, GOOD, BASE = "#999999", "#d55e00", "#009e73", "#0072b2"
 plt.rcParams.update({"font.size": 9, "axes.spines.top": False, "axes.spines.right": False})
 
 def save(fig, name):
