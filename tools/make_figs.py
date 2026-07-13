@@ -35,7 +35,7 @@ cols = [BASE, BAD, GOOD, GOOD]
 b = ax[0].bar(labs, ucaA, color=cols)
 ax[0].axhline(1.0, ls="--", lw=0.8, color="k", alpha=.5)
 ax[0].set_ylabel("device read amplification (A_byte)")
-ax[0].set_title("(a) UC-A  NIXL KV — device geometry", fontsize=9)
+ax[0].set_title("(a) NIXL KV — fan-out", fontsize=9)
 for i, (r, g) in enumerate(zip(b, ucaG)):
     mark = {1: " ✗", 2: " ✓", 3: " ✓"}.get(i, "")
     mc = BAD if i == 1 else (GOOD if i in (2, 3) else "k")
@@ -47,32 +47,32 @@ ax[0].set_ylim(0, 4.2)
 b2 = ax[1].bar(["baseline\n(POSIX bypass)", "ours: coalesce\n(GDS P2P)"], [2.67, 1.00], color=[BAD, GOOD])
 ax[1].axhline(1.0, ls="--", lw=0.8, color="k", alpha=.5)
 ax[1].set_ylabel("class-B amplification (A_byte)")
-ax[1].set_title("(b) UC-B  kvikio — silent bypass", fontsize=9)
+ax[1].set_title("(b) kvikio — silent bypass", fontsize=9)
 for r, mb, pp in zip(b2, [15.6, 5.9], ["2000 cmds\nPOSIX", "94 cmds\nGDS"]):
     ax[1].text(r.get_x()+r.get_width()/2, r.get_height()+0.04, f"{mb} MiB\n{pp}", ha="center", va="bottom", fontsize=6.5)
 ax[1].set_ylim(0, 3.2)
 
-# (c) UC-C
-b3 = ax[2].bar(["ours: segregate\n(fix)", "+1 MiB\ninterferer", "+4 MiB\ninterferer"], [216, 1182, 4080],
-               color=[GOOD, BAD, BAD])
-ax[2].set_ylabel("small-op p99 latency (µs)")
-ax[2].set_title("(c) UC-C  tail — head-of-line", fontsize=9)
-ax[2].text(2, 4080+90, "19×", color=BAD, fontsize=9, ha="center", fontweight="bold")
-ax[2].axhline(141, ls=":", lw=0.9, color="k", alpha=.6)
-ax[2].text(0.05, 280, "p50 ≈141 µs (flat)", fontsize=6.5, color="k")
-ax[2].set_ylim(0, 4600)
-
-# (d) UC-D HDF5: obvious fix (disable cache) is slower; attributed fix (contiguous layout) doubles BW
+# (c) HDF5: obvious fix (disable cache) is slower; attributed fix (contiguous layout) doubles BW
 hd = {r["case"]: r for r in csv.DictReader(open(os.path.join(HERE,"results/xlayer/hdf5_gds_cpu.csv")))}
 hbw = [float(hd[k]["BW_GiBps"]) for k in ("chunked256K_cacheON","chunked256K_cacheOFF","contiguous")]
-b4 = ax[3].bar(["baseline\n(chunk cache)", "obvious:\ncache off", "attributed:\ncontiguous"], hbw,
+b3 = ax[2].bar(["baseline\n(chunk cache)", "obvious:\ncache off", "attributed:\ncontiguous"], hbw,
                color=[BASE, BAD, GOOD])
-ax[3].set_ylabel("read bandwidth (GiB/s)")
-ax[3].set_title("(d) HDF5 — silent chunk-cache bypass", fontsize=9)
-for r, note, mc in zip(b4, ["0 P2P (silent)", "GDS, slower ✗", "2× BW ✓"], [BASE, BAD, GOOD]):
-    ax[3].text(r.get_x()+r.get_width()/2, r.get_height()+0.03, note, ha="center", va="bottom",
+ax[2].set_ylabel("read bandwidth (GiB/s)")
+ax[2].set_title("(c) HDF5 — silent chunk-cache bypass", fontsize=9)
+for r, note, mc in zip(b3, ["0 P2P (silent)", "GDS, slower ✗", "2× BW ✓"], [BASE, BAD, GOOD]):
+    ax[2].text(r.get_x()+r.get_width()/2, r.get_height()+0.03, note, ha="center", va="bottom",
                fontsize=6.5, color=mc)
-ax[3].set_ylim(0, 2.3)
+ax[2].set_ylim(0, 2.3)
+
+# (d) tail: small-op p99 inflates under interference, segregation recovers it
+b4 = ax[3].bar(["ours: segregate\n(fix)", "+1 MiB\ninterferer", "+4 MiB\ninterferer"], [216, 1182, 4080],
+               color=[GOOD, BAD, BAD])
+ax[3].set_ylabel("small-op p99 latency (µs)")
+ax[3].set_title("(d) tail — head-of-line", fontsize=9)
+ax[3].text(2, 4080+90, "19×", color=BAD, fontsize=9, ha="center", fontweight="bold")
+ax[3].axhline(141, ls=":", lw=0.9, color="k", alpha=.6)
+ax[3].text(0.05, 280, "p50 ≈141 µs (flat)", fontsize=6.5, color="k")
+ax[3].set_ylim(0, 4600)
 
 fig.tight_layout()
 save(fig, "fig1_diagnosis")
