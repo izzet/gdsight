@@ -421,3 +421,56 @@ Izzet's skepticism.)
 - nvidia-fs **2.28.4** vs GDS userspace **1.11.1**: gdscheck may print a version heuristic; judge
   by real `-x0 > -x1` behavior, not the heuristic line.
 - **Snapshot immediately** once the gate passes: `sudo cc-snapshot CC-Ubuntu24.04-CUDA-GDS-$(date +%Y%m%d)`.
+
+---
+
+## New lease bring-up — 2026-07-24 (fresh instance, same node name `izzet-gdstrace-node`)
+Fresh Chameleon bare-metal A100-PCIE-40GB, driver 560.35.05, kernel `6.8.0-1051-nvidia`, `nvidia_fs`
+loaded, PowerEdge R6525. Bring-up sequence and what this instance did NOT carry over from the image:
+
+1. **NVMe mount.** Both `nvme0n1`/`nvme1n1` (3.5T PM983-class) were genuinely **raw** — verified three
+   ways before touching them (`wipefs -n` silent, `sfdisk -l` shows no partition table, `blkid -p` finds
+   no signature), so no tenant data was at risk. `DEV=/dev/nvme1n1 FORMAT=1 chameleon/mount_gds_nvme.sh`
+   → ext4 (4k) mounted `-o data=ordered` at `/mnt/nvme1`. `gdscheck -p`: **NVMe: Supported | IOMMU: disabled**.
+2. **Tracer runtime.** `chameleon/setup_datacrumbs_runtime.sh` (eBPF caps + `/var/run/datacrumbs`).
+3. **`rw_stats_enabled=1`** re-applied (per-boot; without it every `/proc/driver/nvidia-fs/stats`
+   counter reads 0 even for genuine GDS).
+4. **TeX Live** was NOT in the image (installed manually on the previous instance and lost): reinstalled
+   `latexmk texlive-{latex-base,latex-recommended,latex-extra,fonts-recommended,pictures,science}`
+   (+ `poppler-utils` for `pdftotext` page checks). `bash paper/build.sh` then builds clean.
+
+**Fresh-mkfs gotcha (cost a misleading number).** The first `gdsio` read right after `mkfs` measured
+**0.77 GiB/s**, not the expected ~2.5. Cause: `ext4lazyinit` was writing ~120 MB/s of inode tables to
+the same drive (`iostat -x` shows it; `pgrep -x ext4lazyinit`). lazyinit ran **350 s** on this 3.5T
+volume; the same read then gives **2.93 GiB/s**, i.e. the single-PM983 drive-bound ceiling from the
+original Step-1 smoke (~2.9). A mid-lazyinit read still measured 2.49, so the contamination is graded,
+not all-or-nothing. Do not benchmark a freshly-formatted drive: wait for `pgrep -x ext4lazyinit` to go
+quiet, or `mkfs.ext4 -E lazy_itable_init=0,lazy_journal_init=0`.
+
+**The image's tracer was stale (the one real gap).** `~/dc-prefix/sbin/datacrumbs` was the **Jun 25**
+build: its cuFile probe set was only the original five (`cuFileRead/Write/ReadAsync/BatchIOSubmit/
+HandleRegister`), missing the Jul-11 `libc:pread` (200005) and per-entry `batchentry` (200006) probes
+that the paper's per-op POSIX and per-entry batch results depend on. libbpf/bpftool/`~/dfa-venv` WERE
+baked in, so only step 4/6 of `build_datacrumbs.sh` had to be redone:
+```
+cmake -S . -B build -G Ninja ... -DDATACRUMBS_TRACE_ALL_PROCESSES_OPT=ON   # ON is mandatory, see below
+ninja -C build datacrumbs_explorer datacrumbs_generator && ninja -C build run_explorer && ninja -C build run_generator
+ninja -k 0 -C build            # regenerates the EMBEDDED skeleton (editing only the .bpf.o does nothing)
+cmake -P build/cmake_install.cmake                                  # install without ninja (clean-race)
+cp build/data/{categories,probes}-cc-<host>.json ~/dc-prefix/etc/datacrumbs/data/   # note the `cc-` prefix
+sudo setcap cap_sys_admin,cap_bpf,cap_perfmon,cap_dac_read_search+ep ~/dc-prefix/sbin/datacrumbs
+```
+Two notes on top of the existing gotcha list: configure **fails** unless
+`DATACRUMBS_CONFIGURED_TRACE_DIR` already exists (`mkdir -p /mnt/nvme1/gdstrace-smoke/dc-traces` first),
+and the generated maps are named `…-cc-izzet-gdstrace-node.json` (user prefix), not `…-izzet-gdstrace-node.json`.
+The bpf.o clean-race did **not** bite this time (149592 B object, new symbols `pread_gds_entry/exit` +
+1648-B `cuFileBatchIOSubmit_entry` present) — check before applying the manual `bpftool gen object` relink.
+
+**Verified end-to-end** (`tools/run_gdstrace_demos.sh gdsio`, 4 MiB GPUD read at 2.49 GiB/s, traced and
+run before lazyinit finished):
+`cuFileRead=64 → nvfs_io=64` (1:1 true GDS) `→ nvfs_get_p2p_dma_mapping=256` (4 P2P maps per 4 MiB read)
+`→ nvme_setup_cmd=488`, plus **`pread=135`** confirming the new probe fires. System-wide events in the
+same trace confirm trace-all is active. Known cosmetic issue reconfirmed: the demo's
+`datacrumbs_run | grep | head` pipeline SIGKILLs the wrapper ("Killed"), but the trace still flushes;
+also `latest_trace()`'s `-newer /tmp/.dc_mark` did not match, so locate the trace under
+`dc-traces/YY/MM/DD/` directly rather than trusting the helper.
