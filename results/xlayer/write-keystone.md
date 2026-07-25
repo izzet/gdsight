@@ -1,8 +1,51 @@
 # The GDS write path: per-op attribution of read-modify-write amplification
 
-Reads were the only path the evaluation covered. This closes that gap. **It is an attribution result,
-not a discovery**: the mechanism is documented by NVIDIA, and cuFile's own statistics expose the
-fallback. What no existing tool supplies is the device-side consequence, per operation.
+Reads were the only path the evaluation covered. This closes that gap.
+
+**The headline result is Section 0 below (kvikio).** It is the write case with the same structure as the
+strong read keystones: an observer that reports *nothing wrong* while most of the workload bypasses GDS
+and drives device traffic no counter reports. The controlled `gdsio` study that follows it characterises
+the mechanism, but on its own it is only an attribution result, because NVIDIA documents the mechanism
+and cuFile's statistics expose that fallback.
+
+## 0. Keystone: kvikio mixed writes - every observer reports clean
+
+A RAPIDS kvikio writer with a realistic mix: large aligned tensor writes plus small packed records
+whose offsets are not 4 KiB aligned (60% of ops at 4 KiB, 40% at 64 KiB, 549 MiB, one writer).
+kvikio routes anything below its Python-default 16 KiB threshold through **its own POSIX path, above
+cuFile**, so cuFile never learns those writes happened.
+
+| observer | what it reports | reality |
+|---|---|---|
+| `gds_stats -l 3` | `Write: n=8081 posix=0 unalign=0 dr=0 err=0` | **clean**: no fallback, no misalignment, no error |
+| nvidia-fs | 8,038 writes, **0 reads** | 60% of ops absent; device reads absent |
+| `iostat` | device reads visible, no cause, mixed with co-tenants | cannot localise |
+| **GDSight** | 23,924 POSIX `pwrite` ops captured; **22,962 / 22,962 device reads attributed (100%)**, 22,611 billed to the bypassed writes | names the ops and the cost |
+
+Cost: **0.126 GiB/s against 0.268 fully aligned (2.1x)**, and **89.7 MiB of device READ commands on a
+pure-write workload**. `gds_stats` reports `posix=0 unalign=0` because the ops it can see are genuinely
+clean; the damage is entirely in the ops it cannot see.
+
+**This case requires the address basis.** The time basis attributes **0 / 22,962**, and not by
+accident: the causing operations never entered cuFile, so no `corr_id` exists to carry. Address
+attribution resolves 100%. It is the sharpest demonstration in the paper of why the two bases are
+complementary rather than redundant.
+
+Two probes make it expressible, both added for this case and both mirroring existing read-side
+machinery: `req->cmd_flags & REQ_OP_MASK` on the block probe (a device command must be identifiable as
+a read), and a `libc:pwrite` uprobe (the write-side twin of the existing `libc:pread` one, giving the
+address basis an op table for writes that carry no `corr_id`).
+
+*Mechanism detail:* each misaligned 4 KiB write is split into two `pwrite` calls of **3,584 + 512
+bytes**, straddling two FS blocks, and the device must read both before writing them back. The trace
+shows exactly 11,962 of each.
+
+---
+
+The rest of this document is the controlled characterisation of that device-side cost. **It is an
+attribution result, not a discovery**: the mechanism is documented by NVIDIA, and cuFile's own
+statistics expose *this* fallback. What no existing tool supplies is the device-side consequence, per
+operation.
 
 ## What is already known (state this first, and plainly)
 
