@@ -668,3 +668,42 @@ server.cpp) -- editing a plugin and only rebuilding/copying `datacrumbs.bpf.o` d
 skeleton), then re-link the bpf.o manually (clean-race) + re-install the category map + re-setcap. Also:
 new BPF program function names must be globally unique across plugins (link-time `bpftool gen object`
 fails on duplicates), and a new event_id needs its name in probes.json (positional -> start_event_id+idx).
+
+## Device-command direction + the `clean_all` build race (2026-07-25)
+Added **direction capture** to the block probe so a device command can be identified as a read or a
+write: `nvme_setup_cmd` now records `req->cmd_flags & REQ_OP_MASK` (0 = `REQ_OP_READ`, 1 =
+`REQ_OP_WRITE`) into a new trailing `op` field of `block_event_t`, emitted by `get_data_5`. Without it
+the device layer is direction-blind, and the write keystone's central claim (a pure-*write* workload
+makes the device issue 14,194 *read* commands) is literally unstatable. `REQ_OP_MASK` is defined
+locally in the plugin: vmlinux BTF carries the `cmd_flags` field but not the kernel's `REQ_OP_*` macros.
+
+**The build race that made this look like a probe bug (cost most of the session).** The symptom was
+`op` reading 0 on commands that were unambiguously writes, with ~0.06% garbage values. The probe was
+correct the whole time. `build.ninja` defines a `clean_all` target that `rm -rf`s
+`datacrumbs.bpf.o`, `datacrumbs.skel.h` **and** the `datacrumbs` binary, and makes it an **order-only
+dependency of both the bpf.o and the skel.h targets**. Consequences:
+- Each **separate** `ninja` invocation re-runs `clean_all`, deleting what the previous one just built.
+  Building bpf.o, then skel.h, then the binary as three commands therefore never converges: the skel.h
+  step fails with `failed to stat() datacrumbs.bpf.o`, so **the binary is silently not relinked**.
+- An *incremental* `ninja -k 0` can plan the build before `clean_all` deletes the artifacts, so it
+  reports success while skipping the BPF recompile entirely.
+- Because the skeleton is **embedded** in the binary (`datacrumbs_bpf__open_and_load()`), a stale binary
+  means the BPF side writes the OLD event struct while the freshly-compiled userspace formatter reads
+  the NEW one. Trailing fields then read past the end of each record: mostly zeros, occasionally
+  neighbouring ring-buffer bytes. That is exactly the "0 with rare garbage" signature.
+
+**Reliable procedure:** after touching any plugin, do a **fresh** `rm -rf build` + configure + the
+generation steps + a single `ninja -k 0`, then verify ordering (`bpf.o` timestamp **older** than the
+binary) before trusting a run. An incremental rebuild is not trustworthy here. Diagnostic trick that
+settled it in one cycle: temporarily emit the raw field alongside the masked one
+(`op = ((u64)cf << 32) | (cf & 0xff)`) -> `raw=0x8801` decoded as `REQ_OP_WRITE|REQ_SYNC|REQ_IDLE`,
+proving the read was right and the plumbing was stale.
+
+**Verified:** aligned 1 MiB GDS write -> `cuFileWrite=64 -> nvfs_io=64 -> p2p=64 -> 64 NVMe commands,
+all op=1`. Results + the two write pathologies: `results/xlayer/write-keystone.md`; scorer
+`tools/write_attr.py`, drivers `tools/run_write_{keystone,sweep}.sh`.
+
+**Two more operational notes.** `datacrumbs_run`'s cleanup SIGKILL takes the **whole process group**
+with it, so a traced run must be launched from its own throwaway script and scored in a separate step
+(not merely un-piped). And `find -newermt` does not reliably match freshly written traces on this node
+(clock skew) -> locate traces with `ls -t`.
