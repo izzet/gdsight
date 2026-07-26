@@ -25,6 +25,8 @@ Test 3 is the one candidates keep failing.
 | **Unaligned-write RMW** (`gdsio -U`) | real, 2.87x device amplification, 6.1-7.8x throughput cost | Documented verbatim by NVIDIA, *and* `gds_stats -l 3` reports it (`posix=`, `unalign=`). Fails test 3 partly and is not a discovery. Kept as supporting characterisation. |
 | **kvikio sub-threshold writes** | strong: `gds_stats` clean (`posix=0 unalign=0 err=0`) while 60% of ops bypass GDS and drive 89.7 MiB of device reads, 100% address-attributed | Fails test 1 (second kvikio case) and largely test 3 (the mechanism is library policy plus filesystem RMW; remove the GPU and it reproduces). |
 | **Page-cache coherence** (GDS write to a file with dirty page-cache pages) | real and GDS-intrinsic: **1.8x** throughput loss (0.949 -> 0.520 at 1 MiB, 0.684 -> 0.372 at 64 KiB), `pg-cache` counter fires | Passes test 3 and test 2. But NVIDIA documents it: applications should avoid mixing O_DIRECT and normal I/O to the same file, and "overall I/O throughput might be slower". Best remaining *attribution* candidate, not a discovery. |
+| **P2P write concurrency ceiling** (lead 3) | P2P writes pin at **1.00 GiB/s from 2 to 32 threads**, spread <0.5% over 12 runs, while latency scales exactly linearly (1.04 ms at 1 thread -> 31.3 ms at 32). Host staging (`-x 2`) is noisy (0.95-1.23 at 8 threads) and averages the same or slightly higher. | The apparent 24% gap to `gdsio`'s CPU_ONLY path (1.33 GiB/s) is a **benchmark artifact, not a GDS effect**: at ~91% device utilisation in all three paths, CPU_ONLY issues 509 KiB commands at queue depth 12.9 while P2P issues 814 KiB at depth 7.8 (= exactly 1 in flight per thread, which is what synchronous `cuFileWrite` should give). Different command-size distributions from `gdsio`'s own code paths, same saturated drive. No pathology. |
+| **`max_io_queue_depth` cliff** (lead 4) | qd=32 and qd=128 are indistinguishable (0.9946 vs 0.9892 GiB/s); qd>256 is rejected loudly at init (`invalid value ... min: 1 max: 256`, `cuFile driver open error: -22`) | The knob does not set the plateau, and out-of-range values fail closed with an accurate message rather than degrading silently. Nothing to attribute. |
 
 ## The pattern this search established
 
@@ -40,17 +42,27 @@ touched the same file buffered. The aggregate `pg-cache` counter says it happene
 writes collided, over which ranges, or who the other writer was. Answering that needs the unified
 cuFile U POSIX op table, which is the hardest attribution problem in the paper.
 
-## Remaining leads, ordered by how plausibly undocumented
+## Verdict: stop hunting
 
-1. **BAR1 / GPU-memory pressure.** The only resource that is GDS-exclusive. Does cuFile degrade or
-   silently fall back under registered-buffer pressure? Caveat: BAR1 is 64 GiB against 40 GB of HBM on
-   this A100, so it may not be exhaustable here.
-2. **Counters that never fire.** `dr=`, `r_sparse=`, `r_inline=` read 0 in every run recorded so far. A
-   condition that makes one fire is behaviour nobody documents.
-3. **Concurrency scaling of the P2P write path itself.** Docs characterise single-stream. A plateau or
-   collapse at N threads would be new.
-4. **Cliffs in documented knobs** (`max_io_queue_depth`, cuFile internal cache size). Documented as
-   knobs, never characterised quantitatively.
+Six candidates, six negatives. Leads 3 and 4 are now measured and closed above; lead 1 is dead on this
+hardware by inspection (`nvidia-smi` reports **BAR1 = 65,536 MiB against 40 GB of HBM**, so every byte of
+device memory can be mapped at once and the resource cannot be put under pressure — `Bar1-map` has read
+`err=0 active=0` in every run of the whole campaign). Lead 2 is the only one left and it is a fishing
+expedition: a counter that never fires is weak evidence of anything, and there is no hypothesis for what
+would make one fire.
+
+The search is complete enough to conclude from. **Choose the write case for what it demonstrates about
+attribution and stop looking for novelty** — this is D5 in `../../paper/ADVISOR-FEEDBACK.md`, and the
+cost of continuing is now measured against a deadline five days out with the re-spine untouched.
+
+Recommendation, in order:
+
+1. **Page-cache coherence** as the write case. Real, GDS-intrinsic, 1.8x, and the attribution problem is
+   the hardest in the paper: the cost is inflicted by *a different actor on a different I/O interface*,
+   so nothing but a unified cuFile-and-POSIX op table can name the collision. Verify what `gds_stats`
+   reports there **before** drafting.
+2. **kvikio sub-threshold writes** as the fallback. Measures beautifully (100% address attribution,
+   0% time attribution) and is written up already; its only defect is being a second kvikio case.
 
 ## Method traps that cost time here
 
