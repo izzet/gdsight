@@ -1,0 +1,16 @@
+case,size_MiB,rep,cpu_user_sys_s,BW_GiBps
+cacheON,512,1,1.330,0.859
+cacheON,512,2,1.310,0.861
+cacheON,512,3,1.300,0.873
+cacheON,512,4,1.320,0.852
+cacheON,512,5,1.330,0.843
+cacheOFF,512,1,1.020,0.595
+cacheOFF,512,2,1.040,0.589
+cacheOFF,512,3,1.030,0.601
+cacheOFF,512,4,1.040,0.588
+cacheOFF,512,5,1.040,0.592
+contiguous,512,1,0.770,1.780
+contiguous,512,2,0.750,1.604
+contiguous,512,3,0.760,1.781
+contiguous,512,4,0.760,1.610
+contiguous,512,5,0.740,1.600
