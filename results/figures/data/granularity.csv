@@ -1,0 +1,6 @@
+requested_B,measured_device_B,sector_prediction_B,source
+512,4096,512,effective-granularity.txt
+2048,4096,2048,effective-granularity.txt
+2560,4096,2560,effective-granularity.txt
+4096,4096,4096,effective-granularity.txt
+6144,8192,6144,effective-granularity.txt

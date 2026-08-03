@@ -1,0 +1,3 @@
+condition,metric,unit,mean,sd,commands,source
+1280 KiB (default),throughput,GiBps,2.439,0.010,4 cmds,amp_perf.csv
+2048 KiB (raised),throughput,GiBps,2.405,0.061,2 cmds,amp_perf.csv

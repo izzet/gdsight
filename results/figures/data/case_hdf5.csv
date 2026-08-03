@@ -1,0 +1,4 @@
+condition,metric,unit,mean,sd,n,source
+chunkcache,read_bandwidth,GiBps,0.8576,0.0111,5,hdf5_cpu_reps.csv
+cacheoff,read_bandwidth,GiBps,0.5930,0.0052,5,hdf5_cpu_reps.csv
+contiguous,read_bandwidth,GiBps,1.6750,0.0964,5,hdf5_cpu_reps.csv

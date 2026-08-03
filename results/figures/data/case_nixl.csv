@@ -1,0 +1,5 @@
+condition,metric,unit,value,source
+baseline,device_byte_amplification,x,4.000,nixl_diagnosis.csv
+2x batch,device_byte_amplification,x,4.000,nixl_diagnosis.csv
+align 4 KiB,device_byte_amplification,x,2.000,nixl_diagnosis.csv
+coalesce,device_byte_amplification,x,1.008,nixl_diagnosis.csv

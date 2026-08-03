@@ -1,0 +1,4 @@
+condition,write_amplification,read_amplification,total,unit,source
+aligned,1.0,0.0,1.0,x,write-keystone.md
+16 KiB unaligned,1.25,0.42,1.67,x,write-keystone.md
+4 KiB unaligned,2.0,0.87,2.87,x,write-keystone.md
