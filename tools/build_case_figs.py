@@ -56,7 +56,8 @@ STYLE = {
 plt.rcParams.update(STYLE)
 
 SQ = (1.95, 1.95)          # half-column square, raw
-COL = (4.06, 2.55)         # full column, raw
+COL = (4.06, 1.95)         # full column, raw. Height chosen so that at \columnwidth the
+                           # rendered height is 120.96pt, identical to the square case panels.
 
 
 # ------------------------------------------------------------------ data derivation
@@ -261,7 +262,8 @@ def make_figures(d: dict) -> dict:
     ax.fill_between(s["req"], [v / 1024 for v in s["sector"]], [v / 1024 for v in s["measured"]],
                     color=BAD, alpha=0.10)
     ax.set_xlabel("Requested Read Size (B)")
-    ax.set_ylabel("Device Bytes per Read (KiB)")
+    # At 1.95in tall the long form is taller than the axes and clips. Caption carries the rest.
+    ax.set_ylabel("Device Bytes (KiB)")
     # 2048 and 2560 sit close enough to collide at this width, so slant the labels rather than drop a
     # data point or shrink the font.
     ax.set_xticks(s["req"])
