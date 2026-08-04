@@ -28,7 +28,13 @@ Usage: python3 tools/build_case_figs.py
 from __future__ import annotations
 
 import csv
+import os
 from pathlib import Path
+
+# Pin the PDF/SVG creation timestamp so rebuilds are byte-identical, not merely visually identical.
+# Without this every rebuild differs in /CreationDate alone, which makes "did this change?" unanswerable
+# by checksum. The value is the date the underlying measurements were taken.
+os.environ.setdefault("SOURCE_DATE_EPOCH", "1785283200")   # 2026-07-29 UTC
 
 import matplotlib
 matplotlib.use("Agg")
