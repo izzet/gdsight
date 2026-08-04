@@ -6,9 +6,15 @@ Design contract (measured from IEEEtran[conference], not assumed):
   half-column subfigure  final 1.67in (0.48\\columnwidth)  -> raw 1.95in at the 0.86 scale rule
   full column            final 3.49in                      -> raw 4.06in
 
-One 10pt serif scale throughout. Nothing is shrunk per-label to make a crowded panel fit: where a panel
-was crowded the STRUCTURE changed instead, which is why every case panel uses horizontal bars. That puts
+One serif scale throughout. Nothing is shrunk per-label to make a crowded panel fit: where a panel was
+crowded the STRUCTURE changed instead, which is why every case panel uses horizontal bars. That puts
 category labels on the y-axis where they have room, and keeps all six panels one visual family.
+
+DELIBERATE DEVIATION from the skill's "one 10pt scale". A half-column panel is scaled by 0.858 on the way
+into the paper (1.95in raw -> 1.674in at 0.48\columnwidth), so a 10pt raw font lands at 8.58pt, which is 7%
+larger than the IEEEtran caption sitting directly beneath it (\footnotesize = 8pt). Drawing at 9.3pt makes
+figure text and caption text render at exactly the same 8pt, so a panel and its caption read as one
+typographic unit. Body text is 10pt; matching that would mean 11.7pt raw and would dominate a 1.67in panel.
 
 No panel titles. The LaTeX subcaptions carry the framing.
 
@@ -41,8 +47,9 @@ STYLE = {
     "font.family": "serif",
     "font.serif": ["Times New Roman", "Nimbus Roman", "Liberation Serif", "DejaVu Serif"],
     "mathtext.fontset": "stix",
-    "font.size": 10, "axes.labelsize": 10, "axes.titlesize": 10,
-    "xtick.labelsize": 10, "ytick.labelsize": 10, "legend.fontsize": 10,
+    # 9.3pt raw x 0.858 scale = 8.0pt on paper, identical to the IEEEtran caption beneath each panel.
+    "font.size": 9.3, "axes.labelsize": 9.3, "axes.titlesize": 9.3,
+    "xtick.labelsize": 9.3, "ytick.labelsize": 9.3, "legend.fontsize": 9.3,
     "pdf.fonttype": 42, "ps.fonttype": 42, "svg.fonttype": "none",
     "axes.spines.top": False, "axes.spines.right": False,
 }
