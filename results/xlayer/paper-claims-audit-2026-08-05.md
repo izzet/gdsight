@@ -64,13 +64,20 @@ Sec V-B says "84--96% mis-billed"; Table II says ">=84%". Exhaustive grep over `
 p50 *falling* under contention (141 -> 136), while the re-measurement reports it *rising* (136 -> 149),
 and the paper already uses the newer direction. Fix: 216 -> **214**.
 
-### D4. `p99 4080 -> 4058 us` was never re-measured (MEDIUM) [was K2]
+### D4. `p99 4080 -> 4058 us` was never re-measured (MEDIUM) [was K2] - RE-MEASURED 2026-08-05
 Sec V-G's tail-neutrality evidence comes entirely from `interference.md` (2026-06-25). It sits beside
 2.44 -> 2.41 GiB/s, which comes from `amp_perf.csv` and a *different workload* whose measured latencies
 are 1587/1610 us (4 MiB) and 5614/5588 us (16 MiB) - nothing near 4080. Either re-measure on the
 interference workload with repetitions, or attribute the two numbers to their separate runs in the text.
 
-### D5. `87% unattributed` is not reproducible as stated (MEDIUM) [was K1]
+**Re-measured** (`scratchpad/cap_tail_reps.sh` -> `cap_tail_reps.csv`), n=3, at the SAME 4x4 MiB
+contention as Sec V-F's 22x claim, so both tail numbers now share one documented regime:
+cap 1280 p99 **4758+/-138 us**, cap 2048 p99 **4946+/-106 us** (p50 149.7 vs 149.0). Difference +3.9%,
+t=1.87 on 4 df - not significant. The conclusion holds and is stronger: raising the cap buys no
+improvement. Paper reworded from "tail-neutral" to "buys no improvement in either", since the point
+estimate moved the wrong way and "neutral" would invite a reader to spot the contradiction.
+
+### D5. `87% unattributed` is not reproducible as stated (MEDIUM) [was K1] - RE-MEASURED 2026-08-05
 Sec V-D and Table II say corr_id leaves ~87% unattributed. `nixl-e2e-complete.md` presents this as a
 **3-run mean (12%+/-2 correct, 87%+/-2 unattributed)**, but only one crosscheck artifact is committed
 (`nixl_crosscheck.txt`) and it reports **9% correct, 90% unattributed, 1% mis-billed on class B**. The
@@ -80,6 +87,23 @@ other two runs are not in the repo.
 (the ~12% attributed are the large class-A reads), 100% is the KV-only sweep where no class-A reads
 exist. The paper's parenthetical already distinguishes them. The defect is only that 87% has no
 reproducible backing. The defensible artifact-backed number is **90% on class B**.
+
+**Re-measured** (`scratchpad/nixl_crosscheck_reps.sh` -> `nixl_crosscheck_reps.csv` plus three per-rep
+files), n=3, **at SB=2048** - the size Sec V-D declares, which also closes D10 below:
+corr_id unattributed **86+/-9%** (92/76/91), correct 12+/-8% (7/22/8). The paper's ~87% was right; the
+*claimed precision* was not (the note said +/-2, the real spread is +/-9). Stable across reps:
+35 cuFile API calls, 2200 reads, aggregate 1.057x, class A 1.000x, class B **4.000x**.
+
+**Bonus fix.** The old keystone ran at SB=2560 and measured class B at **3.200x** while the paper claims
+4.00x. At 2048 B it measures 4.000x, so Sec V-D's headline amplification is now backed by the keystone at
+its own declared size instead of borrowed from the diagnosis run.
+
+### D10. Sec V-D declared 2048 B but its keystone numbers came from a 2560 B run - FIXED 2026-08-05
+Found during the re-measurement, not in the original sweep. "35 calls for 2208 device reads" and the
+"2000/2000 versus 32 batch ids" parenthetical both came from SB=2560 artifacts while the section says
+"(2048 B reads)". Both re-derived at 2048 B: **2200 reads / 35 calls**, and address pins **2220 of 2223**
+commands to unique batch entries versus **35** batch ids. Note `nvme_setup_cmd` is not stable across reps
+(2238/2394/2223), so the paper now quotes the stable 2200 read count rather than a command count.
 
 ### D6. `granularity.csv` idealizes its source (MEDIUM)
 `effective-granularity.txt` measures **4089 B** device bytes per read at 512/2048/2560/4096 B requested,
