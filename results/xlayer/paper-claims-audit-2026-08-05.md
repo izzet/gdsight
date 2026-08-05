@@ -42,7 +42,7 @@ carries a `source` column, which is what made this audit tractable.
 
 ## Defects
 
-### D1. Sec V-D mixes two runs in one sentence (HIGH)
+### D1. Sec V-D mixes two runs in one sentence (HIGH) - FIXED 2026-08-05
 > "cuts device traffic to 1.0x and **120,009 commands to 301**, taking throughput from 0.152+/-0.012 to
 > 2.602+/-0.031 GiB/s"
 
@@ -51,12 +51,12 @@ The command counts come from `optimization.md` (2026-07-24), the superseded 2560
 re-measurement. **The current run's own counts are 120,008 -> 239** (`optimization.csv`, same campaign as
 `reps.csv`). Fix: 120,009 -> **120,008**, 301 -> **239**.
 
-### D2. `84%` mis-billed appears in no artifact (MEDIUM)
+### D2. `84%` mis-billed appears in no artifact (MEDIUM) - FIXED 2026-08-05
 Sec V-B says "84--96% mis-billed"; Table II says ">=84%". Exhaustive grep over `results/` finds **85%**
 (`posix_addr_attr.txt`, 1700/2000), **94%** (`necessity.md`, `worked-examples.md`), **95%**
 (`worked-examples.md`), **96%** (`ucb_kvikio_fix.txt`). The floor is **85%**, not 84.
 
-### D3. Sec V-F quotes the old isolated p99 (MEDIUM)
+### D3. Sec V-F quotes the old isolated p99 (MEDIUM) - FIXED 2026-08-05
 > "Segregating the classes recovers the tail to its isolated **216 us**"
 
 216 is from `interference.md` (2026-06-25). The same sentence's 22x is computed against
@@ -93,7 +93,7 @@ Sec V-G: "Trace-all stays within **2%** at >=256 KiB". `overhead_traceall.txt` m
 256 KiB (0.5% at 1 MiB, 0.1% at 4 MiB). Should be "within 3%". Separately, "20 to 30% for small
 high-IOPS streams" is 21.7% (16K) and 22.9% (4K), but 64K measures **32.0%**.
 
-### D8. Rounding inconsistency between text and figure (LOW)
+### D8. Rounding inconsistency between text and figure (LOW) - FIXED 2026-08-05
 `amp_perf.csv` gives 2.405 GiB/s. Sec V-G rounds it to **2.41**; Fig. 9 labels it **2.40**.
 
 ### D9. Abstract's amplification bound is loose (LOW)
