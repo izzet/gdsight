@@ -20,3 +20,6 @@ venv/
 
 # compiled tracer artifact (build from tools/gds_trace_preload.c)
 *.so
+
+# stray PDFs dropped at the repo root (e.g. papers shared by others) -- never publish
+/*.pdf
