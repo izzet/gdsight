@@ -20,8 +20,8 @@ valid, the two cover every regime but one characterized corner, which is reporte
 than guessed.
 
 Built as three eBPF plugins (`cufile`, `nvidiafs`, `block`) on the
-[DataCrumbs](https://github.com/LLNL/datacrumbs) substrate, emitting the
-[DFTracer](https://github.com/LLNL/dftracer) format. It needs no source changes, no library
+[DataCrumbs](https://github.com/llnl/datacrumbs) substrate, emitting the
+[DFTracer](https://github.com/llnl/dftracer) format. It needs no source changes, no library
 injection, and no change to the installed GDS stack.
 
 ## What it finds
