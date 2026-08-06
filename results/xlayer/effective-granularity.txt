@@ -6,10 +6,10 @@
   /sys/block/nvme1n1/queue/max_hw_sectors_kb = 2048
   ext4 Block size = 4096
 === EFFECTIVE granularity, MEASURED by GDSight (device bytes per aligned read) ===
-  req=512  B aligned -> MEASURED device/read=4089 B | if 512-block: 512  B | if 4096-block: 4096 B
-  req=2048 B aligned -> MEASURED device/read=4089 B | if 512-block: 2048 B | if 4096-block: 4096 B
-  req=2560 B aligned -> MEASURED device/read=4089 B | if 512-block: 2560 B | if 4096-block: 4096 B
-  req=4096 B aligned -> MEASURED device/read=4089 B | if 512-block: 4096 B | if 4096-block: 4096 B
-  req=6144 B aligned -> MEASURED device/read=8179 B | if 512-block: 6144 B | if 4096-block: 8192 B
+  req=512  B aligned -> MEASURED device/read=4096 B | if 512-block: 512  B | if 4096-block: 4096 B
+  req=2048 B aligned -> MEASURED device/read=4096 B | if 512-block: 2048 B | if 4096-block: 4096 B
+  req=2560 B aligned -> MEASURED device/read=4096 B | if 512-block: 2560 B | if 4096-block: 4096 B
+  req=4096 B aligned -> MEASURED device/read=4096 B | if 512-block: 4096 B | if 4096-block: 4096 B
+  req=6144 B aligned -> MEASURED device/read=8192 B | if 512-block: 6144 B | if 4096-block: 8192 B
 => the device & NVMe spec report 512 B; the measured effective granularity is 4096 B (ext4 block,
    confirmed on the GDS P2P path). Trusting the documented 512 B predicts 1.0x and 'no problem'.

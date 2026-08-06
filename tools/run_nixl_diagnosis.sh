@@ -32,7 +32,7 @@ run_arm() { # label fix_source batch align coalesce
   sec1=$(awk '$3=="nvme1n1"{print $6}' /proc/diskstats)
   local nvfsMiB=$(( nvfs1 - nvfs0 )); local ioMiB=$(( (sec1-sec0)*512/1024/1024 ))
   sleep 1; local T; T=$(ls -t "$TRACEDIR"/*/*/*/*.pfw.gz 2>/dev/null | head -1)
-  read devB ab nvme batches < <(python3 $HOME/projects/gdstrace/tools/nixl_devbytes.py "$T" "$F" "$reqB")
+  read devB ab nvme batches devB_exact < <(python3 $HOME/projects/gdstrace/tools/nixl_devbytes.py "$T" "$F" "$reqB")
   printf "%-16s | tool:%-8s batch=%-3s align=%-4s coal=%-5s | CURRENT TOOLS: nvfs=%sMiB iostat=%sMiB | OURS: devB=%sMiB A_byte=%-5s | goodput=%sMiB/s\n" \
     "$label" "$src" "$batch" "$align" "$coal" "$nvfsMiB" "$ioMiB" "$devB" "$ab" "${gp:-?}"
   echo "$label,$src,$batch,$align,$coal,$nvfsMiB,$ioMiB,$devB,$ab,${gp:-0}" >> "$CSV"

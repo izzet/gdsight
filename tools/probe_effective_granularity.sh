@@ -24,8 +24,8 @@ for S in 512 2048 2560 4096 6144; do
   APP="env LD_PRELOAD=$SYSCUFILE LD_LIBRARY_PATH=$CUDALIB $NIXL_PY $HOME/projects/gdstrace/workloads/nixl_gds_kv.py --file $F --na 0 --nb $N --sb $S --batch 32 --kv-align 0"
   datacrumbs_run --app "$APP" >/dev/null 2>&1
   sleep 1; T=$(ls -t "$TRACEDIR"/*/*/*/*.pfw.gz 2>/dev/null | head -1)
-  read devB ab nvme batches < <(python3 $HOME/projects/gdstrace/tools/nixl_devbytes.py "$T" "$F" $((N*S)))
-  perread=$(python3 -c "print(round($devB*1048576/$N))")
+  read devB ab nvme batches devB_exact < <(python3 $HOME/projects/gdstrace/tools/nixl_devbytes.py "$T" "$F" $((N*S)))
+  perread=$(python3 -c "print(round($devB_exact/$N))")
   spec=$(( ((S+511)/512)*512 )); eff=$(( ((S+4095)/4096)*4096 ))
   printf "  req=%-5sB aligned -> MEASURED device/read=%-5sB | if 512-block: %-5sB | if 4096-block: %-5sB\n" "$S" "$perread" "$spec" "$eff"
 done

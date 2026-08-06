@@ -105,12 +105,25 @@ Found during the re-measurement, not in the original sweep. "35 calls for 2208 d
 commands to unique batch entries versus **35** batch ids. Note `nvme_setup_cmd` is not stable across reps
 (2238/2394/2223), so the paper now quotes the stable 2200 read count rather than a command count.
 
-### D6. `granularity.csv` idealizes its source (MEDIUM)
-`effective-granularity.txt` measures **4089 B** device bytes per read at 512/2048/2560/4096 B requested,
-and **8179 B** at 6144 B. `granularity.csv` records **4096** and **8192** - the theoretical grid, not the
-measurement. Fig. 7's caption says "Points are **measured** per-op device bytes". The gap is 0.17%, so no
-conclusion changes, but the figure is not reproducing what the artifact recorded. This is the only figure
-CSV of the seven that does not match its source.
+### D6. WITHDRAWN 2026-08-06 - the figure was right, the artifact was wrong
+Originally filed as "`granularity.csv` records 4096/8192 where `effective-granularity.txt` measured
+4089/8179". **That diagnosis was backwards.** 4089 and 8179 are display artifacts, not measurements.
+
+Root cause: `nixl_devbytes.py` printed device bytes as MiB to two decimal places
+(`f"{devB/2**20:.2f} ..."`), and `probe_effective_granularity.sh` read that string back and multiplied
+it up: `perread = devB_MiB * 1048576 / N`, N=200. The true total for the 512 B case is
+200 x 4096 = 819,200 B = **0.781250 MiB**, printed as `0.78`, and 0.78 x 1048576 / 200 = 4089.4 -> 4089.
+For 6144 B: 1.562500 MiB -> `1.56` -> 8178.9 -> 8179. Both reproduce exactly from the rounding alone,
+and the ~0.17% deficit is just 2-dp truncation.
+
+**Fixed at the source, not papered over.** `nixl_devbytes.py` now emits exact bytes as a fifth field
+(the existing four are unchanged); `probe_effective_granularity.sh` computes per-read from it; the other
+caller `run_nixl_diagnosis.sh` absorbs the new field so its positional read stays clean. Probe re-run
+(`scratchpad/rerun_granularity.sh`): **effective-granularity.txt now reports 4096 and 8192**, matching
+`granularity.csv` and Fig. 7. No figure regeneration was needed - the plotted values never changed.
+
+**All seven figure CSVs now match their sources.** Lesson: a committed artifact can be less precise than
+the figure derived from it, so "artifact and figure disagree" does not imply the figure is wrong.
 
 ### D7. Trace-all overhead overclaims in our favour (LOW)
 Sec V-G: "Trace-all stays within **2%** at >=256 KiB". `overhead_traceall.txt` measures **2.6%** at
@@ -120,10 +133,12 @@ high-IOPS streams" is 21.7% (16K) and 22.9% (4K), but 64K measures **32.0%**.
 ### D8. Rounding inconsistency between text and figure (LOW) - FIXED 2026-08-05
 `amp_perf.csv` gives 2.405 GiB/s. Sec V-G rounds it to **2.41**; Fig. 9 labels it **2.40**.
 
-### D9. Abstract's amplification bound is loose (LOW)
+### D9. Abstract's amplification bound is loose (LOW) - FIXED 2026-08-06
 "device amplification up to 4x in both the read and write directions". Measured read amplification
 reaches **16x** (256 B KV, Sec V-E); measured write amplification reaches **2.87x**. 4x is true as an
-upper bound for the headline cases but is neither direction's maximum.
+upper bound for the headline cases but is neither direction's maximum. Reworded to "device
+amplification of 4x on KV reads and 2.9x on unaligned writes", which keeps the NIXL headline and states
+the write figure instead of letting "both directions" imply writes also reach 4x.
 
 ---
 

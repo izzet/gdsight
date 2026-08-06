@@ -27,4 +27,6 @@ for line in gzip.open(T, 'rt', errors='replace'):
         lb = p2l(int(a['sector']) * SEC // BS)
         if lb is None: continue
         if lb * BS >= BBASE: devB += int(a.get('size', 0)); nvme += 1
-print(f"{devB/2**20:.2f} {devB/reqB:.3f} {nvme} {batches}")
+# 5th field is devB in EXACT bytes. The MiB field above is 2-dp for display, and round-tripping it
+# back to per-read bytes loses ~0.17% (it reported 4089 B for a true 4096 B grid). Consume field 5.
+print(f"{devB/2**20:.2f} {devB/reqB:.3f} {nvme} {batches} {devB}")
