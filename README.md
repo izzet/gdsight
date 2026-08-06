@@ -8,7 +8,6 @@ DFTracer / DFAnalyzer.
 ## Repo map
 | path | what |
 |---|---|
-| `gds-trace-brief.md` | the pre-proposal (idea, novelty, go/no-go gate, **Appendix A** smoke tests) |
 | `chamREADME.md` | Chameleon true-GDS bring-up plan |
 | `CHAMELEON-GDS-BRINGUP-LOG.md` | **full worklog** of getting true GDS working on Chameleon — every issue + fix |
 | `SMOKE-TEST-REPORT-CHAMELEON.md` | Chameleon results — **TRUE GDS achieved** |

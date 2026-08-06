@@ -23,3 +23,6 @@ venv/
 
 # stray PDFs dropped at the repo root (e.g. papers shared by others) -- never publish
 /*.pdf
+
+# the paper lives in its own repo (codeberg: izzet/paper-gdsight)
+paper/

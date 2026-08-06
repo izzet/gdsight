@@ -6,7 +6,7 @@ memory, which is deliberately kept out of the snapshot image for security.)
 ## What this is
 **GDSight** — a per-operation, cross-layer tracer correlating cuFile (user) ↔ nvidia-fs (kernel)
 ↔ NVMe, to attribute GPUDirect Storage pathologies (silent POSIX fallback, I/O amplification, GPU
-stall) to the causing app op. Extends DFTracer/DFAnalyzer. Full pitch: `gds-trace-brief.md`.
+stall) to the causing app op. Extends DFTracer/DFAnalyzer.
 
 ## Current state (2026-06-07)
 - **TRUE GDS is working** on a Chameleon bare-metal A100. Reusable grc-private image:

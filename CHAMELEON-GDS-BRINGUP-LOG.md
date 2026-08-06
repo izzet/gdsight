@@ -7,7 +7,7 @@ they were compat-only and non-root). This is the live worklog — every issue + 
 here in order so the run can be followed and reproduced later.
 
 **Started:** 2026-06-07 · **Operator:** Claude (driven by Izzet Yildirim)
-**Reference:** `chamREADME.md` (bring-up plan), `gds-trace-brief.md` Appendix A (smoke tests),
+**Reference:** `chamREADME.md` (bring-up plan), the Appendix~A smoke-test sequence,
 NVIDIA [GDS Troubleshooting/Install guide](https://docs.nvidia.com/gpudirect-storage/troubleshooting-guide/index.html#installing-gpudirect-storage).
 
 ---

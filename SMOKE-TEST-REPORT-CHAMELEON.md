@@ -2,7 +2,7 @@
 
 **Run by:** Claude (driven by Izzet Yildirim) · **Date:** 2026-06-07
 **Node:** Chameleon bare-metal (CHI@TACC `compute_liqid`-class), PowerEdge R6525
-**Following:** Appendix A of `gds-trace-brief.md` · **Companions:** `SMOKE-TEST-REPORT.md` (DeltaAI GH200),
+**Following:** the Appendix A smoke-test sequence · **Companions:** `SMOKE-TEST-REPORT.md` (DeltaAI GH200),
 `SMOKE-TEST-REPORT-DELTA-A100.md` (Delta A100) — both were compat-only dead ends.
 **Full bring-up worklog (every issue + fix):** `CHAMELEON-GDS-BRINGUP-LOG.md`
 

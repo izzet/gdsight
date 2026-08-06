@@ -2,7 +2,7 @@
 
 **Run by:** Claude (autonomous), on behalf of Izzet Yildirim · **Date:** 2026-06-06
 **Node:** `gh151.hsn.cm.delta.internal.ncsa.edu` (NCSA DeltaAI), Slurm job `2426676`
-**Following:** Appendix A of `gds-trace-brief.md`
+**Following:** the Appendix A smoke-test sequence
 **Status of this file:** written incrementally during the run (2 h alloc limit) — results appear as they are produced.
 
 ---

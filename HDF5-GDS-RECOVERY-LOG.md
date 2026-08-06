@@ -2,10 +2,10 @@
 
 Running log for recovering work lost when a prior working session's instance was torn down before
 committing, and for rebuilding the HDF5+GDS keystone on top of the current tree. Raw source of the
-lost session: **`convo-paper.md`** (committed alongside this file).
+lost session: **the paper drafting notes** (committed alongside this file).
 
 ## Why this exists — the three buckets of lost/pending work
-A prior session (transcript in `convo-paper.md`) did substantial work that **never reached git**; the
+A prior session (transcript in the paper drafting notes) did substantial work that **never reached git**; the
 instance was then torn down and the artifacts (all in `$HOME`/scratch, outside the repo) were lost.
 Split into three buckets:
 
@@ -25,7 +25,7 @@ Split into three buckets:
   conversation/objection/walk-back ("necessity proven", "wrong or futile", "why this is hard",
   challenge→solution "one-to-one", "(supporting)", "known physics/textbook", "don't-bother",
   "we do not claim", the adversarial §5 "obvious fix vs. our fix" spine). Present as a design conceived
-  whole from first principles, declaratively. Full A–E inventory is in `convo-paper.md` (end).
+  whole from first principles, declaratively. Full A–E inventory is in the paper drafting notes (end).
 
 Order (per project owner): finish Bucket 1 on this instance first, then Bucket 2, then Bucket 3.
 

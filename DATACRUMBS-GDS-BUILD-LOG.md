@@ -548,7 +548,7 @@ workloads/cucim_coalesce_test.py: 4000 contiguous tiles (0% gap), per-tile (4000
 Honest: speedup combines fewer/larger ops + GDS engagement (both from restructure); SEQUENTIAL only (random
 patch gather can't coalesce -> GDS genuinely under-delivers there). So the cuCIM default per-tile path leaves
 19.5x on the table for region scans, and GDSight shows why (small POSIX reads vs coalesced GDS). NEXT:
-investigate read_region(device=cuda) hang, then update GDS-TRACE-PITCH.md.
+investigate read_region(device=cuda) hang, then update the project overview.
 
 ## read_region investigation -> CORRECTS the cuCIM finding (2026-06-09)
 read_region(device=cuda) does NOT persistently hang (the 256s was a cold first-GDS-init transient; warm =
@@ -559,7 +559,7 @@ The 82% bypass is the NAIVE per-tile kvikio path (cuCIM's gds_whole_slide BENCHM
 main API. Tempered cucim.md: naive per-tile under-delivers (82% bypass, 19.5x slower than coalesced);
 production read_region coalesces (clean). Consistent with "well-engineered clean, naive under-delivers".
 Tool value: reveals which path your code is on (per-tile bypass vs coalesced GDS) + the 19.5x lever, which
-gds_stats/iostat can't. workloads/read_region_test.py. NEXT: update GDS-TRACE-PITCH.md.
+gds_stats/iostat can't. workloads/read_region_test.py. NEXT: update the project overview.
 
 ## Tracer overhead measured (Table C / §5.x) + rebuild on v3 (2026-06-24)
 Rebuilt the full DataCrumbs toolchain on a fresh v3 instance (the image predates the tracer work):

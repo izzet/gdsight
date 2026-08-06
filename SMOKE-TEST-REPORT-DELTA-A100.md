@@ -3,7 +3,7 @@
 **Run by:** Claude (interactive, driven by Izzet Yildirim) · **Date:** 2026-06-06
 **Node:** `gpua054.delta.ncsa.illinois.edu` (NCSA **Delta**, *not* DeltaAI), Slurm job `18923989`
 **Partition/alloc:** `gpuA100x4`, 1× A100-SXM4-40GB, 16 CPU, 64 GB, account `bekn-delta-gpu`
-**Following:** Appendix A of `gds-trace-brief.md`
+**Following:** the Appendix A smoke-test sequence
 **Companion to:** `SMOKE-TEST-REPORT.md` (the earlier **DeltaAI / GH200** run) — this is a *different cluster*.
 
 ---

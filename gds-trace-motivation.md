@@ -54,7 +54,7 @@ reads (no amplification when aligned).
   "no fallback").
 - **Throughput / `nvidia-smi`** show a low aggregate but can't attribute it to the sub-threshold reads
   vs. the disk vs. topology. (This is exactly forum user *fuyao3860*'s "which really confuses me," and
-  *pandeyshweta2401*'s "is GDS actually enabled?" — see `rw-claude.md`.)
+  *pandeyshweta2401*'s "is GDS actually enabled?" — see the demand-research notes.)
 - **The kernel `nvidia-fs` counter** is the only ground truth, and only as a *negative* signal
   (DMA-bytes < bytes-read) — you must already know the true byte count from elsewhere, and it gives no
   per-op / per-file / per-layer attribution.

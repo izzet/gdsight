@@ -33,7 +33,7 @@ Test 3 is the one candidates keep failing.
 Every mechanism reached so far is documented: unaligned-write RMW via POSIX, the 4 KiB alignment
 fallback, mixed O_DIRECT/buffered coherence, kvikio's threshold, HDF5's chunk cache. NVIDIA has
 enumerated the failure modes. This is independent confirmation of the spine the paper already adopted
-(`PDSW26-PAPER-PLAN.md`): **the contribution is the attribution method, not the discovery of a
+(the paper plan): **the contribution is the attribution method, not the discovery of a
 pathology.** Select the write case for what it demonstrates about attribution, not for novelty.
 
 On that criterion the page-cache case is the strongest untested option, because the cost is inflicted by
@@ -52,7 +52,7 @@ expedition: a counter that never fires is weak evidence of anything, and there i
 would make one fire.
 
 The search is complete enough to conclude from. **Choose the write case for what it demonstrates about
-attribution and stop looking for novelty** — this is D5 in `../../paper/ADVISOR-FEEDBACK.md`, and the
+attribution and stop looking for novelty** — this is D5 in the paper's feedback tracker, and the
 cost of continuing is now measured against a deadline five days out with the re-spine untouched.
 
 Recommendation, in order:
