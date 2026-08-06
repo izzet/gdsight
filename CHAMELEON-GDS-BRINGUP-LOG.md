@@ -353,7 +353,7 @@ Caught that v2 inadvertently baked in **secrets**: `~/.claude/.credentials.json`
 `-e /mnt -e /home/cc/projects -e /home/cc/.claude -e /home/cc/.claude.json -e /home/cc/openrc -e /home/cc/.bash_history`.
 Session continuity (memory no longer travels in the image) is handled by **`CLAUDE.md`** in the repo
 (auto-loaded by Claude Code after `git clone`). **v2 deleted** once v3 is `active`.
-**Workspace now lives in git:** https://github.com/izzet/gdstrace.
+**Workspace now lives in git:** https://github.com/izzet/gdsight.
 
 > ⚠️ **PARKED — security TODO (exclude did NOT work):** on the v3 instance `~/.claude` and `~/projects`
 > are STILL present. The `cc-snapshot -e` excludes did not drop them — likely `-e` only appeared to

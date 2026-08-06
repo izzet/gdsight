@@ -23,7 +23,7 @@ nvidia-fs 2.28.4 + `amd_iommu=off`. The only per-instance step is mounting the l
 `-o data=ordered`:
 
 ```bash
-git clone https://github.com/izzet/gdstrace.git ~/projects/gdstrace   # this workspace
+git clone https://github.com/izzet/gdsight.git ~/projects/gdstrace   # this workspace
 /opt/gds-tools/mount_gds_nvme.sh                                       # mount local NVMe data=ordered
 /usr/local/cuda-12.6/gds/tools/gdscheck -p | grep -E 'NVMe |IOMMU:'   # expect: NVMe: Supported | IOMMU: disabled
 source /opt/gds-venv/bin/activate                                      # kvikio / cupy / DALI
