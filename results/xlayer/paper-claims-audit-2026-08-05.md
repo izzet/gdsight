@@ -70,7 +70,7 @@ Sec V-G's tail-neutrality evidence comes entirely from `interference.md` (2026-0
 are 1587/1610 us (4 MiB) and 5614/5588 us (16 MiB) - nothing near 4080. Either re-measure on the
 interference workload with repetitions, or attribute the two numbers to their separate runs in the text.
 
-**Re-measured** (`scratchpad/cap_tail_reps.sh` -> `cap_tail_reps.csv`), n=3, at the SAME 4x4 MiB
+**Re-measured** (`tools/cap_tail_reps.sh` -> `cap_tail_reps.csv`), n=3, at the SAME 4x4 MiB
 contention as Sec V-F's 22x claim, so both tail numbers now share one documented regime:
 cap 1280 p99 **4758+/-138 us**, cap 2048 p99 **4946+/-106 us** (p50 149.7 vs 149.0). Difference +3.9%,
 t=1.87 on 4 df - not significant. The conclusion holds and is stronger: raising the cap buys no
@@ -88,7 +88,7 @@ other two runs are not in the repo.
 exist. The paper's parenthetical already distinguishes them. The defect is only that 87% has no
 reproducible backing. The defensible artifact-backed number is **90% on class B**.
 
-**Re-measured** (`scratchpad/nixl_crosscheck_reps.sh` -> `nixl_crosscheck_reps.csv` plus three per-rep
+**Re-measured** (`tools/nixl_crosscheck_reps.sh` -> `nixl_crosscheck_reps.csv` plus three per-rep
 files), n=3, **at SB=2048** - the size Sec V-D declares, which also closes D10 below:
 corr_id unattributed **86+/-9%** (92/76/91), correct 12+/-8% (7/22/8). The paper's ~87% was right; the
 *claimed precision* was not (the note said +/-2, the real spread is +/-9). Stable across reps:
@@ -119,7 +119,7 @@ and the ~0.17% deficit is just 2-dp truncation.
 **Fixed at the source, not papered over.** `nixl_devbytes.py` now emits exact bytes as a fifth field
 (the existing four are unchanged); `probe_effective_granularity.sh` computes per-read from it; the other
 caller `run_nixl_diagnosis.sh` absorbs the new field so its positional read stays clean. Probe re-run
-(`scratchpad/rerun_granularity.sh`): **effective-granularity.txt now reports 4096 and 8192**, matching
+(`tools/rerun_granularity.sh`): **effective-granularity.txt now reports 4096 and 8192**, matching
 `granularity.csv` and Fig. 7. No figure regeneration was needed - the plotted values never changed.
 
 **All seven figure CSVs now match their sources.** Lesson: a committed artifact can be less precise than
