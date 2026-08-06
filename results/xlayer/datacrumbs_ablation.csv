@@ -1,0 +1,7 @@
+case,default_sees,default_count,ops_total,device_cmds_seen_by_default,verdict,source
+kvikio_bypass,pread64 syscalls,2254,2200,0,partial,trace cc-20260729223 (cat=custom1)
+hdf5_chunkcache,pread syscalls,17919,262,0,blind,hdf5_gds_trace.csv posix_pread_read
+hdf5_truegds,pread syscalls,16951,262,0,blind,hdf5_gds_trace.csv posix_pread_read
+nixl_keystone,pread64 syscalls (none are KV reads),486,2200,0,blind,trace cc-20260805222 (cat=custom1)
+write_keystone,pwrite64 syscalls,32756,16384,0,partial,trace cc-20260725220 (cat=custom1)
+tail_interference,no syscalls for the cuFile P2P ops,0,8000,0,blind,trace cc-20260729230 (cat=custom1)
