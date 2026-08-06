@@ -1,8 +1,8 @@
 # GDSight
 
 A per-operation, cross-layer tracer correlating **cuFile** (userspace), **nvidia-fs** (kernel) and
-**NVMe**, to attribute GPUDirect Storage (GDS) pathologies to the application operation that caused
-them.
+**NVMe** (block layer), to attribute GPUDirect Storage (GDS) pathologies to the application
+operation that caused them.
 
 GDS copies NVMe data straight into GPU memory, bypassing the CPU data path and with it the identity
 that links an application read to the device work it causes. The file is `O_DIRECT`, the DMA target
