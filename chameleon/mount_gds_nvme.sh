@@ -69,5 +69,5 @@ done
 if [ "$ok" = 1 ]; then
   echo "OK: NVMe Supported + $MNT data=ordered -> GDS-ready. Scratch: $MNT/gdstrace-smoke"
 else
-  echo "WARN: gdscheck still not 'NVMe: Supported' after retries. Check kernel(-nvidia)/nvidia_fs/amd_iommu=off — see CHAMELEON-GDS-BRINGUP-LOG.md" >&2
+  echo "WARN: gdscheck still not 'NVMe: Supported' after retries. Check kernel(-nvidia)/nvidia_fs/amd_iommu=off — see ../docs/CHAMELEON-GDS-BRINGUP-LOG.md" >&2
 fi

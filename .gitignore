@@ -26,3 +26,6 @@ venv/
 
 # the paper lives in its own repo (codeberg: izzet/paper-gdsight)
 paper/
+
+# agent orientation, not artifact material
+CLAUDE.md

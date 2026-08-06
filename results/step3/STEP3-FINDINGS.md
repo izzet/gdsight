@@ -31,7 +31,7 @@
 # [SUPERSEDED] Step 3 & 4 — Silent per-op GDS bypass on a vendor reader (kvikio), and why coarse tools miss it
 
 **Node:** Chameleon A100, true-GDS (image `grc-ub2404-nvk-gds-a100-cu126-v3`). **Date:** 2026-06-07.
-**Reader:** kvikio 26.04 (cuFile/GDS) · **Workload:** `step3/step3_ragged.py` reading many records
+**Reader:** kvikio 26.04 (cuFile/GDS) · **Workload:** `workloads/step3_ragged.py` reading many records
 `(offset,size)` from a 4 GiB file on the local NVMe (ext4 `data=ordered`) into GPU memory.
 Single-threaded random reads, cold cache (root `drop_caches`). cuFile counters captured **live** via
 `gds_stats -p` (cuFile segfaults at process exit on this kvikio-26 / libcufile-12.6 stack, so the
@@ -92,7 +92,7 @@ attribution neither bandwidth nor `gds_stats` provides.
 /opt/gds-tools/mount_gds_nvme.sh
 dd if=/dev/zero of=/mnt/nvme1/gdstrace-smoke/dataset.bin bs=1M count=4096 oflag=direct
 # stats-enabled cufile.json (cufile_stats:3); run + live gds_stats:
-CUFILE_ENV_PATH_JSON=<stats.json> /opt/gds-venv/bin/python -u step3/step3_ragged.py --mode {aligned|ragged|mixed} --secs 18 &
+CUFILE_ENV_PATH_JSON=<stats.json> /opt/gds-venv/bin/python -u workloads/step3_ragged.py --mode {aligned|ragged|mixed} --secs 18 &
 gds_stats -p $! -l 3   # read Read: n=/posix=/unalign= live
 ```
 Raw: `results/step3/run_*.txt`, `results/step3/step3_summary.txt`.

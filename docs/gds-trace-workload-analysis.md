@@ -64,7 +64,7 @@ amplification, the 16 KiB reader threshold, async/batch overheads, and path deci
 where per-op cross-layer attribution matters most. Muradli (NIXL/KV-cache transfer) is a **local,
 reachable design partner / potential co-author** working this exact problem on the same testbed.
 
-## Measured: read-side amplification (kernel oracle) — `step3/step3_ampl.py`
+## Measured: read-side amplification (kernel oracle) — `workloads/step3_ampl.py`
 Reads-only (writes are the risky path on this node). Amplification vs aligned baseline:
 
 | case | 64 KiB | 256 KiB | 1 MiB |

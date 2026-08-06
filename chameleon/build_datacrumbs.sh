@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # build_datacrumbs.sh — build the DataCrumbs eBPF tracer + DFAnalyzer on a fresh
 # Chameleon v3 GDS node (the snapshot image predates the tracer work). Reproducible
-# version of DATACRUMBS-GDS-BUILD-LOG.md. Run from the repo root after submodules are
+# version of ../docs/DATACRUMBS-GDS-BUILD-LOG.md. Run from the repo root after submodules are
 # initialized (git submodule update --init --recursive).
 #
 # Produces: ~/dc-prefix (libbpf 1.5 + bpftool 7.5 + datacrumbs), ~/dfa-venv (DFAnalyzer).
@@ -74,7 +74,7 @@ cat <<EOF
 
 DONE. Toolchain in $PREFIX ; analyzer in ~/dfa-venv .
 Smoke (overhead): N=3 bash $REPO/tools/overhead_bench.sh
-NOTE: trace-write on stop is currently buggy (see DATACRUMBS-GDS-BUILD-LOG.md:
+NOTE: trace-write on stop is currently buggy (see ../docs/DATACRUMBS-GDS-BUILD-LOG.md:
   sticky run_id + log-perm trips set -e in stop → 0-byte .pfw.gz). Overhead numbers
   do NOT depend on it (probes attach & fire regardless). dc_reset between runs.
 EOF

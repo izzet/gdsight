@@ -168,7 +168,7 @@ Reconciling against the brief's gate:
 ---
 
 ## Reproduction / artifacts (all under `/projects/bekn/izzet/gdstrace/`)
-- `SMOKE-TEST-REPORT.md` — this file
+- `../results/SMOKE-TEST-REPORT.md` — this file
 - `results/run_steps.sh` — Step 1+2 gdsio driver (`SIZE=8G IOSZ=1M THREADS=4 bash results/run_steps.sh`)
 - `results/cufile-stats.json`, `results/cufile-trace.json` — cuFile configs (`export CUFILE_ENV_PATH_JSON=…`)
 - `results/step12_output.txt` — raw gdsio output; `results/gds_stats_sample.txt` — gds_stats failure

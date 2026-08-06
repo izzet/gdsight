@@ -2,9 +2,9 @@
 
 **Run by:** Claude (driven by Izzet Yildirim) · **Date:** 2026-06-07
 **Node:** Chameleon bare-metal (CHI@TACC `compute_liqid`-class), PowerEdge R6525
-**Following:** the Appendix A smoke-test sequence · **Companions:** `SMOKE-TEST-REPORT.md` (DeltaAI GH200),
-`SMOKE-TEST-REPORT-DELTA-A100.md` (Delta A100) — both were compat-only dead ends.
-**Full bring-up worklog (every issue + fix):** `CHAMELEON-GDS-BRINGUP-LOG.md`
+**Following:** the Appendix A smoke-test sequence · **Companions:** `../results/SMOKE-TEST-REPORT.md` (DeltaAI GH200),
+`../results/SMOKE-TEST-REPORT-DELTA-A100.md` (Delta A100) — both were compat-only dead ends.
+**Full bring-up worklog (every issue + fix):** `../docs/CHAMELEON-GDS-BRINGUP-LOG.md`
 
 ---
 
@@ -173,7 +173,7 @@ dirs intact; a reboot restored ACS to firmware default. **Lessons:** (1) on this
 sufficient and ACS should be left at default** — disabling it is unnecessary and harmful; (2) GDS
 *reads* are low-risk (a controller drop triggers a protective RO remount, not corruption), GDS
 *writes* are riskier (the first drop was a GDS write) — for smoke tests, create files with `dd` and
-test GDS reads. Full timeline in `CHAMELEON-GDS-BRINGUP-LOG.md`.
+test GDS reads. Full timeline in `../docs/CHAMELEON-GDS-BRINGUP-LOG.md`.
 
 ---
 
@@ -218,7 +218,7 @@ The gate passes **now**, but two settings reset on reboot and must be made durab
 ---
 
 ## Reproduction / artifacts (under `~/projects/gdstrace/`)
-- `CHAMELEON-GDS-BRINGUP-LOG.md` — full chronological worklog (every blocker, root cause, fix).
+- `../docs/CHAMELEON-GDS-BRINGUP-LOG.md` — full chronological worklog (every blocker, root cause, fix).
 - `chameleon/provision_gds.sh` — reproducible bring-up (install + symvers patches + open-driver swap + GRUB/iommu).
 - `chameleon/post_reboot_smoke.sh` — gate + smoke runner.
 - `results/chameleon/` — `gdscheck.txt`, `step1_ceiling.txt`, `step2_unaligned.txt`, `step2_counters.txt`, `gds_stats.txt`.

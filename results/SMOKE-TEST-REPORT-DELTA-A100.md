@@ -4,7 +4,7 @@
 **Node:** `gpua054.delta.ncsa.illinois.edu` (NCSA **Delta**, *not* DeltaAI), Slurm job `18923989`
 **Partition/alloc:** `gpuA100x4`, 1× A100-SXM4-40GB, 16 CPU, 64 GB, account `bekn-delta-gpu`
 **Following:** the Appendix A smoke-test sequence
-**Companion to:** `SMOKE-TEST-REPORT.md` (the earlier **DeltaAI / GH200** run) — this is a *different cluster*.
+**Companion to:** `../results/SMOKE-TEST-REPORT.md` (the earlier **DeltaAI / GH200** run) — this is a *different cluster*.
 
 ---
 
@@ -192,7 +192,7 @@ _Sources:_ [NVIDIA GDS docs](https://docs.nvidia.com/gpudirect-storage/) · [Tro
 ---
 
 ## Reproduction / artifacts
-- This report: `SMOKE-TEST-REPORT-DELTA-A100.md`
+- This report: `../results/SMOKE-TEST-REPORT-DELTA-A100.md`
 - `results/delta-a100/gdscheck.txt` — full `gdscheck -p`
 - `results/delta-a100/cufile_compat_evidence.txt` — compat notices + per-op POSIX counts
 - `results/delta-a100/env_snapshot.txt` — node/kernel/driver/nvidia-fs/perf snapshot
@@ -201,4 +201,4 @@ _Sources:_ [NVIDIA GDS docs](https://docs.nvidia.com/gpudirect-storage/) · [Tro
 - *Scratch (`/tmp/izzet_gds/…`, incl. full `cufile_trace.log`) is node-local and is deleted when job 18923989 ends — key excerpts copied to `results/delta-a100/`.*
 
 ---
-*Generated interactively during a Delta A100 allocation (job 18923989) on 2026-06-06. All numbers from live runs on `gpua054`; documentation cross-checked against NCSA + NVIDIA sources. Companion to the earlier DeltaAI report (`SMOKE-TEST-REPORT.md`).*
+*Generated interactively during a Delta A100 allocation (job 18923989) on 2026-06-06. All numbers from live runs on `gpua054`; documentation cross-checked against NCSA + NVIDIA sources. Companion to the earlier DeltaAI report (`../results/SMOKE-TEST-REPORT.md`).*

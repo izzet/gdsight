@@ -4,8 +4,8 @@
 runs a large fraction of its reads on POSIX instead of GDS, and **`gds_stats` — NVIDIA's GDS
 observability tool — reports `posix=0` ("GDS perfect") and cannot see it.** This is the corrected
 Figure-1 (an earlier "bypass" claim was a measurement error; this one is verified against the kernel
-nvidia-fs DMA counters with a `gdsio -x0` control). Scripts: `step3/step3_sizesweep.py`,
-`step3/step3_mixed.py`. Ground-truth oracle: `/proc/driver/nvidia-fs/stats` (`rw_stats_enabled=1`).
+nvidia-fs DMA counters with a `gdsio -x0` control). Scripts: `workloads/step3_sizesweep.py`,
+`workloads/step3_mixed.py`. Ground-truth oracle: `/proc/driver/nvidia-fs/stats` (`rw_stats_enabled=1`).
 
 > ## ⚠️ REALITY CHECK — this is kvikio-SPECIFIC, not a GDS-intrinsic gap
 > Verified on the same node: **raw cuFile (`gdsio -x0 -i 4K`) DMAs 4 KiB reads** (kernel Δreads=65536,
@@ -82,9 +82,9 @@ activation/correctness verifier (`is GDS active per-op?`).
 echo 1 | sudo tee /sys/module/nvidia_fs/parameters/rw_stats_enabled    # kernel oracle on
 # threshold sweep:
 for sz in 4096 8192 16384 65536 1048576; do  # measure /proc/driver/nvidia-fs/stats Reads delta around each
-  python step3/step3_sizesweep.py --size $sz --count $((256*1024*1024/sz)); done
+  python workloads/step3_sizesweep.py --size $sz --count $((256*1024*1024/sz)); done
 # mixed demo (gds_stats posix=0 vs kernel DMA = large-only):
-python step3/step3_mixed.py --p-small 0.6 --secs 15   # + gds_stats -p <pid> and nvidia-fs Reads delta
+python workloads/step3_mixed.py --p-small 0.6 --secs 15   # + gds_stats -p <pid> and nvidia-fs Reads delta
 ```
 
 ## Caveats

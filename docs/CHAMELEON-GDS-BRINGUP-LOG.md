@@ -7,7 +7,7 @@ they were compat-only and non-root). This is the live worklog — every issue + 
 here in order so the run can be followed and reproduced later.
 
 **Started:** 2026-06-07 · **Operator:** Claude (driven by Izzet Yildirim)
-**Reference:** `chamREADME.md` (bring-up plan), the Appendix~A smoke-test sequence,
+**Reference:** `../docs/chamREADME.md` (bring-up plan), the Appendix~A smoke-test sequence,
 NVIDIA [GDS Troubleshooting/Install guide](https://docs.nvidia.com/gpudirect-storage/troubleshooting-guide/index.html#installing-gpudirect-storage).
 
 ---
@@ -263,7 +263,7 @@ On reconnect: `uname -r`(=6.8.0-1051-nvidia) → remount `-o data=ordered` → s
 - Steps 3/4 (kvikio/DALI ragged-chunk workload) NOT run — readers not installed; now the high-value
   next task (finally meaningful on a real GDS path).
 
-### ✅ Step 6 — Report written: `SMOKE-TEST-REPORT-CHAMELEON.md`; artifacts in `results/chameleon/`.
+### ✅ Step 6 — Report written: `../results/SMOKE-TEST-REPORT-CHAMELEON.md`; artifacts in `results/chameleon/`.
 
 ---
 ## ✅✅✅ OUTCOME: TRUE GDS WORKING ON CHAMELEON — first of the 3 testbeds to pass the gate.
@@ -370,7 +370,7 @@ kvikio over aligned vs **ragged** (compressed-chunk-like) reads: aligned `n=9926
 throughput is identical **~1.23 GiB/s** and `gds_stats` shows **`posix=0`** (blind: the bypass is
 *above* cuFile). Can't force GDS on (`KVIKIO_COMPAT_MODE=OFF` unchanged, no error). = the motivating
 Figure-1 result: a real vendor reader silently skips GDS for a subset of ops, invisible to throughput
-AND to `gds_stats`. Write-up: `results/step3/STEP3-FINDINGS.md`; script `step3/step3_ragged.py`.
+AND to `gds_stats`. Write-up: `results/step3/STEP3-FINDINGS.md`; script `workloads/step3_ragged.py`.
 Caveat: libcufile **segfaults at process exit** on this stack (kvikio-26 / libcufile-12.6) → counters
 read **live** via `gds_stats -p`.
 

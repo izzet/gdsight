@@ -4,7 +4,7 @@ This image is **GDS-capable out of the box**: open NVIDIA driver (560.35.05, Dua
 the **`linux-nvidia` 6.8.0-1051 kernel with the GDS-patched nvme**, nvidia-fs 2.28.4 (+ symvers
 patches), `amd_iommu=off`, nvidia_fs autoload, the C++ toolchain, and the Python env at
 `/opt/gds-venv` (kvikio/cupy/DALI). **Toolkit scripts live in `/opt/gds-tools`** (also symlinked at
-`~/projects/gdstrace/chameleon`). See `CHAMELEON-GDS-BRINGUP-LOG.md` for how it was built.
+`~/projects/gdstrace/chameleon`). See `../docs/CHAMELEON-GDS-BRINGUP-LOG.md` for how it was built.
 
 **Per-instance steps** (the snapshot captures the OS root, not the physical NVMe nor tmpfs/xattr state):
 1. the **local NVMe mount** (`data=ordered`) — §3 below;

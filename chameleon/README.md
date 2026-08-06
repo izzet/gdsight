@@ -47,8 +47,8 @@ Step-by-step relaunch guide: **`launch-from-snapshot-README.md`**.
 - GDS **reads** are safe; GDS **writes** are riskier (first surfaced the controller drop) — create test files with `dd`.
 
 ## Full build record / results (in this dir)
-- `CHAMELEON-GDS-BRINGUP-LOG.md` — chronological worklog (every issue + fix).
-- `SMOKE-TEST-REPORT-CHAMELEON.md` — gate + smoke results.
+- `../docs/CHAMELEON-GDS-BRINGUP-LOG.md` — chronological worklog (every issue + fix).
+- `../results/SMOKE-TEST-REPORT-CHAMELEON.md` — gate + smoke results.
 
 The research *workspace* (pre-proposal brief, DeltaAI/Delta reports, `results/`) is intentionally
 **NOT** in this image — it lives in the user's home / git. These two docs are copied here so the

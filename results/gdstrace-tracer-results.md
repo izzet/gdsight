@@ -4,7 +4,7 @@ The working tracer: **DataCrumbs** (eBPF; cuFile uprobe plugin sync+async+batch 
 size/offset/count, NVMe `nvme_setup_cmd` kprobe with size/sector, TGID worker-thread fix) →
 **DFTracer `.pfw.gz`** → **DFAnalyzer** (datacrumbs/stack preset; nests `nvme_setup_cmd` under the
 `cuFileRead` that issued it) → per-op cross-layer attribution + amplification. Driver:
-`tools/dfa_drive.py`. Build/how-to: `DATACRUMBS-GDS-BUILD-LOG.md`.
+`tools/dfa_drive.py`. Build/how-to: `../docs/DATACRUMBS-GDS-BUILD-LOG.md`.
 
 ## End-to-end results (real + synthetic readers through the full stack)
 | reader / workload | cuFile API | cuFile ops | NVMe cmds | **device-cmd amplification** | bytes (cuFile = NVMe) | notes |

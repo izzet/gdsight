@@ -2,7 +2,7 @@
 # provision_gds.sh — bring a Chameleon A100 bare-metal node (Ubuntu 24.04, kernel 6.8,
 # CUDA 12.6 image) to a TRUE-GDS-capable state. Idempotent-ish; safe to re-run.
 #
-# What it does (and WHY — see CHAMELEON-GDS-BRINGUP-LOG.md for the full story):
+# What it does (and WHY — see ../docs/CHAMELEON-GDS-BRINGUP-LOG.md for the full story):
 #   1. Install nvidia-fs DKMS (nvidia-gds-12-6 metapackage).
 #   2. Swap the PROPRIETARY nvidia kernel driver for the OPEN one (same 560.35.05).
 #      -> nvidia-fs is GPL v2 + uses GPL-only kernel symbols, so the kernel's

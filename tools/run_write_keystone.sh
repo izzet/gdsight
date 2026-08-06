@@ -6,7 +6,7 @@
 # device command attributed to its causing cuFileWrite.
 #
 # Requires the direction-aware block probe (req->cmd_flags & REQ_OP_MASK). Two operational gotchas that
-# cost real time, both documented in DATACRUMBS-GDS-BUILD-LOG.md:
+# cost real time, both documented in ../docs/DATACRUMBS-GDS-BUILD-LOG.md:
 #   - datacrumbs_run is SIGKILLed during cleanup and takes its process group with it, so each traced run
 #     is launched from its own throwaway script and scored afterwards, never in the same pipeline.
 #   - find -newermt is unreliable on this node (clock skew); locate traces with ls -t instead.
