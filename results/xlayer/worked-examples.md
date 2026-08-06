@@ -1,5 +1,10 @@
 # Worked examples: same problem, what each tool tells you to do, what GDSight adds
 
+> **SUPERSEDED IN PART, 2026-08-06.** Walkthroughs are still valid, several numbers are not.
+> Current values: `corr_id` mis-billing **85-96%** (not a single 94%), NIXL class B **4.00x** at
+> 2048 B (not 3.2x), tail inflation **22.35x** with p99 **214.3 -> 4790.7 us** (not 19x, 216 ->
+> 4080). Sources: `ucb_kvikio_fix.txt`, `nixl_crosscheck_reps.csv`, `tail_reps.csv`.
+
 For each use case: the **symptom**, the **fix a practitioner derives from each existing tool** (and why it
 is wrong, incomplete, or mis-directed), then **what GDSight adds on top** and **the solution that
 unlocks**. The pattern is consistent — current tools report *true but incomplete* facts (an aggregate, or

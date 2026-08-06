@@ -1,5 +1,10 @@
 # Necessity test: when is per-op cross-layer attribution a *must*? (2026-06-25)
 
+> **SUPERSEDED IN PART, 2026-08-06.** The argument stands, the magnitudes moved. `corr_id`
+> mis-billing on the KvikIO small class is **85-96%** across runs rather than a single 94%, and the
+> NIXL class-B amplification is **4.00x** at 2048 B rather than 3.2x at 2560 B. Sources:
+> `posix_addr_attr.txt`, `ucb_kvikio_fix.txt`, `nixl_crosscheck_reps.csv`.
+
 Goal (per the "intellectually-defensible + method-must-be-necessary" bar): find a regime where the
 per-op cross-layer method is the **only** way to obtain a true, non-obvious result. Heterogeneous
 *async* workloads are that regime. Controlled demo via `workloads/gds_mixed.c` (two op-classes,

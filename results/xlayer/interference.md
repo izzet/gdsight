@@ -1,5 +1,14 @@
 # Cross-op interference / tail-latency attribution (2026-06-25)
 
+> **SUPERSEDED, 2026-08-06.** Single run with unrecorded contention parameters. Re-measured at a
+> documented contention level (4 small threads of 3 KiB against 4 large readers of 4 MiB, n=3).
+> Current values: isolated p99 **214.3+/-5.1 us**, contended p99 **4790.7+/-139.4 us**, inflation
+> **22.35x** (not 19x, not 216 -> 4080). Note the median moves in the opposite direction to what is
+> recorded below: p50 **rises 9%** (136.3 -> 148.7 us) rather than falling. The `max_sectors_kb`
+> comparison is likewise re-measured: p99 **4758+/-138 us** at cap 1280 against **4946+/-106 us** at
+> 2048, a difference that is not statistically significant. Sources: `tail_reps.csv`,
+> `cap_tail_reps.csv`. Kept as the record of the earlier run.
+
 Hunt for a genuine discovery: do concurrent large GDS reads inflict tail latency on small GDS ops via
 device head-of-line blocking, attributable per-op only cross-layer? Probe `workloads/gds_interfere.c`
 (multi-thread sync cuFileRead → trace `dur` is the true per-op latency; verified: 1 MiB reads p50≈1334

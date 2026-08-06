@@ -1,5 +1,12 @@
 # From attribution to optimization (O1/O2) — does better observation *drive* a fix, and would existing tools?
 
+> **SUPERSEDED, 2026-08-06.** Measured at KV size 2560 B. The workload was later standardised on
+> **2048 B**, the Llama-3.1-70B per-token per-layer slice, and re-measured with repetitions. Current
+> values: amplification **4.000x** (not 3.2x), commands **120,008 -> 239** (not 120,009 -> 301),
+> throughput **0.152+/-0.012 -> 2.602+/-0.031 GiB/s = 17.1+/-1.3x** over five untraced runs (not
+> 0.196 -> 2.692 = 13.7x). Sources: `optimization.csv`, `reps.csv`. Kept as the record of the
+> earlier run.
+
 **Question.** Observability only matters if it drives a fix. Does our per-op cross-layer attribution
 lead to a *measured* optimization that existing tools would **not** have driven — ideally where every
 shipping tool reports the system **healthy** while ours sees the misconfiguration?
