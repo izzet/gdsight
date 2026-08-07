@@ -24,3 +24,15 @@ ADDRESS, lifetime-gated       : unique 500   ambiguous 0   unmapped 3
 
 => address pins each command to 1 of 500 entries; the time basis distinguishes only 500 batches (1x coarser).
 => retiring completed candidates resolves 500 ambiguous command(s).
+
+## keystone reproduction on the rebuilt tracer (2026-08-07)
+Re-ran tools/run_nixl_crosscheck.sh at SB=2048 after adding the batch-completion probe, to confirm
+the new probe changes nothing it should not. Every quantity the paper cites reproduces identically:
+  cuFileRead(Async) A=3 B=32, requested A=200.0MiB B=3.91MiB, device A=200.0MiB B=15.62MiB
+  aggregate 1.057x, per-class A=1.000x B=4.000x
+  corr_id on B: 8% correct, 91% unattributed, 1% mis-billed
+  cuFileBatchIOSubmit=35, nvfs_io=2200
+Differences are confined to the two counts already known to be unstable rep-to-rep (the audit records
+nvme_setup_cmd at 2238/2394/2223): this run gave p2p=2203 nvme=2206 against the committed 2220/2223.
+nixl_crosscheck.txt is left at the committed run, which is the one the paper cites, rather than
+overwritten with an equivalent one that would move a published count.
