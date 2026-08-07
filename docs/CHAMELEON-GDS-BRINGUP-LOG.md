@@ -474,3 +474,41 @@ same trace confirm trace-all is active. Known cosmetic issue reconfirmed: the de
 `datacrumbs_run | grep | head` pipeline SIGKILLs the wrapper ("Killed"), but the trace still flushes;
 also `latest_trace()`'s `-newer /tmp/.dc_mark` did not match, so locate the trace under
 `dc-traces/YY/MM/DD/` directly rather than trusting the helper.
+
+## Candidate lifetime closed + the trace-all rebuild trap, hit a third time (2026-08-07)
+**Symptom:** after rebuilding DataCrumbs to add a batch-completion probe, EVERY traced app collected
+0 events and wrote a 23-byte trace, including a bare `dd`. Reverting the plugin to the published pin
+did not help, which ruled out the probe.
+
+**Cause:** the same trap this log already records twice. A rebuild defaults
+`-DDATACRUMBS_TRACE_ALL_PROCESSES_OPT=OFF`, and with it OFF `need_tracing()` requires the app's TGID
+in `pid_map`. Nothing seeds it: `pid_map` is written only by the uprobe on `datacrumbs_start` in
+`libdatacrumbs_client.so` (plus `generic_fork_exit`, which needs an already-traced parent), so only
+apps launched under LD_PRELOAD of the client lib are traced. Our workload drivers preload the SYSTEM
+libcufile instead, and the client lib segfaults the kvikio/cupy stack, so an OFF build traces nothing
+at all, silently and with exit status 0. It had gone unnoticed because `chameleon/build_datacrumbs.sh`
+never passed the flag: the working builds were all hand-configured.
+
+**Fix, so it cannot recur:** the flag is now in `build_datacrumbs.sh` with the reason inline, and
+`chameleon/rebuild_datacrumbs_traceall.sh` does the in-place reconfigure+build+install used after a
+plugin edit. It re-asserts the flag and HARD-FAILS if `datacrumbs_config.h` does not come out with
+`DATACRUMBS_TRACE_ALL_PROCESSES 1`. Restored: a `dd` smoke went 0 -> 65,624 events.
+
+**Then the actual work.** New `cuFileBatchIOGetStatus` entry/return probes emit one `batchdone` per
+reaped cookie (datacrumbs `f18b057`), bounding each address candidate's lifetime so a completed
+operation is retired from the candidate set. Cookies name a SLOT, not an entry: NIXL recycles one
+32-slot `CUfileIOParams_t` array for all 2000 entries, so pairing is FIFO per cookie, which is sound
+because a slot cannot be resubmitted before it is reaped (verified: 2000 submits, 2000 completions,
+32 cookies, 0 alternation violations, 0 completions preceding their submit).
+
+`tools/batch_addr_attr.py` now reports attribution gated and ungated, and
+`tools/run_candidate_lifetime.sh` runs both arms (`results/xlayer/candidate-lifetime.txt`):
+- regression (paper's NIXL KV case, disjoint slots): 2000/2000 unique either way, and it reproduces
+  the committed `batch_addr_attr.txt` exactly (2000 entries, 32 corr_ids, 2003 commands, 3 unmapped).
+  The published Sec V-D numbers are unchanged.
+- positive control (8 KiB reads on a 4 KiB stride, batch=1, so every overlap is historical):
+  **0/500 unique ungated -> 500/500 gated.** The mechanism does real work where ranges repeat.
+
+**Casualty to watch for:** runs made during the dead window overwrite result artifacts with empty
+measurements. `results/xlayer/nixl_crosscheck.txt` was clobbered with `A=0 B=0 / 0.000x` and had to be
+restored from git. Check `git status results/` after any suspicious run.

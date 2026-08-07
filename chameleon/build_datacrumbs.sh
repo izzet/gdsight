@@ -49,7 +49,13 @@ cmake -S . -B build -G Ninja \
   -DBPFTOOL_EXECUTABLE="$PREFIX/sbin/bpftool" \
   -DDATACRUMBS_HOST="$HOSTCFG" \
   -DDATACRUMBS_LAUNCHER_TYPE=SLURM \
-  -DDATACRUMBS_CONFIGURED_TRACE_DIR="$TRACEDIR"
+  -DDATACRUMBS_CONFIGURED_TRACE_DIR="$TRACEDIR" \
+  -DDATACRUMBS_TRACE_ALL_PROCESSES_OPT=ON
+# TRACE_ALL is MANDATORY and defaults to OFF. With it OFF, need_tracing() requires the app's TGID in
+# pid_map, which is only seeded by a uprobe on datacrumbs_start in the client .so, i.e. only for apps
+# launched under LD_PRELOAD of libdatacrumbs_client.so. Our workload drivers preload the system
+# libcufile instead (and the client lib segfaults the kvikio/cupy python stack), so an OFF build
+# collects 0 events for EVERY app, silently and with a successful exit status.
 # generation must precede the BPF-object build (explorer→generator emit per-host *.bpf.c)
 ninja -C build datacrumbs_explorer datacrumbs_generator
 ninja -C build run_explorer

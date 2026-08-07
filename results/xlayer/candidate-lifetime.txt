@@ -1,0 +1,26 @@
+# Candidate lifetime, gated vs ungated address attribution (tools/run_candidate_lifetime.sh)
+# host izzet-gdstrace-node, 2026-08-07T19:00:32Z
+
+## headline (regression): NIXL KV, disjoint slots
+# workload: --na 0 --nb 2000 --sb 2560 --stride 65536 --kv-align 3072 --batch 64
+# trace: trace-cc-20260807190032-izzet-gdstrace-node-izzet-gdstrace-node.pfw.gz
+batch entries (address ops)   : 2000   completions paired: 2000   unreaped: 0
+distinct batch corr_ids (time): 32
+NVMe commands                 : 2003
+ADDRESS, no lifetime          : unique 2000   ambiguous 0   unmapped 3
+ADDRESS, lifetime-gated       : unique 2000   ambiguous 0   unmapped 3
+
+=> address pins each command to 1 of 2000 entries; the time basis distinguishes only 32 batches (62x coarser).
+=> retiring completed candidates resolves 0 ambiguous command(s).
+
+## control (positive): overlapping ranges, one op in flight
+# workload: --na 0 --nb 500 --sb 8192 --stride 4096 --kv-align 0 --batch 1
+# trace: trace-cc-20260807190102-izzet-gdstrace-node-izzet-gdstrace-node.pfw.gz
+batch entries (address ops)   : 500   completions paired: 500   unreaped: 0
+distinct batch corr_ids (time): 500
+NVMe commands                 : 503
+ADDRESS, no lifetime          : unique 0   ambiguous 500   unmapped 3
+ADDRESS, lifetime-gated       : unique 500   ambiguous 0   unmapped 3
+
+=> address pins each command to 1 of 500 entries; the time basis distinguishes only 500 batches (1x coarser).
+=> retiring completed candidates resolves 500 ambiguous command(s).
