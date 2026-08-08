@@ -1,0 +1,13 @@
+condition,rep,metric,unit,value
+alone,1,small_p50,us,124.3
+alone,1,small_p99,us,204.7
+large_4MiB_4,1,small_p50,us,136.9
+large_4MiB_4,1,small_p99,us,4887.7
+alone,2,small_p50,us,128.6
+alone,2,small_p99,us,213.3
+large_4MiB_4,2,small_p50,us,140.8
+large_4MiB_4,2,small_p99,us,5083.9
+alone,3,small_p50,us,128.8
+alone,3,small_p99,us,211.6
+large_4MiB_4,3,small_p50,us,140.5
+large_4MiB_4,3,small_p99,us,5032.7
