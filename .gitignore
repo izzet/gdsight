@@ -12,6 +12,7 @@ __pycache__/
 .wakatime-project
 
 # stray empty capture
+tmp/
 results/**/*_gdsstats.txt
 
 # python envs (the real env is /opt/gds-venv on the image)
