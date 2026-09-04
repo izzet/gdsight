@@ -1,0 +1,5 @@
+{
+    "editor.formatOnSave": true,
+    "latex-workshop.formatting.latex": "latexindent",
+    "latex-workshop.latex.outDir": "./out"
+}
