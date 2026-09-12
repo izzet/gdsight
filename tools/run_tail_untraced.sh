@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 # UNTRACED control for the 22x tail claim: no datacrumbs anywhere in the loop.
 set -u
+REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+CUDA=/usr/local/cuda-12.6
 BIN=/tmp/gds_interfere_lat
 F=/mnt/nvme1/gdstrace-smoke/ovh.dat
 OUT=$HOME/projects/gdstrace/results/xlayer/tail_untraced.csv
+gcc -O2 -o "$BIN" "$REPO/workloads/gds_interfere_lat.c" \
+  -I"$CUDA/include" -L"$CUDA/lib64" -lcufile -lcudart -lcuda -lpthread
 printf 'condition,rep,metric,unit,value\n' > "$OUT"
 for rep in 1 2 3; do
   for cond in alone large_4MiB_4; do

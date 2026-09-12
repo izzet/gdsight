@@ -22,7 +22,7 @@ SELF=$(cd "$(dirname "$0")/.." && pwd)
 OUT=$SELF/results/xlayer
 CSV=$OUT/reps.csv
 
-NIXL_PY=${NIXL_PY:-$HOME/nixl-test-venv/bin/python}
+NIXL_PY=${NIXL_PY:-$HOME/nixl-venv/bin/python}
 CUDA=${CUDA:-/usr/local/cuda-12.6}
 CUDALIB=$CUDA/targets/x86_64-linux/lib:$CUDA/lib64
 SYSCUFILE=$CUDA/targets/x86_64-linux/lib/libcufile.so.0

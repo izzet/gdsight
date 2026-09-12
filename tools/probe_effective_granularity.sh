@@ -4,7 +4,7 @@
 #   documented (device LBA / NVMe spec / sysfs): printed below
 #   effective (measured by GDSight on the true-P2P path): device bytes per aligned read
 set -u
-PREFIX=$HOME/dc-prefix; NIXL_PY=${NIXL_PY:-$HOME/nixl-test-venv/bin/python}
+PREFIX=$HOME/dc-prefix; NIXL_PY=${NIXL_PY:-$HOME/nixl-venv/bin/python}
 CUDALIB=/usr/local/cuda-12.6/targets/x86_64-linux/lib:/usr/local/cuda-12.6/lib64
 SYSCUFILE=/usr/local/cuda-12.6/targets/x86_64-linux/lib/libcufile.so.0
 export PATH="$PREFIX/sbin:$PREFIX/bin:$PATH" LD_LIBRARY_PATH="$PREFIX/lib"

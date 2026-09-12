@@ -8,12 +8,12 @@
 # diskstats (iostat), cuFile-API op count, and OUR per-op LBA (device bytes, A_byte, useful GiB/s).
 set -u
 PREFIX=$HOME/dc-prefix
-NIXL_PY=${NIXL_PY:-$HOME/nixl-test-venv/bin/python}
+NIXL_PY=${NIXL_PY:-$HOME/nixl-venv/bin/python}
 CUDALIB=/usr/local/cuda-12.6/targets/x86_64-linux/lib:/usr/local/cuda-12.6/lib64
 SYSCUFILE=/usr/local/cuda-12.6/targets/x86_64-linux/lib/libcufile.so.0
 export PATH="$PREFIX/sbin:$PREFIX/bin:$PATH" LD_LIBRARY_PATH="$PREFIX/lib"
 F=/mnt/nvme1/gdstrace-smoke/ovh.dat; TRACEDIR=/mnt/nvme1/gdstrace-smoke/dc-traces
-NA=1; SA=1048576; NB=${NB:-120000}; SB=${SB:-2560}; STRIDE=${STRIDE:-8192}; BATCH=${BATCH:-64}
+NA=1; SA=1048576; NB=${NB:-120000}; SB=${SB:-2048}; STRIDE=${STRIDE:-8192}; BATCH=${BATCH:-64}
 OUT=/home/cc/projects/gdstrace/results/xlayer; CSV="$OUT/optimization.csv"
 echo 1 | sudo tee /sys/module/nvidia_fs/parameters/rw_stats_enabled >/dev/null
 echo "layout,nvfs_readMiB,nvfs_err,disk_MiB,cufile_api_ops,nvme_cmds,our_deviceB_MiB,our_B_A_byte,useful_GiBps" > "$CSV"

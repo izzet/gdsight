@@ -6,7 +6,7 @@
 # fp8: 2 (K,V) x 8 KV heads x 128 elem). Table V (KV-only) is: NA=0 SB=2048 bash run_nixl_batchsweep.sh
 set -u
 PREFIX=$HOME/dc-prefix
-NIXL_PY=${NIXL_PY:-$HOME/nixl-test-venv/bin/python}
+NIXL_PY=${NIXL_PY:-$HOME/nixl-venv/bin/python}
 CUDALIB=/usr/local/cuda-12.6/targets/x86_64-linux/lib:/usr/local/cuda-12.6/lib64
 SYSCUFILE=/usr/local/cuda-12.6/targets/x86_64-linux/lib/libcufile.so.0
 export PATH="$PREFIX/sbin:$PREFIX/bin:$PATH" LD_LIBRARY_PATH="$PREFIX/lib"

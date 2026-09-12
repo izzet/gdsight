@@ -10,6 +10,8 @@
 # Must run from a script file, not inline: the pkill pattern matches any command line containing it.
 set -u
 export PATH=$HOME/dc-prefix/sbin:$HOME/dc-prefix/bin:$PATH LD_LIBRARY_PATH=$HOME/dc-prefix/lib
+REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+CUDA=/usr/local/cuda-12.6
 BIN=/tmp/gds_interfere
 F=/mnt/nvme1/gdstrace-smoke/ovh.dat
 TD=/mnt/nvme1/gdstrace-smoke/dc-traces
@@ -17,6 +19,9 @@ SELF=$HOME/projects/gdstrace
 DEV=nvme1n1
 REPS=${REPS:-3}
 OUT=$SELF/results/xlayer/cap_tail_reps.csv
+
+gcc -O2 -o "$BIN" "$REPO/workloads/gds_interfere.c" \
+  -I"$CUDA/include" -L"$CUDA/lib64" -lcufile -lcudart -lcuda -lpthread
 
 ORIG=$(cat /sys/block/$DEV/queue/max_sectors_kb)
 restore() { echo "$ORIG" | sudo tee /sys/block/$DEV/queue/max_sectors_kb >/dev/null; echo "restored cap=$ORIG"; }

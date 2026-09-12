@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 set -u
 PREFIX=$HOME/dc-prefix
+REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+CUDA=/usr/local/cuda-12.6
 export PATH="$PREFIX/sbin:$PREFIX/bin:$PATH" LD_LIBRARY_PATH="$PREFIX/lib:/usr/local/cuda-12.6/targets/x86_64-linux/lib:/usr/local/cuda-12.6/lib64"
 F=/mnt/nvme1/gdstrace-smoke/ovh.dat
 TRACEDIR=/mnt/nvme1/gdstrace-smoke/dc-traces
 SIZE=65536; NREADS=4000
+[ -x /tmp/gds_oracle ] || gcc -O2 -o /tmp/gds_oracle "$REPO/workloads/gds_oracle.c" \
+  -I"$CUDA/include" -L"$CUDA/lib64" -lcufile -lcudart -lcuda -lpthread
 cp /tmp/gds_oracle /tmp/gds_oracle_dc; datacrumbs_track --executable /tmp/gds_oracle_dc >/dev/null 2>&1
 OUT=/home/cc/projects/gdstrace/results/xlayer/oracle.csv
 echo "regime,nvme_scored,corr_id_pct,lba_unique_pct" > "$OUT"
