@@ -62,7 +62,7 @@ Every quantitative result is traced to a committed artifact in
 | `results/` | measurement outputs, one directory per experiment family |
 | `results/xlayer/` | the cross-layer attribution evidence trail, one note per experiment |
 | `docs/` | bring-up and build worklogs, plus background analysis |
-| `external/` | pinned submodules for the substrate, analyzer and evaluated stacks |
+| `external/` | pinned submodules for the substrate, analyzer and evaluated stacks; see [release manifest](RELEASE-MANIFEST.md) |
 
 ## Reproducing
 

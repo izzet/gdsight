@@ -16,6 +16,6 @@ Use `npm run build` to type-check and create the static production site in
 
 ## Release policy
 
-The site is local until the artifact release and DOI are public. Its paper
-preview and paper link are intentionally easy to disable if the workshop's
-camera-ready or public-release rules require it.
+The site deploys through GitHub Pages. Its paper preview and paper link are
+intentionally easy to disable if the workshop's camera-ready or public-release
+rules require it.
