@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 const repo = 'https://github.com/izzet/gdsight';
-const artifactDoi = 'https://doi.org/10.5281/zenodo.22718933';
+const artifactDoi = 'https://doi.org/10.5281/zenodo.22719795';
 const canonicalUrl = 'https://izzet.github.io/gdsight/';
 const paperPreview = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/images/paper-preview.png`;
 const socialImage = 'https://izzet.github.io/gdsight/images/gdsight-social-card.png';
@@ -51,7 +51,7 @@ const structuredData = {
       description,
       url: repo,
       codeRepository: repo,
-      identifier: { '@type': 'PropertyValue', propertyID: 'DOI', value: '10.5281/zenodo.22718933' },
+      identifier: { '@type': 'PropertyValue', propertyID: 'DOI', value: '10.5281/zenodo.22719795' },
       license: `${repo}/blob/main/LICENSE`,
       programmingLanguage: ['C++', 'Python', 'eBPF'],
       runtimePlatform: 'Linux with NVIDIA GPUDirect Storage',
@@ -110,7 +110,7 @@ const citation = `@inproceedings{yildirim2026gdsight,
 cd gdsight
 /opt/gds-tools/mount_gds_nvme.sh
 gdscheck -p</code></pre>
-      <p class="repro-note">Frozen artifact: <a href={artifactDoi}>doi:10.5281/zenodo.22718933</a>.</p>
+      <p class="repro-note">Frozen artifact: <a href={artifactDoi}>doi:10.5281/zenodo.22719795</a>.</p>
       <p><a class="button" href={repo}>View code on GitHub</a></p>
     </div></section>
 
