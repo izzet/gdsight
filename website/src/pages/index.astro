@@ -1,0 +1,109 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const repo = 'https://github.com/izzet/gdsight';
+const canonicalUrl = 'https://izzet.github.io/gdsight/';
+const paperPreview = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/images/paper-preview.png`;
+const socialImage = 'https://izzet.github.io/gdsight/images/gdsight-social-card.png';
+const paperTitle = 'GDSight: Per-Operation Cross-Layer Attribution for GPUDirect Storage';
+const description = 'GDSight attributes GPUDirect Storage device work to the application operation that caused it.';
+const authors = [
+  { name: 'Izzet Yildirim', url: 'https://github.com/izzet' },
+  { name: 'Xian-He Sun', url: 'https://orcid.org/0000-0002-1093-0792' },
+  { name: 'Anthony Kougkas', url: 'https://orcid.org/0000-0003-3943-663X' },
+];
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'ScholarlyArticle',
+      '@id': `${canonicalUrl}#article`,
+      url: canonicalUrl,
+      headline: paperTitle,
+      name: paperTitle,
+      description,
+      abstract: description,
+      author: authors.map((author) => ({
+        '@type': 'Person',
+        ...author,
+        affiliation: { '@type': 'Organization', name: 'Illinois Institute of Technology' },
+      })),
+      inLanguage: 'en',
+      keywords: ['GPUDirect Storage', 'GDS', 'eBPF', 'NVMe', 'I/O attribution', 'HPC I/O'],
+      isPartOf: { '@type': 'Event', name: 'PDSW 2026' },
+      mainEntityOfPage: canonicalUrl,
+      about: { '@id': `${canonicalUrl}#software` },
+    },
+    {
+      '@type': 'SoftwareSourceCode',
+      '@id': `${canonicalUrl}#software`,
+      name: 'GDSight',
+      description,
+      url: repo,
+      codeRepository: repo,
+      license: `${repo}/blob/main/LICENSE`,
+      programmingLanguage: ['C++', 'Python', 'eBPF'],
+      runtimePlatform: 'Linux with NVIDIA GPUDirect Storage',
+    },
+  ],
+};
+const citation = `@inproceedings{yildirim2026gdsight,
+  title = {GDSight: Per-Operation Cross-Layer Attribution for GPUDirect Storage},
+  author = {Yildirim, Izzet and Sun, Xian-He and Kougkas, Anthony},
+  booktitle = {International Parallel Data Systems Workshop},
+  year = {2026}
+}`;
+---
+
+<BaseLayout title={paperTitle} {description} {canonicalUrl} {socialImage}>
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+  <main>
+    <section class="hero"><div class="container">
+      <!-- Release gate: comment out this block if paper-preview publication is not permitted. -->
+      <div class="paper-preview-section" aria-label="Accepted manuscript preview">
+        <div class="paper-preview">
+          <img src={paperPreview} alt="Upper portion of the GDSight accepted manuscript, showing its title, authors, and abstract." />
+        </div>
+      </div>
+      <h1>{paperTitle}</h1>
+      <p class="authors"><a href={authors[0].url}>{authors[0].name}</a><sup>1</sup> &nbsp; <a href={authors[1].url}>{authors[1].name}</a><sup>1</sup> &nbsp; <a href={authors[2].url}>{authors[2].name}</a><sup>1</sup></p>
+      <p class="affiliation"><sup>1</sup>Illinois Institute of Technology</p>
+      <p class="venue">PDSW 2026 · Accepted</p>
+      <div class="links"><span class="link-disabled">Paper <small>coming soon</small></span><a href={repo}>Code</a><a href="#citation">BibTeX</a></div>
+    </div></section>
+
+    <section class="container abstract-section"><h2>Abstract</h2>
+      <p>GPUDirect Storage moves data directly between NVMe and GPU memory, bypassing the host-I/O path that normally identifies which application operation caused device work. GDSight reconstructs that link for external tracing.</p>
+      <p>It traces <code>cuFile</code>, <code>nvidia-fs</code>, and NVMe with eBPF, then composes a time basis with an address basis to attribute device commands and bytes to individual operations, including asynchronous submissions for which temporal identity is absent or unsafe.</p>
+    </section>
+
+    <section class="section section-tint"><div class="container narrow"><h2>How it works</h2>
+      <p class="lead">GDSight follows one read across the path, then attributes each device command using the strongest valid evidence.</p>
+      <div class="overview-flow" aria-label="GDSight system overview"><div><b>cuFile operation</b><span>offset, size, correlation id</span></div><i aria-hidden="true">→</i><div><b>nvidia-fs</b><span>GDS kernel path</span></div><i aria-hidden="true">→</i><div><b>NVMe command</b><span>sector and device bytes</span></div><i aria-hidden="true">→</i><div><b>Offline attribution</b><span>time plus address basis</span></div></div>
+      <p class="caption">The time basis is exact when a synchronous key is valid. The address basis maps file ranges through FIEMAP to handle asynchronous work without guessing.</p>
+    </div></section>
+
+    <section class="section container" id="results"><h2>What it finds</h2>
+      <p class="lead">Across unmodified GDS software stacks, familiar observers can report health while per-operation attribution identifies the responsible operation class and a measured action.</p>
+      <div class="result-grid">
+        <article class="result-card"><p class="result-value">91%</p><h3>KvikIO bypass</h3><p>Reads silently routed through POSIX rather than GDS cost 2.67× device bytes until the GDS path is restored.</p></article>
+        <article class="result-card"><p class="result-value">4.00×</p><h3>NIXL KV reads</h3><p>A 4 KiB filesystem grid rounds 2048 B reads; layout coalescing reduces device traffic to 1.00×.</p></article>
+        <article class="result-card"><p class="result-value">27%</p><h3>HDF5 cache path</h3><p>The raw-data chunk cache host-stages reads and consumes more host CPU than true GDS.</p></article>
+        <article class="result-card"><p class="result-value">22×</p><h3>Tail contention</h3><p>Small-read p99 inflates under overlapping large device commands while median latency changes only 9%.</p></article>
+      </div>
+    </section>
+
+    <section class="section section-tint"><div class="container narrow"><h2>Reproducibility</h2>
+      <p>The artifact contains the tracer, offline analyzer, real-engine drivers, committed measurement outputs, and figure-data pipeline. It is pinned through submodules and runs on a reusable Chameleon Cloud GDS environment.</p>
+      <pre><code>git clone --recurse-submodules https://github.com/izzet/gdsight.git
+cd gdsight
+/opt/gds-tools/mount_gds_nvme.sh
+gdscheck -p</code></pre>
+      <p class="repro-note">A public release DOI will be linked here with the artifact archive.</p>
+      <p><a class="button" href={repo}>View code on GitHub</a></p>
+    </div></section>
+
+    <section class="section container narrow citation" id="citation"><h2>BibTeX</h2><pre><code>{citation}</code></pre></section>
+  </main>
+  <footer><div class="container">GDSight · Illinois Institute of Technology · <a href={repo}>GitHub</a></div></footer>
+</BaseLayout>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="GDSight">
+  <rect width="64" height="64" rx="12" fill="#0b3d5c"/>
+  <path d="M14 18h26v8H22v12h16v8H22v8h28V18H14z" fill="#76d6c5"/>
+  <circle cx="45" cy="42" r="8" fill="#f4b942"/>
+</svg>
