@@ -20,9 +20,19 @@ valid, the two cover every regime but one characterized corner, which is reporte
 than guessed.
 
 Built as three eBPF plugins (`cufile`, `nvidiafs`, `block`) on the
-[DataCrumbs](https://github.com/llnl/datacrumbs) substrate, emitting the
+[DataCrumbs](https://github.com/izzet/datacrumbs) substrate, emitting the
 [DFTracer](https://github.com/llnl/dftracer) format. It needs no source changes, no library
 injection, and no change to the installed GDS stack.
+
+## Paper
+
+> Izzet Yildirim, Xian-He Sun, Anthony Kougkas.
+> **GDSight: Per-Operation Cross-Layer Attribution for GPUDirect Storage.**
+> 11th International Parallel Data Systems Workshop (PDSW'26), held in conjunction with
+> SC26: The International Conference for High Performance Computing, Networking, Storage,
+> and Analysis, McCormick Place Convention Center, Chicago, IL, USA, 16 November 2026.
+
+Use [`CITATION.cff`](CITATION.cff) to cite the software and paper.
 
 ## What it finds
 
@@ -35,7 +45,7 @@ report health:
 | HDF5 via the GDS VFD | `nvfs_io=0`, so the chunk cache host-stages every read, at 27% more host CPU than true GDS |
 | NIXL KV-cache reads | a 4 KiB filesystem grid rounds every 2048 B read to 4x device bytes |
 | unaligned writes | 46,956 device commands, of which 14,194 are reads, from read-modify-write on a pure-write workload |
-| small reads under contention | p99 inflates 22x while the median moves 9%, from head-of-line blocking at the device queue |
+| small reads under contention | p99 inflates 22x while the median moves 9%, from device contention: 3–8 overlapping large commands per slow operation |
 | high command rate | nothing is wrong, since raising the block cap buys no improvement and the attributed answer is to leave it alone |
 
 Each diagnosis resolves to a specific layout or configuration change, measured before and after.
@@ -62,7 +72,7 @@ NVIDIA driver 560.35.05, `linux-nvidia` 6.8.0-1051 carrying the GDS-patched nvme
 which cuFile verifies:
 
 ```bash
-git clone --recurse-submodules https://github.com/izzet/gdsight.git
+git clone --recurse-submodules https://github.com/izzet/gdsight.git && cd gdsight
 /opt/gds-tools/mount_gds_nvme.sh                                      # mount local NVMe data=ordered
 /usr/local/cuda-12.6/gds/tools/gdscheck -p | grep -E 'NVMe |IOMMU:'   # expect NVMe: Supported | IOMMU: disabled
 source /opt/gds-venv/bin/activate                                     # kvikio / cupy / DALI

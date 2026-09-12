@@ -30,7 +30,16 @@ const structuredData = {
       })),
       inLanguage: 'en',
       keywords: ['GPUDirect Storage', 'GDS', 'eBPF', 'NVMe', 'I/O attribution', 'HPC I/O'],
-      isPartOf: { '@type': 'Event', name: 'PDSW 2026' },
+      isPartOf: {
+        '@type': 'Event',
+        name: "11th International Parallel Data Systems Workshop (PDSW'26)",
+        startDate: '2026-11-16',
+        location: {
+          '@type': 'Place',
+          name: 'McCormick Place Convention Center',
+          address: { '@type': 'PostalAddress', addressLocality: 'Chicago', addressRegion: 'IL', addressCountry: 'US' },
+        },
+      },
       mainEntityOfPage: canonicalUrl,
       about: { '@id': `${canonicalUrl}#software` },
     },

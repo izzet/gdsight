@@ -1,0 +1,34 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the software and the paper."
+title: "GDSight: Per-Operation Cross-Layer Attribution for GPUDirect Storage"
+abstract: "Per-operation cross-layer attribution for GPUDirect Storage device work."
+license: MIT
+url: https://github.com/izzet/gdsight
+repository-code: https://github.com/izzet/gdsight
+authors:
+  - family-names: Yildirim
+    given-names: Izzet
+    orcid: https://orcid.org/0000-0003-3513-0764
+  - family-names: Sun
+    given-names: Xian-He
+    orcid: https://orcid.org/0000-0002-1093-0792
+  - family-names: Kougkas
+    given-names: Anthony
+    orcid: https://orcid.org/0000-0003-3943-663X
+preferred-citation:
+  type: conference-paper
+  title: "GDSight: Per-Operation Cross-Layer Attribution for GPUDirect Storage"
+  year: 2026
+  authors:
+    - family-names: Yildirim
+      given-names: Izzet
+    - family-names: Sun
+      given-names: Xian-He
+    - family-names: Kougkas
+      given-names: Anthony
+  conference:
+    name: "11th International Parallel Data Systems Workshop (PDSW'26)"
+    city: Chicago
+    country: US
+    date-start: 2026-11-16
+    date-end: 2026-11-16
