@@ -1,9 +1,6 @@
 [submodule "external/dftracer"]
 	path = external/dftracer
 	url = https://github.com/izzet/dftracer.git
-[submodule "external/brahma"]
-	path = external/brahma
-	url = https://github.com/izzet/brahma.git
 [submodule "external/nixl"]
 	path = external/nixl
 	url = https://github.com/ai-dynamo/nixl
@@ -15,18 +12,3 @@
 	path = external/dfanalyzer
 	url = https://github.com/izzet/dfanalyzer.git
 	branch = fix/pandas-2.2-datacrumbs
-[submodule "external/espn"]
-	path = external/espn
-	url = https://github.com/susavlsh10/ESPN-v1
-[submodule "external/elbencho"]
-	path = external/elbencho
-	url = https://github.com/breuner/elbencho.git
-[submodule "external/deepspeedexamples"]
-	path = external/deepspeedexamples
-	url = https://github.com/deepspeedai/DeepSpeedExamples.git
-[submodule "external/cucim"]
-	path = external/cucim
-	url = https://github.com/rapidsai/cucim.git
-[submodule "external/zns-tools"]
-	path = external/zns-tools
-	url = https://github.com/stonet-research/zns-tools.git

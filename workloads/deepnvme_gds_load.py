@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Parametrized DeepNVMe GDS load (file->GPU via cuFile), exposing the five DeepNVMe tuning knobs so
 GDSight can attribute each knob's device-level effect (the "explain the autotuner" experiment). Mirrors
-external/deepspeedexamples/deepnvme/file_access/gds_load_gpu_tensor.py but with block_size / queue_depth /
+DeepSpeed's gds_load_gpu_tensor.py but with block_size / queue_depth /
 single_submit / overlap_events / intra_op_parallelism as CLI args.
 Usage: deepnvme_gds_load.py --input_file F --block_size 1048576 --intra_op_parallelism 8 [--overlap_events]"""
 import argparse, os, time

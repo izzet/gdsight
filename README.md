@@ -49,8 +49,6 @@ report health:
 | high command rate | nothing is wrong, since raising the block cap buys no improvement and the attributed answer is to leave it alone |
 
 Each diagnosis resolves to a specific layout or configuration change, measured before and after.
-Every quantitative result is traced to a committed artifact in
-`results/xlayer/paper-claims-audit-2026-08-05.md`.
 
 ## Repo map
 
