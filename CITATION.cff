@@ -4,6 +4,7 @@ title: "GDSight: Per-Operation Cross-Layer Attribution for GPUDirect Storage"
 abstract: "Per-operation cross-layer attribution for GPUDirect Storage device work."
 license: MIT
 version: 1.0.0
+doi: 10.5281/zenodo.22718933
 url: https://github.com/izzet/gdsight
 repository-code: https://github.com/izzet/gdsight
 authors:

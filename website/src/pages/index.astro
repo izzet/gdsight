@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 const repo = 'https://github.com/izzet/gdsight';
+const artifactDoi = 'https://doi.org/10.5281/zenodo.22718933';
 const canonicalUrl = 'https://izzet.github.io/gdsight/';
 const paperPreview = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/images/paper-preview.png`;
 const socialImage = 'https://izzet.github.io/gdsight/images/gdsight-social-card.png';
@@ -50,6 +51,7 @@ const structuredData = {
       description,
       url: repo,
       codeRepository: repo,
+      identifier: { '@type': 'PropertyValue', propertyID: 'DOI', value: '10.5281/zenodo.22718933' },
       license: `${repo}/blob/main/LICENSE`,
       programmingLanguage: ['C++', 'Python', 'eBPF'],
       runtimePlatform: 'Linux with NVIDIA GPUDirect Storage',
@@ -78,7 +80,7 @@ const citation = `@inproceedings{yildirim2026gdsight,
       <p class="authors"><a href={authors[0].url}>{authors[0].name}</a><sup>1</sup> &nbsp; <a href={authors[1].url}>{authors[1].name}</a><sup>1</sup> &nbsp; <a href={authors[2].url}>{authors[2].name}</a><sup>1</sup></p>
       <p class="affiliation"><sup>1</sup>Illinois Institute of Technology</p>
       <p class="venue">PDSW 2026 · Accepted</p>
-      <div class="links"><span class="link-disabled">Paper <small>coming soon</small></span><a href={repo}>Code</a><a href="#citation">BibTeX</a></div>
+      <div class="links"><span class="link-disabled">Paper <small>coming soon</small></span><a href={repo}>Code</a><a href={artifactDoi}>Artifact DOI</a><a href="#citation">BibTeX</a></div>
     </div></section>
 
     <section class="container abstract-section"><h2>Abstract</h2>
@@ -108,7 +110,7 @@ const citation = `@inproceedings{yildirim2026gdsight,
 cd gdsight
 /opt/gds-tools/mount_gds_nvme.sh
 gdscheck -p</code></pre>
-      <p class="repro-note">A public release DOI will be linked here with the artifact archive.</p>
+      <p class="repro-note">Frozen artifact: <a href={artifactDoi}>doi:10.5281/zenodo.22718933</a>.</p>
       <p><a class="button" href={repo}>View code on GitHub</a></p>
     </div></section>
 
