@@ -34,7 +34,7 @@ injection, and no change to the installed GDS stack.
 
 Use [`CITATION.cff`](CITATION.cff) to cite the software and paper.
 The frozen software artifact is archived at
-[doi:10.5281/zenodo.22719795](https://doi.org/10.5281/zenodo.22719795).
+[doi:10.5281/zenodo.22718932](https://doi.org/10.5281/zenodo.22718932).
 
 ## What it finds
 
