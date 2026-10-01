@@ -1,19 +1,15 @@
 # Chameleon true-GDS bring-up — ordered next steps
 
 Goal: get a **true NVMe→GPU DMA (GDS) path working** on a Chameleon bare-metal GPU node,
-then run Appendix A for real (which WSL2/DeltaAI/Delta could not). Reference recipe:
-Muradli 2025 (IIT) — A100-PCIE-40GB, Ubuntu 24.04, CUDA 12.9, nvidia-fs 2.25, ext4 on local NVMe.
+then validate true GDS operation on hardware (A100-PCIE-40GB, Ubuntu 24.04, CUDA 12.9, nvidia-fs 2.25, ext4 on local NVMe).
 
 ## 0. Launch the instance (you have the reservation)
-- Node: **`compute_liqid` @ CHI@TACC** (= Muradli's proven node class: A100-PCIE-40GB, 256GB RAM,
-  2× 3.84TB local NVMe). `gpu_h100` @ CHI@TACC is the discrete, no-compose-step alternative.
+- Node: **`compute_liqid` @ CHI@TACC** (A100-PCIE-40GB, 256GB RAM, 2× 3.84TB local NVMe). `gpu_h100` @ CHI@TACC is the discrete alternative.
 - COMPOSABLE caveat (compute_liqid): node comes with 1 GPU by default. After boot, run `nvidia-smi`
   and confirm an A100 is present. If not, file a helpdesk ticket "Composable Hardware Configuration
   Request" — do NOT provision until the GPU is composed.
 - Image: **`CC-Ubuntu24.04-CUDA`** (driver + CUDA preinstalled; matches the recipe).
 - Associate a floating IP, then `ssh cc@<ip>`.
-- IN PARALLEL: ask **Muradli** for his exact image/setup or a snapshot — he ran this exact node class;
-  it can save hours of nvidia-fs/DKMS debugging.
 - Storage note: on these nodes `sda` (SAS 480GB) is the OS root; format `nvme0n1` (or `nvme1n1`)
   for /mnt/gds — i.e. set `DEV=/dev/nvme0n1` in step 1.
 
@@ -42,7 +38,7 @@ Bank the win — never rebuild, and the whole group can reuse it.
 bash smoke_gds.sh        # Step 1 ceiling (-x0 should BEAT -x1), Step 2 silent pathology
 ```
 Then Steps 3–4: vendor reader (kvikio/DALI) with varied alignment + the DFTracer GOTCHA
-cuFile tracer → per-op cross-layer attribution on a REAL GDS node = Figure 1 of the proposal.
+cuFile tracer → per-op cross-layer attribution on a real GDS node.
 
 ## Notes
 - Local-NVMe ext4/xfs GDS does **not** need MLNX_OFED (that's only the RDMA/distributed-FS path).

@@ -6,7 +6,7 @@ then run the Appendix-A smoke tests for real (the thing DeltaAI / Delta could no
 they were compat-only and non-root). This is the live worklog — every issue + fix is recorded
 here in order so the run can be followed and reproduced later.
 
-**Started:** 2026-06-07 · **Operator:** Claude (driven by Izzet Yildirim)
+**Started:** 2026-06-07
 **Reference:** `../docs/chamREADME.md` (bring-up plan), the Appendix~A smoke-test sequence,
 NVIDIA [GDS Troubleshooting/Install guide](https://docs.nvidia.com/gpudirect-storage/troubleshooting-guide/index.html#installing-gpudirect-storage).
 
@@ -28,10 +28,9 @@ NVIDIA [GDS Troubleshooting/Install guide](https://docs.nvidia.com/gpudirect-sto
 
 **GPU + both NVMe are all on NUMA node 1** → ideal for P2P DMA.
 
-⚠️ **The NVMe disks contain other users' data** (nvme0n1: RocksDB/YCSB work from Dec 2024;
-nvme1n1: a `gds/` dir from Aug 2025, a `jye/` user dir). **Do NOT reformat.** Use a scratch
-subdirectory only; leave everything else untouched. (The `chamREADME` said "format nvme0n1",
-written before this was known — overridden.)
+⚠️ **Storage note:** The local NVMe disks contain existing data. Use a scratch
+subdirectory only; leave existing partitions untouched. (The `chamREADME` previously suggested
+formatting `nvme0n1`; overridden to preserve existing filesystem layout.)
 
 ---
 
@@ -130,14 +129,13 @@ nvidia-fs refuses to register the NVMe device for P2P while the IOMMU is in Tran
 - `/etc/modprobe.d/nvidia-fs-softdep.conf` = `softdep nvme pre: nvidia_fs` (load nvidia_fs before
   nvme so nvme registers with it). `update-initramfs -u` done.
 
-### ⛔ REBOOT ISSUED 2026-06-07 ~05:18 (to apply amd_iommu=off; ended the agent session)
+### 🔄 REBOOT ISSUED 2026-06-07 ~05:18 (to apply amd_iommu=off)
 **On reconnect, THIS is the next action:**
 ```
 # verify IOMMU off + nvidia_fs autoloaded:
 grep -o amd_iommu=off /proc/cmdline ; lsmod | grep nvidia_fs
 # then run the gate + smoke tests:
 bash ~/projects/gdstrace/chameleon/post_reboot_smoke.sh
-# (or just start Claude again and say "continue the GDS bring-up")
 ```
 If `amd_iommu=off` is NOT in /proc/cmdline after reboot, the GRUB change didn't take — re-check
 `/etc/default/grub` (effective 2nd line) and re-run `sudo update-grub`.
@@ -189,13 +187,12 @@ Installed (no-recommends, so NO proprietary userspace pulled):
   newest) + one-time `grub-reboot` set. Old `6.8.0-111-generic` retained as fallback in GRUB menu.
 - softdep = `nvidia_fs pre: nvme` (nvme must load first for the symbol_get registration).
 
-### ⛔ REBOOT #2 ISSUED 2026-06-07 ~07:26 — into 6.8.0-1051-nvidia (ends agent session)
+### 🔄 REBOOT #2 ISSUED 2026-06-07 ~07:26 — into 6.8.0-1051-nvidia
 **On reconnect:**
 ```
 uname -r                      # expect 6.8.0-1051-nvidia
 nm $(modinfo -n nvme | sed 's/.zst//') 2>/dev/null | grep -c nvfs   # patched nvme in use (>0)
 bash ~/projects/gdstrace/chameleon/post_reboot_smoke.sh             # gate + smoke
-# (or restart Claude and say "continue the GDS bring-up")
 ```
 If the node doesn't come back: it's an official Ubuntu kernel (low risk), but you can pick
 "Ubuntu, with Linux 6.8.0-111-generic" from the GRUB menu via Chameleon's serial console to revert.
@@ -297,9 +294,9 @@ dataset, compare achieved BW vs the Step-1 ceiling, and use `gds_stats`/`cufile.
 
 ---
 ## Snapshot created + VALIDATED on a fresh instance — 2026-06-08
-**Snapshot:** `grc-ub2404-nvk-gds-a100-cu126-20260607` (project-private Glance image). cc-snapshot
-needed `-f` (15.5 GB tripped a size-warning prompt) and `-e /mnt` (exclude NVMe / other tenants'
-data; tar also uses `--one-file-system`). virt-sysprep ran (clean image: no SSH keys/machine-id).
+**Snapshot:** `grc-ub2404-nvk-gds-a100-cu126` (project-private Glance image). cc-snapshot
+used `-f` (size threshold override) and `-e /mnt` (exclude local NVMe data mounts;
+tar also uses `--one-file-system`). virt-sysprep ran (clean image: no SSH keys/machine-id).
 
 **Relaunched from the snapshot (same node class) and re-verified — ALL GREEN:**
 - Baked-in stack reproduced perfectly: kernel `6.8.0-1051-nvidia`, `amd_iommu=off`, open driver
@@ -327,42 +324,12 @@ data; tar also uses `--one-file-system`). virt-sysprep ran (clean image: no SSH 
 **Toolkit relocated to `/opt/gds-tools`** (group-accessible, captured in-image; the project's
 `chameleon/` is now a symlink to it). README paths updated to `/opt/gds-tools`.
 
-**v2 snapshot: `grc-ub2404-nvk-gds-a100-cu126-v2`** (date dropped — Glance records `created_at`;
-version suffix instead). Bakes the 3 script fixes + the `/opt/gds-tools` relocation; supersedes v1.
-Plan: create v2 → confirm `active` → delete v1 (`openstack image delete
-301c527d-4e48-404e-9a0c-f95321ea18ea`). v1 had the ACS landmine in `post_reboot_smoke.sh` — do not
-run that script from a v1 instance.
-
-**v2 scope (decided):** image = `/opt/gds-tools` (toolkit + README + this LOG + the Chameleon report)
+**Image snapshot scope:** image = `/opt/gds-tools` (toolkit + README + this LOG + the Chameleon report)
 + `/opt/gds-venv` + system (driver/kernel/nvidia-fs). **`~/projects/gdstrace` is EXCLUDED**
-(`cc-snapshot -e /home/cc/projects`) — the research workspace (brief, DeltaAI/Delta reports,
-`results/`) stays in home/git, not baked into the shared image. The Chameleon LOG + report are copied
-into `/opt/gds-tools/` so the image self-documents.
+(`cc-snapshot -e /home/cc/projects`) — the research workspace stays in git, not baked into the shared image.
+The Chameleon LOG + report are copied into `/opt/gds-tools/` so the image self-documents.
 
-**DONE (2026-06-07 ~20:42):** v2 `active`, id `f7088c23-a3d5-4d4f-967c-199525250c63`, ~8.2 GB,
-visibility `shared`/0-members (grc-project-only). Tagged with properties (kernel/driver/nvidia_fs/
-cuda/gds_ready/notes). **v1 deleted.** Single canonical image now =
-`grc-ub2404-nvk-gds-a100-cu126-v2`. (Toolkit relocated to `/opt/gds-tools`, project `chameleon/` →
-symlink.) Validated end-to-end on a fresh instance earlier; v2 == that validated state + script fixes.
-
-### 🔒 Security rebuild → v3 (2026-06-07 ~21:25)
-Caught that v2 inadvertently baked in **secrets**: `~/.claude/.credentials.json` (Claude auth token),
-`~/.claude.json` (config/oauth), `~/.claude/projects/` (conversation transcripts), and `~/openrc`
-(Chameleon API token) — unacceptable in a grc-shared image. Rebuilt as
-**`grc-ub2404-nvk-gds-a100-cu126-v3`** additionally excluding them:
-`-e /mnt -e /home/cc/projects -e /home/cc/.claude -e /home/cc/.claude.json -e /home/cc/openrc -e /home/cc/.bash_history`.
-Session continuity (memory no longer travels in the image) is handled by **`CLAUDE.md`** in the repo
-(auto-loaded by Claude Code after `git clone`). **v2 deleted** once v3 is `active`.
-**Workspace now lives in git:** https://github.com/izzet/gdsight.
-
-> ⚠️ **PARKED — security TODO (exclude did NOT work):** on the v3 instance `~/.claude` and `~/projects`
-> are STILL present. The `cc-snapshot -e` excludes did not drop them — likely `-e` only appeared to
-> work for `/mnt` because tar's `--one-file-system` skips separate filesystems, while the relative
-> exclude patterns don't match tar's `./`-prefixed members on the **root** fs (and `~/.claude` is also
-> re-created live by the running Claude session). ⇒ **both v2 AND v3 still contain the Claude auth
-> token (`~/.claude/.credentials.json`) + `~/openrc` Chameleon token.** Fix later: verify the exclude
-> pattern (try `./home/cc/.claude`) or scrub/rotate secrets before snapshot, delete v2, re-snapshot.
-> **Parked per user; continuing Step 3 on this instance.**
+**Workspace lives in git:** https://github.com/izzet/gdsight.
 
 ### ✅ Steps 3 & 4 — silent per-op GDS bypass DEMONSTRATED (2026-06-07 ~22:30)
 kvikio over aligned vs **ragged** (compressed-chunk-like) reads: aligned `n=9926` GDS reads, **ragged

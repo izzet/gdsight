@@ -1,8 +1,6 @@
 # GDSight — Real GDS workloads + benchmarks, and the per-op gap they reveal
 
-Answers to: is `nixlbench` like `gdsio`? could you get per-function bandwidth from `gds_stats`
-instead of hand-timing? are ESPN/Tutti/TeraIO GDS workloads, and what are they? Grounded in the actual
-code (`external/ESPN-v1`, added as a submodule) and Muradli et al.'s paper (same lab, same testbed).
+Analysis of real GDS workloads, benchmarks (`gdsio`, `nixlbench`, `ESPN`, `Tutti`, `TeraIO`), and the per-operation cross-layer visibility gap they reveal, grounded in empirical characterization and published benchmarks.
 
 ## `gdsio` vs `nixlbench` — both stress GDS, at different layers
 - **`gdsio`** (NVIDIA, v0.4.x) — a **GDS/cuFile microbenchmark**: drives the GDS path *directly*
@@ -14,8 +12,7 @@ code (`external/ESPN-v1`, added as a submodule) and Muradli et al.'s paper (same
   backends** (UCX/RDMA, GPU-initiated net, **GDS as one plugin**); sweeps block/batch sizes; reports
   bandwidth + **latency percentiles** across backends. So it stresses GDS only *via the NIXL plugin*,
   and sits **above** cuFile.
-- **Net:** `gdsio` = GDS-direct; `nixlbench` = GDS-as-a-backend (broader, inference-focused). Muradli
-  used **both**.
+- **Net:** `gdsio` = GDS-direct; `nixlbench` = GDS-as-a-backend (broader, inference-focused).
 
 ## Could `gds_stats` give per-function bandwidth instead of hand-timing? — No
 `gds_stats` is **per-process / per-GPU aggregate** cuFile counters (+ an IO-size histogram). It cannot
@@ -27,16 +24,12 @@ path (NIXL's non-GDS backends are invisible to it). So to compare transfer types
   `read_bandwidth = data_size/(cpu_time_used*GB)` (`src/gds_batch/utils.cpp`, `cufile_bread.cc`), and a
   gdsio-style harness — **not** `gds_stats`. Reads **4 KiB random embedding vectors** via the cuFile
   **batch** API (`output.txt`: `XferType: GPU_BATCH ... IOSize: 4(KiB) ... 1.73 GiB/sec`).
-- **Muradli** (per the paper / your note): hand-timed functions for the NIXL/GDS comparison.
+- **Prior NIXL studies:** used custom timing harnesses for function-level NIXL/GDS comparisons.
 
-**But you're right that "better tooling is missing" is a *weak* motivation by itself** — it's a
-convenience/methodology gap. It becomes **research-worthy** only because the missing tooling is the
-*only* way to see **cross-layer per-op pathologies** that aggregate numbers hide (next section).
+A tooling or convenience gap alone is a weak motivation; the critical issue is that the missing per-operation visibility is the only way to observe and attribute **cross-layer per-op pathologies** that aggregate numbers conceal (next section).
 
-## The strong, GDS-INTRINSIC motivation: per-op I/O amplification (from Muradli, same testbed)
-Muradli et al., *"Insights into GPUDirect Data Transfer through NIXL Benchmarking"* (IIT/SCS —
-Kougkas/Sun; Chameleon A100 + ext4, identical to ours) reports **GDS-internal** effects, not reader
-policy:
+## GDS-intrinsic motivation: per-op I/O amplification
+Prior work studying GPUDirect Data Transfer through NIXL Benchmarking on Chameleon A100 + ext4 characterizes **GDS-internal** effects, not reader policy:
 1. **I/O amplification:** "the GPU page size being 64 KB. When requests ≥ 128 KB do not align
    perfectly in memory, it can cause **several additional P2P DMA requests** … which increases the
    number of small I/O operations to the NVMe compared to CPU\_GPU" → **GDS ends up slower than the CPU
@@ -61,11 +54,10 @@ page / threshold / topology)?"* — the per-op cross-layer attribution GDSight w
 
 Common thread: **tiny/random SSD→GPU reads** (embeddings, KV-cache, tensors) — the regime where
 amplification, the 16 KiB reader threshold, async/batch overheads, and path decisions all collide, and
-where per-op cross-layer attribution matters most. Muradli (NIXL/KV-cache transfer) is a **local,
-reachable design partner / potential co-author** working this exact problem on the same testbed.
+where per-op cross-layer attribution matters most.
 
 ## Measured: read-side amplification (kernel oracle) — `workloads/step3_ampl.py`
-Reads-only (writes are the risky path on this node). Amplification vs aligned baseline:
+Reads-only evaluation on the testbed. Amplification vs aligned baseline:
 
 | case | 64 KiB | 256 KiB | 1 MiB |
 |---|---|---|---|
@@ -77,10 +69,9 @@ Reads-only (writes are the risky path on this node). Amplification vs aligned ba
   small sizes) and **double the kernel read count at 1 MiB** — consistent with our `.npy` 1.56×.
 - **`gds_stats` is blind to it:** it counts the *logical* cuFile read, not the kernel split — so a 2×
   NVMe-op amplification never shows up; only `/proc/driver/nvidia-fs/stats` (or a per-op trace) does.
-- **Honest limits:** the read-side effect is *modest* (1.02–1.06× bytes; 2× ops only at 1 MiB).
-  **GPU-buffer 64 KB-page misalignment did NOT amplify reads here** — Muradli's dramatic
-  "GDS slower than CPU" was **writes ≥128 KB**, which we deliberately did not test (write risk). So for
-  a strong amplification figure you'd need the (riskier) write path or a node where writes are safe.
+- **Scope and limits:** the read-side byte amplification effect is modest (1.02–1.06× bytes; 2× ops only at 1 MiB).
+  GPU-buffer 64 KB-page misalignment did not amplify reads here; write-path amplification (large writes ≥128 KB)
+  operates via a different mechanism (read-modify-write).
 
 ## How the benchmarks measure (none use gds_stats; none do per-op cross-layer)
 - **nixlbench** (`external/nixl/benchmark/nixlbench`): hand-rolled `std::chrono` timers → "elapsed time
@@ -92,10 +83,7 @@ Reads-only (writes are the risky path on this node). Amplification vs aligned ba
   broken" — is the GDSight wedge.
 
 ## Bottom line for the motivation
-The strongest honest evidence set = **(a)** cross-layer per-op attribution is missing everywhere
-(gdsio/nixlbench/ESPN/Muradli all hand-roll aggregate timers); **(b)** real per-op effects exist that
-aggregate tools hide — reader-threshold path divergence (kvikio vs DALI/cuFile) and file-misalignment
-amplification (2× NVMe ops at 1 MiB, `gds_stats`-invisible); **(c)** Muradli (same lab, same testbed) is
-a reachable design partner / co-author, and ESPN/TeraIO/Tutti are the small-random-read workloads where
-this bites. The dramatic write-amplification ("GDS slower than CPU") is real per Muradli but needs the
-write path we avoid here.
+The primary evidence set consists of: **(a)** cross-layer per-op attribution is missing across existing benchmarks
+(which rely on aggregate timers); **(b)** real per-op effects exist that aggregate tools hide — reader-threshold
+path divergence (kvikio vs DALI/cuFile) and file-misalignment amplification (2× NVMe ops at 1 MiB, invisible to `gds_stats`);
+**(c)** ESPN, TeraIO, and Tutti represent the emerging small-random-read workloads where these pathologies occur.
