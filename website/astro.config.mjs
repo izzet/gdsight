@@ -4,6 +4,6 @@ import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
   site: 'https://izzet.github.io',
-  base: '/gdsight',
+  base: '/gdsight/',
   integrations: [mdx(), sitemap()],
 });
