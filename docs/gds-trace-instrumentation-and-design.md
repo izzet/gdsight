@@ -58,7 +58,7 @@ This is precisely the gap every real user hand-codes around (ESPN `cudaEvent`+ma
 `std::chrono`; Muradli's hand-timing) and that `gds_stats` (`posix=0`) cannot express.
 
 ## 4. Right host: DataCrumbs (eBPF), not DFTracer+GOTCHA
-Re-evaluated after inspecting **[LLNL/DataCrumbs](https://github.com/LLNL/datacrumbs)** (`external/datacrumbs`)
+Re-evaluated after inspecting **[llnl-asr/datacrumbs](https://github.com/llnl-asr/datacrumbs)** (`external/datacrumbs`)
 — the **eBPF successor to DFTracer from the same authors** (Devarajan/LLNL). It **already unifies the
 layers we would otherwise glue together**, which makes "DFTracer + a separate eBPF correlator"
 redundant:
