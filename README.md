@@ -31,6 +31,7 @@ injection, and no change to the installed GDS stack.
 > 11th International Parallel Data Systems Workshop (PDSW'26), held in conjunction with
 > SC26: The International Conference for High Performance Computing, Networking, Storage,
 > and Analysis, McCormick Place Convention Center, Chicago, IL, USA, 16 November 2026.
+> [doi:10.1109/SCW72768.2026.00303](https://doi.ieeecomputersociety.org/10.1109/SCW72768.2026.00303)
 
 Use [`CITATION.cff`](CITATION.cff) to cite the software and paper.
 The frozen software artifact is archived at
