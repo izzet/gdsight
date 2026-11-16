@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 const repo = 'https://github.com/izzet/gdsight';
+const paperUrl = 'https://doi.ieeecomputersociety.org/10.1109/SCW72768.2026.00303';
 const artifactDoi = 'https://doi.org/10.5281/zenodo.22718932';
 const canonicalUrl = 'https://izzet.github.io/gdsight/';
 const paperPreview = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/images/paper-preview.png`;
@@ -62,7 +63,8 @@ const citation = `@inproceedings{yildirim2026gdsight,
   title = {GDSight: Per-Operation Cross-Layer Attribution for GPUDirect Storage},
   author = {Yildirim, Izzet and Sun, Xian-He and Kougkas, Anthony},
   booktitle = {International Parallel Data Systems Workshop},
-  year = {2026}
+  year = {2026},
+  doi = {10.1109/SCW72768.2026.00303}
 }`;
 ---
 
@@ -80,7 +82,7 @@ const citation = `@inproceedings{yildirim2026gdsight,
       <p class="authors"><a href={authors[0].url}>{authors[0].name}</a><sup>1</sup> &nbsp; <a href={authors[1].url}>{authors[1].name}</a><sup>1</sup> &nbsp; <a href={authors[2].url}>{authors[2].name}</a><sup>1</sup></p>
       <p class="affiliation"><sup>1</sup>Illinois Institute of Technology</p>
       <p class="venue">PDSW 2026 · Accepted</p>
-      <div class="links"><span class="link-disabled">Paper <small>coming soon</small></span><a href={repo}>Code</a><a href={artifactDoi}>Artifact DOI</a><a href="#citation">BibTeX</a></div>
+      <div class="links"><a href={paperUrl}>Paper</a><a href={repo}>Code</a><a href={artifactDoi}>Artifact DOI</a><a href="#citation">BibTeX</a></div>
     </div></section>
 
     <section class="container abstract-section"><h2>Abstract</h2>
