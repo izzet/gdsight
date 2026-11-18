@@ -7,7 +7,7 @@ A scientific-HPC keystone for GDSight, on real middleware (HDF5) and the communi
 
 ## Setup
 - HW: Chameleon bare-metal A100-PCIE-40GB, Samsung PM983-class NVMe (ext4 `data=ordered`), CUDA 12.6,
-  nvidia-fs 2.28, GDS 1.17.1, kernel `6.8.0-1051-nvidia`, IOMMU off.
+  nvidia-fs 2.28, GDS 1.11.1 (libcufile; nvidia-fs stats header prints 1.17.1), kernel `6.8.0-1051-nvidia`, IOMMU off.
 - SW: **HDF5 1.14.5** (serial) + **`nv-legate/vfd-gds`** — NVIDIA's maintained GPUDirect-Storage VFD
   (opens `O_DIRECT`, branches on device pointers; used in production by Legate). The VFD is the direct
   descendant of Ravi/Byna/Koziol's PDSW'20 "GPU Direct I/O with HDF5" driver.

@@ -1,0 +1,1819 @@
+{
+  "tool": {
+    "name": "gds-diag",
+    "version": "1.0.0",
+    "git_commit": "d49288c99f5d"
+  },
+  "mode": "all",
+  "environment": {
+    "kind": "host",
+    "in_container": false,
+    "runtime": "host",
+    "detection": "No common container markers found."
+  },
+  "path": "/mnt/nvme1/gdstrace-smoke",
+  "planned_sequence": [
+    "pre-install",
+    "post-install",
+    "config-audit",
+    "mount-check"
+  ],
+  "stopped_at": null,
+  "exit_code": 0,
+  "steps": [
+    {
+      "command": "pre-install",
+      "display": "pre-install",
+      "exit_code": 0,
+      "result": {
+        "tool": {
+          "name": "gds-diag",
+          "version": "1.0.0",
+          "git_commit": "d49288c99f5d"
+        },
+        "mode": "pre-install",
+        "version_context": [
+          {
+            "component": "Linux kernel",
+            "found": true,
+            "version": "6.8.0-1051-nvidia",
+            "source": "uname -r",
+            "detail": "platform.release() = 6.8.0-1051-nvidia"
+          },
+          {
+            "component": "CUDA Toolkit",
+            "found": true,
+            "version": "12.8",
+            "source": "nvcc: /usr/local/cuda-12.8/bin/nvcc",
+            "detail": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2025 NVIDIA Corporation\nBuilt on Fri_Feb_21_20:23:50_PST_2025\nCuda compilation tools, release 12.8, V12.8.93\nBuild cuda_12.8.r12.8/compiler.35583870_0"
+          },
+          {
+            "component": "NVIDIA driver",
+            "found": true,
+            "version": "570.211.01",
+            "source": "modinfo nvidia",
+            "detail": "pre-install intentionally avoids nvidia-smi; runtime driver checks run in post-install."
+          },
+          {
+            "component": "nvidia-fs",
+            "found": true,
+            "version": "2.28.4",
+            "source": "/sys/module/nvidia_fs/version",
+            "detail": "kernel module is loaded; version read from sysfs."
+          },
+          {
+            "component": "libcufile",
+            "found": true,
+            "version": "1.13.1",
+            "source": "/usr/local/cuda-12.8/lib64/libcufile.so.0",
+            "detail": "realpath=/usr/local/cuda-12.8/targets/x86_64-linux/lib/libcufile.so.1.13.1"
+          }
+        ],
+        "summary": {
+          "pass": 11,
+          "info": 1,
+          "warn": 2,
+          "fail": 0
+        },
+        "checks": {
+          "System": [
+            {
+              "check": "Operating system",
+              "status": "PASS",
+              "finding": "Linux detected: Ubuntu 24.04.4 LTS. GDS is supported.",
+              "mitigation": null,
+              "evidence": "platform.system() = Linux, distro = Ubuntu 24.04.4 LTS"
+            },
+            {
+              "check": "CPU architecture",
+              "status": "PASS",
+              "finding": "Architecture x86_64 (AMD64) is supported by GDS.",
+              "mitigation": null,
+              "evidence": "platform.machine() = x86_64"
+            }
+          ],
+          "GPU": [
+            {
+              "check": "NVIDIA GPU (lspci)",
+              "status": "PASS",
+              "finding": "Found 1 NVIDIA GPU(s) via lspci.",
+              "mitigation": null,
+              "evidence": "97:00.0 3D controller: NVIDIA Corporation GA100 [A100 PCIe 40GB] (rev a1)"
+            },
+            {
+              "check": "NVIDIA Open Driver install",
+              "status": "PASS",
+              "finding": "NVIDIA Open Kernel Driver 570.211.01 is installed. post-install will verify runtime driver version and GPU compute capability.",
+              "mitigation": null,
+              "evidence": "modinfo nvidia: version=570.211.01, license=Dual MIT/GPL"
+            }
+          ],
+          "CUDA Toolkit": [
+            {
+              "check": "CUDA Toolkit",
+              "status": "PASS",
+              "finding": "CUDA Toolkit 12.8 found at /usr/local/cuda-12.8/bin/nvcc.",
+              "mitigation": null,
+              "evidence": "nvcc path: /usr/local/cuda-12.8/bin/nvcc"
+            }
+          ],
+          "DOCA / MLNX_OFED": [
+            {
+              "check": "MLNX_OFED / DOCA",
+              "status": "WARN",
+              "finding": "Inbox RDMA drivers found (mlx5_ib) but MLNX_OFED/DOCA not detected. Inbox drivers may work for basic RDMA but NVIDIA recommends MLNX_OFED for GDS. Pre-install advisory: MLNX_OFED/DOCA is recommended for GDS RDMA paths and for NVMe/NVMe-oF nvfs deployments that rely on NVIDIA-provided storage-stack patches.",
+              "mitigation": "Install MLNX_OFED or DOCA/DOCA-OFED if this host will use GPFS/WekaFS userspace RDMA, Lustre/NFS-RDMA, or NVMe/NVMe-oF nvidia-fs/nvfs mode with GDS storage-stack patches.\nGDS DOCA requirements:\n  https://docs.nvidia.com/gpudirect-storage/troubleshooting-guide/index.html#doca-requirements-and-installation\nDOCA storage installation:\n  https://docs.nvidia.com/doca/sdk/doca-host-installation-and-upgrade/index.html#storage-installation\nVerify after install:\n  ofed_info -s || doca_version\nIf you only plan to use a confirmed upstream PCI P2PDMA route or compat mode, this warning may be informational.",
+              "evidence": "Inbox modules loaded: mlx5_ib"
+            }
+          ],
+          "Kernel": [
+            {
+              "check": "P2PDMA kernel support",
+              "status": "PASS",
+              "finding": "pci_p2pdma_add_resource found in /proc/kallsyms \u2014 PCI P2PDMA support is present in this kernel.",
+              "mitigation": null,
+              "evidence": "0000000000000000 T __pfx_pci_p2pdma_add_resource"
+            },
+            {
+              "check": "CONFIG_PCI_P2PDMA",
+              "status": "PASS",
+              "finding": "CONFIG_PCI_P2PDMA=y \u2014 kernel P2PDMA subsystem compiled in.",
+              "mitigation": null,
+              "evidence": null
+            },
+            {
+              "check": "Kernel version",
+              "status": "PASS",
+              "finding": "Running kernel 6.8.",
+              "mitigation": null,
+              "evidence": "uname -r \u2192 6.8.0-1051-nvidia"
+            }
+          ],
+          "IOMMU": [
+            {
+              "check": "IOMMU mode",
+              "status": "PASS",
+              "finding": "IOMMU is disabled. Direct GPU DMA is unrestricted.",
+              "mitigation": null,
+              "evidence": "cmdline: BOOT_IMAGE=/boot/vmlinuz-6.8.0-1051-nvidia root=LABEL=cloudimg-rootfs ro console=tty0 console=ttyS0,115200 no_timer_check gfxpayload=text pci=realloc=off amd_iommu=off"
+            }
+          ],
+          "PCIe / ACS": [
+            {
+              "check": "PCIe ACS redirect",
+              "status": "PASS",
+              "finding": "No PCIe bridges have ACS P2P Request Redirect (ReqRedir+) enabled.",
+              "mitigation": null,
+              "evidence": null
+            }
+          ],
+          "Mounted Filesystems": [
+            {
+              "check": "ext4 data mode (/)",
+              "status": "WARN",
+              "finding": "/ is not explicitly mounted with data=ordered. GDS requires data=ordered to be visible in the active mount options.",
+              "mitigation": "For the root filesystem, add rootflags=data=ordered to GRUB_CMDLINE_LINUX in /etc/default/grub, then run:\n  sudo update-grub\n  sudo reboot\nVerify: findmnt -no OPTIONS / | tr ',' '\\n' | grep '^data=ordered$'",
+              "evidence": "/ opts: rw,relatime (implicit ext4 default)"
+            },
+            {
+              "check": "Mount: /boot/efi",
+              "status": "INFO",
+              "finding": "/boot/efi (vfat): O_DIRECT support could not be verified. O_DIRECT probe skipped \u2014 no write permission in /boot/efi",
+              "mitigation": null,
+              "evidence": "O_DIRECT probe skipped \u2014 no write permission in /boot/efi"
+            },
+            {
+              "check": "Mount: /mnt/nvme1",
+              "status": "PASS",
+              "finding": "/mnt/nvme1 (ext4): O_DIRECT supported. Native=Yes  P2PDMA=NoMP Config  RDMA=No  Compat=Yes",
+              "mitigation": null,
+              "evidence": "O_DIRECT open succeeded on /mnt/nvme1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "command": "post-install",
+      "display": "post-install",
+      "exit_code": 0,
+      "result": {
+        "tool": {
+          "name": "gds-diag",
+          "version": "1.0.0",
+          "git_commit": "d49288c99f5d"
+        },
+        "mode": "post-install",
+        "version_context": [
+          {
+            "component": "Linux kernel",
+            "found": true,
+            "version": "6.8.0-1051-nvidia",
+            "source": "uname -r",
+            "detail": "platform.release() = 6.8.0-1051-nvidia"
+          },
+          {
+            "component": "CUDA Toolkit",
+            "found": true,
+            "version": "12.8",
+            "source": "nvcc: /usr/local/cuda-12.8/bin/nvcc",
+            "detail": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2025 NVIDIA Corporation\nBuilt on Fri_Feb_21_20:23:50_PST_2025\nCuda compilation tools, release 12.8, V12.8.93\nBuild cuda_12.8.r12.8/compiler.35583870_0"
+          },
+          {
+            "component": "NVIDIA driver",
+            "found": true,
+            "version": "570.211.01",
+            "source": "nvidia-smi",
+            "detail": "Runtime driver version from nvidia-smi when available; modinfo fallback otherwise."
+          },
+          {
+            "component": "nvidia-fs",
+            "found": true,
+            "version": "2.28.4",
+            "source": "/sys/module/nvidia_fs/version",
+            "detail": "kernel module is loaded; version read from sysfs."
+          },
+          {
+            "component": "libcufile",
+            "found": true,
+            "version": "1.13.1",
+            "source": "/usr/local/cuda-12.8/lib64/libcufile.so.0",
+            "detail": "realpath=/usr/local/cuda-12.8/targets/x86_64-linux/lib/libcufile.so.1.13.1"
+          }
+        ],
+        "summary": {
+          "pass": 18,
+          "info": 0,
+          "warn": 0,
+          "fail": 0
+        },
+        "checks": {
+          "Prerequisites": [
+            {
+              "check": "CUDA Toolkit",
+              "status": "PASS",
+              "finding": "CUDA Toolkit 12.8 found at /usr/local/cuda-12.8/bin/nvcc.",
+              "mitigation": null,
+              "evidence": "nvcc path: /usr/local/cuda-12.8/bin/nvcc"
+            },
+            {
+              "check": "NVIDIA GPU (lspci)",
+              "status": "PASS",
+              "finding": "Found 1 NVIDIA GPU(s) via lspci.",
+              "mitigation": null,
+              "evidence": "97:00.0 3D controller: NVIDIA Corporation GA100 [A100 PCIe 40GB] (rev a1)"
+            },
+            {
+              "check": "NVIDIA driver installed",
+              "status": "PASS",
+              "finding": "NVIDIA driver is installed; version and Open Driver checks can run.",
+              "mitigation": null,
+              "evidence": "nvidia-smi driver_version \u2192 570.211\nmodinfo nvidia: version=570.211.01, license=Dual MIT/GPL"
+            },
+            {
+              "check": "NVIDIA driver version",
+              "status": "PASS",
+              "finding": "Driver 570.211 >= minimum 460 for GDS support.",
+              "mitigation": null,
+              "evidence": "nvidia-smi driver_version \u2192 570.211"
+            },
+            {
+              "check": "NVIDIA driver type",
+              "status": "PASS",
+              "finding": "NVIDIA Open Kernel Driver 570.211.01 installed \u2014 required for GDS (nvfs and P2PDMA).",
+              "mitigation": null,
+              "evidence": "modinfo nvidia: version=570.211.01, license=Dual MIT/GPL"
+            }
+          ],
+          "Installation": [
+            {
+              "check": "gdscheck binary",
+              "status": "PASS",
+              "finding": "gdscheck found at /usr/local/cuda/gds/tools/gdscheck.",
+              "mitigation": null,
+              "evidence": "/usr/local/cuda/gds/tools/gdscheck"
+            },
+            {
+              "check": "libcufile library",
+              "status": "PASS",
+              "finding": "libcufile detected (cuFileGetVersion API=1.13, file=1.13.1, gdscheck release=1.13.1.3)",
+              "mitigation": null,
+              "evidence": "path=/usr/local/cuda-12.8/lib64/libcufile.so.0\nrealpath=/usr/local/cuda-12.8/targets/x86_64-linux/lib/libcufile.so.1.13.1\ncuFileGetVersion=1130"
+            },
+            {
+              "check": "nvidia-fs module",
+              "status": "PASS",
+              "finding": "nvidia_fs module is loaded (version 2.28.4).",
+              "mitigation": null,
+              "evidence": "nvidia_fs loaded; version=2.28.4; source=/sys/module/nvidia_fs/version"
+            },
+            {
+              "check": "NVIDIA Open Driver",
+              "status": "PASS",
+              "finding": "NVIDIA Open Kernel Driver is installed \u2014 required for GDS Native (nvfs) and P2PDMA modes.",
+              "mitigation": null,
+              "evidence": "Nvidia Driver Info Status: Supported(Nvidia Open Driver Installed)"
+            }
+          ],
+          "GDS Driver Configuration": [
+            {
+              "check": "GDS active modes",
+              "status": "PASS",
+              "finding": "gdscheck reports the following filesystem modes are active.",
+              "mitigation": null,
+              "evidence": "NVMe P2PDMA: Supported\nNVMe: Supported\nNVMeOF: Unsupported\nSCSI: Unsupported\nScaleFlux CSD: Unsupported\nNVMesh: Unsupported\nDDN EXAScaler: Unsupported\nIBM Spectrum Scale: Unsupported\nNFS: Unsupported\nBeeGFS: Unsupported\nWekaFS: Unsupported\nUserspace RDMA: Unsupported\n--Mellanox PeerDirect: Disabled\n--rdma library: Not Loaded (libcufile_rdma.so)\n--rdma devices: Not configured\n--rdma_device_status: Up: 0 Down: 0"
+            }
+          ],
+          "P2PDMA/C2C Direct Routes": [
+            {
+              "check": "P2PDMA kernel support",
+              "status": "PASS",
+              "finding": "pci_p2pdma_add_resource found in /proc/kallsyms \u2014 PCI P2PDMA support is present in this kernel.",
+              "mitigation": null,
+              "evidence": "0000000000000000 T __pfx_pci_p2pdma_add_resource"
+            },
+            {
+              "check": "CONFIG_PCI_P2PDMA",
+              "status": "PASS",
+              "finding": "CONFIG_PCI_P2PDMA=y \u2014 kernel P2PDMA subsystem compiled in.",
+              "mitigation": null,
+              "evidence": null
+            },
+            {
+              "check": "NVIDIA P2PDMA driver registries",
+              "status": "PASS",
+              "finding": "Loaded NVIDIA driver RegistryDwords include RMForceStaticBar1=1 and RmForceDisableIomapWC=1, which are required for PCI P2PDMA on x86.",
+              "mitigation": null,
+              "evidence": "RegistryDwords: \"RMForceStaticBar1=1;ForceP2P=0;RmForceDisableIomapWC=1;\""
+            },
+            {
+              "check": "cufile.json P2PDMA/C2C route preferences",
+              "status": "PASS",
+              "finding": "cufile.json has the direct P2P preference enabled for: local NVMe. This permits the route when the kernel, topology, filesystem, and GDS library support it; active routes are confirmed separately by gdscheck as p2pdma on x86 or c2c on supported GH/GB ARM platforms.",
+              "mitigation": null,
+              "evidence": "local NVMe: properties.use_pci_p2pdma=True, block.nvme.use_pci_p2pdma=True -> enabled\nNVMe-oF: properties.use_pci_p2pdma=True, block.nvmeof.use_pci_p2pdma=False -> disabled\nvirtiofs: properties.use_pci_p2pdma=True, fs.virtiofs.use_pci_p2pdma=False -> disabled\nRAID0: properties.use_pci_p2pdma=True, block.raid.use_pci_p2pdma=False -> disabled"
+            },
+            {
+              "check": "P2PDMA topology candidates",
+              "status": "PASS",
+              "finding": "At least one GPU/NVMe pair appears optimal for local NVMe P2PDMA.",
+              "mitigation": null,
+              "evidence": "GPU 0000:97:00.0 <-> NVMe 0000:88:00.0: 0000:97:00.0 and 0000:88:00.0 share ancestor 0000:80:01.1\nGPU 0000:97:00.0 <-> NVMe 0000:87:00.0: 0000:97:00.0 and 0000:87:00.0 share ancestor 0000:80:01.1"
+            },
+            {
+              "check": "PCIe ACS redirect",
+              "status": "PASS",
+              "finding": "No PCIe bridges have ACS P2P Request Redirect (ReqRedir+) enabled.",
+              "mitigation": null,
+              "evidence": null
+            },
+            {
+              "check": "Active P2PDMA/C2C routes",
+              "status": "PASS",
+              "finding": "gdscheck reports direct P2PDMA/C2C route token(s) as active for the following DRIVER CONFIGURATION route(s).",
+              "mitigation": null,
+              "evidence": "NVMe P2PDMA: Supported"
+            }
+          ],
+          "cufile.json": [
+            {
+              "check": "Compat mode availability",
+              "status": "PASS",
+              "finding": "compat mode is true \u2014 CPU bounce buffer fallback is available.",
+              "mitigation": null,
+              "evidence": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "command": "config-audit",
+      "display": "config-audit",
+      "exit_code": 0,
+      "result": {
+        "config_path": null,
+        "config_source": "gdscheck",
+        "config_source_detail": "gdscheck -p CUFILE CONFIGURATION",
+        "requested_config_path": null,
+        "env_config_path": null,
+        "env_overrides_applied": true,
+        "gdscheck_path": "/usr/local/cuda/gds/tools/gdscheck",
+        "gdscheck_error": null,
+        "gdscheck_fallback": false,
+        "file_fallback_path": "/etc/cufile.json",
+        "file_fallback_error": null,
+        "parse_error": null,
+        "profile": null,
+        "entries": [
+          {
+            "path": "logging.dir",
+            "resolved_key": "logging.dir",
+            "value": "cwd",
+            "default": "cwd",
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "logging",
+            "description": "Directory for cufile.log output."
+          },
+          {
+            "path": "logging.level",
+            "resolved_key": "logging.level",
+            "value": "ERROR",
+            "default": "ERROR",
+            "source": "file fallback",
+            "status": "INFO",
+            "risk": "Production logging level",
+            "recommendation": "ERROR/WARN is appropriate for production use. Consider CUFILE_LOGGING_LEVEL=DEBUG or TRACE when troubleshooting.",
+            "detail": "",
+            "scope": "logging",
+            "description": "GDS log verbosity."
+          },
+          {
+            "path": "profile.nvtx",
+            "resolved_key": "profile.nvtx",
+            "value": false,
+            "default": false,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "profiling",
+            "description": "Enable NVTX tracing."
+          },
+          {
+            "path": "profile.cufile_stats",
+            "resolved_key": "profile.cufile_stats",
+            "value": 0,
+            "default": 0,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "profiling",
+            "description": "Enable cuFile user-level statistics."
+          },
+          {
+            "path": "profile.io_batchsize",
+            "resolved_key": "profile.io_batchsize",
+            "value": 128,
+            "default": 128,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "profiling",
+            "description": "Maximum profiling batch size."
+          },
+          {
+            "path": "properties.force_compat_mode",
+            "resolved_key": "properties.force_compat_mode",
+            "value": false,
+            "default": false,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "data-path",
+            "description": "Force all IO through compatibility mode."
+          },
+          {
+            "path": "properties.allow_compat_mode",
+            "resolved_key": "properties.use_compat_mode",
+            "value": true,
+            "default": false,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "data-path",
+            "description": "Allow CPU/POSIX fallback when direct GDS is unavailable."
+          },
+          {
+            "path": "properties.use_pci_p2pdma",
+            "resolved_key": "properties.use_pci_p2pdma",
+            "value": true,
+            "default": false,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "data-path",
+            "description": "Prefer direct P2P mode when supported by the GDS library route; this is PCI P2PDMA on x86 and C2C on supported Grace/Blackwell ARM platforms."
+          },
+          {
+            "path": "properties.gds_rdma_write_support",
+            "resolved_key": "properties.gds_rdma_write_support",
+            "value": true,
+            "default": true,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "data-path",
+            "description": "Enable GDS writes for RDMA-backed storage."
+          },
+          {
+            "path": "properties.force_odirect_mode",
+            "resolved_key": "properties.force_odirect_mode",
+            "value": false,
+            "default": false,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "data-path",
+            "description": "Force O_DIRECT mode behavior."
+          },
+          {
+            "path": "properties.prefer_iouring",
+            "resolved_key": "properties.prefer_iouring",
+            "value": false,
+            "default": false,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "data-path",
+            "description": "Prefer io_uring where supported."
+          },
+          {
+            "path": "properties.vanilla_posix_io_mode",
+            "resolved_key": "properties.vanilla_posix_io_mode",
+            "value": false,
+            "default": false,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "data-path",
+            "description": "Allow POSIX reads/writes through cuFile without platform checks."
+          },
+          {
+            "path": "properties.gds_fallback_io",
+            "resolved_key": "properties.gds_fallback_io",
+            "value": false,
+            "default": false,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "data-path",
+            "description": "Allow RDMA IO to retry compat mode if nvfs IO fails."
+          },
+          {
+            "path": "properties.io_batchsize",
+            "resolved_key": "properties.io_batchsize",
+            "value": 128,
+            "default": 128,
+            "source": "file fallback",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "data-path",
+            "description": "Default cuFile batch IO size."
+          },
+          {
+            "path": "properties.io_priority",
+            "resolved_key": "properties.io_priority",
+            "value": "default",
+            "default": "default",
+            "source": "file fallback",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "data-path",
+            "description": "Default IO priority policy."
+          },
+          {
+            "path": "properties.allow_rdma_token_reset",
+            "resolved_key": "properties.allow_rdma_token_reset",
+            "value": false,
+            "default": false,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "data-path",
+            "description": "Allow cuFile to reset RDMA tokens when the stack supports token reset."
+          },
+          {
+            "path": "properties.compat_odirect_unaligned_read_split",
+            "resolved_key": "properties.compat_odirect_unaligned_read_split",
+            "value": false,
+            "default": false,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "data-path",
+            "description": "Split unaligned O_DIRECT reads for compatibility handling."
+          },
+          {
+            "path": "properties.compat_odirect_unaligned_read_split_min_size_kb",
+            "resolved_key": "properties.compat_odirect_unaligned_read_split_min_size_kb",
+            "value": 128,
+            "default": 128,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "data-path",
+            "description": "Minimum IO size for compat O_DIRECT unaligned-read splitting."
+          },
+          {
+            "path": "properties.max_direct_io_size_kb",
+            "resolved_key": "properties.max_direct_io_size_kb",
+            "value": 16384,
+            "default": 16384,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "buffering",
+            "description": "Maximum GDS IO chunk size."
+          },
+          {
+            "path": "properties.max_batch_io_size",
+            "resolved_key": "properties.max_batch_io_size",
+            "value": 128,
+            "default": 128,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "buffering",
+            "description": "Maximum batch IO size."
+          },
+          {
+            "path": "properties.max_batch_io_timeout_msecs",
+            "resolved_key": "properties.max_batch_io_timeout_msecs",
+            "value": 5,
+            "default": 5,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "buffering",
+            "description": "Maximum batch IO timeout."
+          },
+          {
+            "path": "properties.max_device_cache_size_kb",
+            "resolved_key": "properties.max_device_cache_size_kb",
+            "value": 131072,
+            "default": 131072,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "buffering",
+            "description": "Total internal GPU bounce buffer cache size."
+          },
+          {
+            "path": "properties.per_buffer_cache_size_kb",
+            "resolved_key": "properties.per_buffer_cache_size_kb",
+            "value": 1024,
+            "default": 1024,
+            "source": "file fallback",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "buffering",
+            "description": "Size of each internal GPU bounce buffer."
+          },
+          {
+            "path": "properties.max_device_pinned_mem_size_kb",
+            "resolved_key": "properties.max_device_pinned_mem_size_kb",
+            "value": 33554432,
+            "default": 33554432,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "buffering",
+            "description": "Maximum per-GPU pinned memory."
+          },
+          {
+            "path": "properties.posix_pool_slab_size_kb",
+            "resolved_key": "properties.posix_pool_slab_size_kb",
+            "value": [
+              4,
+              1024,
+              16384
+            ],
+            "default": [
+              4,
+              1024,
+              16384
+            ],
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "buffering",
+            "description": "POSIX fallback slab sizes."
+          },
+          {
+            "path": "properties.posix_pool_slab_count",
+            "resolved_key": "properties.posix_pool_slab_count",
+            "value": [
+              128,
+              64,
+              64
+            ],
+            "default": [
+              128,
+              64,
+              64
+            ],
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "buffering",
+            "description": "POSIX fallback slab counts."
+          },
+          {
+            "path": "properties.gpu_bounce_buffer_slab_size_kb",
+            "resolved_key": "properties.gpu_bounce_buffer_slab_size_kb",
+            "value": null,
+            "default": null,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "buffering",
+            "description": "Flattened GDS GPU bounce buffer slab sizes."
+          },
+          {
+            "path": "properties.gpu_bounce_buffer_slab_count",
+            "resolved_key": "properties.gpu_bounce_buffer_slab_count",
+            "value": null,
+            "default": null,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "buffering",
+            "description": "Flattened GDS GPU bounce buffer slab counts."
+          },
+          {
+            "path": "properties.gpu_bounce_buffer_slab_config",
+            "resolved_key": "properties.gpu_bounce_buffer_slab_config",
+            "value": null,
+            "default": null,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "buffering",
+            "description": "GDS 1.17 per-mode GPU bounce buffer slab config."
+          },
+          {
+            "path": "properties.use_poll_mode",
+            "resolved_key": "properties.use_poll_mode",
+            "value": false,
+            "default": false,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "small-io",
+            "description": "Poll for completion for small IO."
+          },
+          {
+            "path": "properties.poll_mode_max_size_kb",
+            "resolved_key": "properties.poll_mode_max_size_kb",
+            "value": 4,
+            "default": 4,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "small-io",
+            "description": "Maximum size for poll mode."
+          },
+          {
+            "path": "sparse.min_p2pdma_threshold_kb",
+            "resolved_key": "sparse.min_p2pdma_threshold_kb",
+            "value": 8,
+            "default": 8,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "small-io",
+            "description": "Minimum sparse IO size before direct P2P mode is preferred."
+          },
+          {
+            "path": "sparse.p2p_compat_enable",
+            "resolved_key": "sparse.p2p_compat_enable",
+            "value": true,
+            "default": true,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "small-io",
+            "description": "Allow sparse IO compatibility handling for P2P paths."
+          },
+          {
+            "path": "properties.rdma_dev_addr_list",
+            "resolved_key": "properties.rdma_dev_addr_list",
+            "value": [],
+            "default": [],
+            "source": "file fallback",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "rdma",
+            "description": "Client IPv4 addresses for RDMA devices."
+          },
+          {
+            "path": "properties.rdma_peer_type",
+            "resolved_key": "properties.rdma_peer_type",
+            "value": "peer_mem",
+            "default": "peer_mem",
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "rdma",
+            "description": "Userspace RDMA peer transport: peer_mem or dmabuf."
+          },
+          {
+            "path": "properties.rdma_load_balancing_policy",
+            "resolved_key": "properties.rdma_peer_affinity_policy",
+            "value": "RoundRobin",
+            "default": "RoundRobin",
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "rdma",
+            "description": "RDMA memory registration peer selection policy."
+          },
+          {
+            "path": "properties.rdma_topN_ranks",
+            "resolved_key": "properties.rdma_topN_ranks",
+            "value": 1,
+            "default": 1,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "rdma",
+            "description": "Number of distinct nearest GPU/NIC distance ranks considered by the RDMA policy."
+          },
+          {
+            "path": "properties.rdma_dynamic_routing",
+            "resolved_key": "properties.rdma_dynamic_routing",
+            "value": false,
+            "default": false,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "rdma",
+            "description": "Enable dynamic routing for GPU/NIC topology."
+          },
+          {
+            "path": "properties.rdma_dynamic_routing_order",
+            "resolved_key": "properties.rdma_dynamic_routing_order",
+            "value": [
+              "GPU_MEM_NVLINKS",
+              "GPU_MEM",
+              "SYS_MEM",
+              "P2P"
+            ],
+            "default": [
+              "GPU_MEM_NVLINKS",
+              "GPU_MEM",
+              "SYS_MEM",
+              "P2P"
+            ],
+            "source": "file fallback",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "rdma",
+            "description": "Dynamic routing policy preference order."
+          },
+          {
+            "path": "properties.rdma_transport_type",
+            "resolved_key": "properties.rdma_transport_type",
+            "value": "DC_V1",
+            "default": "DC_V1",
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "rdma",
+            "description": "RDMA transport flavor used between cuFile and cuObject/filesystem consumers."
+          },
+          {
+            "path": "properties.rdma_dc_key",
+            "resolved_key": "properties.rdma_dc_key",
+            "value": null,
+            "default": null,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "rdma",
+            "description": "Optional 32-bit DC key for userspace RDMA."
+          },
+          {
+            "path": "properties.rdma_access_mask",
+            "resolved_key": "properties.rdma_access_mask",
+            "value": null,
+            "default": null,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "rdma",
+            "description": "Optional RDMA operation access mask."
+          },
+          {
+            "path": "fs.generic.posix_unaligned_writes",
+            "resolved_key": "fs.generic.posix_unaligned_writes",
+            "value": false,
+            "default": false,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "Use POSIX writes for unaligned writes."
+          },
+          {
+            "path": "fs.lustre.posix_gds_min_kb",
+            "resolved_key": "fs.lustre.posix_gds_min_kb",
+            "value": 0,
+            "default": 4,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "Small Lustre IO threshold for POSIX path."
+          },
+          {
+            "path": "fs.lustre.rdma_dev_addr_list",
+            "resolved_key": "fs.lustre.rdma_dev_addr_list",
+            "value": [],
+            "default": [],
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "Lustre-specific RDMA client addresses."
+          },
+          {
+            "path": "fs.lustre.mount_table",
+            "resolved_key": "fs.lustre.mount_table",
+            "value": {},
+            "default": {},
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "Per-mount Lustre RDMA routing table."
+          },
+          {
+            "path": "fs.lustre.use_pci_p2pdma",
+            "resolved_key": "fs.lustre.use_pci_p2pdma",
+            "value": false,
+            "default": false,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "Legacy/unsupported P2PDMA-looking key; the GDS library does not support P2PDMA for Lustre."
+          },
+          {
+            "path": "fs.beegfs.posix_gds_min_kb",
+            "resolved_key": "fs.beegfs.posix_gds_min_kb",
+            "value": 0,
+            "default": 0,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "Small BeeGFS IO threshold for POSIX path."
+          },
+          {
+            "path": "fs.beegfs.rdma_dev_addr_list",
+            "resolved_key": "fs.beegfs.rdma_dev_addr_list",
+            "value": [],
+            "default": [],
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "BeeGFS-specific RDMA client addresses."
+          },
+          {
+            "path": "fs.beegfs.mount_table",
+            "resolved_key": "fs.beegfs.mount_table",
+            "value": {},
+            "default": {},
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "Per-mount BeeGFS RDMA routing table."
+          },
+          {
+            "path": "fs.beegfs.use_pci_p2pdma",
+            "resolved_key": "fs.beegfs.use_pci_p2pdma",
+            "value": false,
+            "default": false,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "Legacy/unsupported P2PDMA-looking key; the GDS library does not support P2PDMA for BeeGFS."
+          },
+          {
+            "path": "fs.scatefs.posix_gds_min_kb",
+            "resolved_key": "fs.scatefs.posix_gds_min_kb",
+            "value": 0,
+            "default": 0,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "Small ScaTeFS IO threshold for POSIX path."
+          },
+          {
+            "path": "fs.scatefs.use_pci_p2pdma",
+            "resolved_key": "fs.scatefs.use_pci_p2pdma",
+            "value": false,
+            "default": false,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "Legacy/unsupported P2PDMA-looking key; the GDS library does not support P2PDMA for ScaTeFS."
+          },
+          {
+            "path": "fs.nfs.rdma_dev_addr_list",
+            "resolved_key": "fs.nfs.rdma_dev_addr_list",
+            "value": [],
+            "default": [],
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "NFS-specific RDMA client addresses."
+          },
+          {
+            "path": "fs.nfs.mount_table",
+            "resolved_key": "fs.nfs.mount_table",
+            "value": {},
+            "default": {},
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "Per-mount NFS RDMA routing table."
+          },
+          {
+            "path": "fs.nfs.use_pci_p2pdma",
+            "resolved_key": "fs.nfs.use_pci_p2pdma",
+            "value": false,
+            "default": false,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "Legacy NFS P2PDMA-looking key; NFS GDS validation should use the NFSoRDMA path."
+          },
+          {
+            "path": "fs.weka.rdma_write_support",
+            "resolved_key": "fs.weka.rdma_write_support",
+            "value": false,
+            "default": false,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "Enable WekaFS RDMA writes instead of POSIX writes."
+          },
+          {
+            "path": "fs.weka.rdma_dev_addr_list",
+            "resolved_key": "fs.weka.rdma_dev_addr_list",
+            "value": [],
+            "default": [],
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "WekaFS-specific RDMA client addresses."
+          },
+          {
+            "path": "fs.weka.mount_table",
+            "resolved_key": "fs.weka.mount_table",
+            "value": {},
+            "default": {},
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "Per-mount WekaFS RDMA routing table."
+          },
+          {
+            "path": "fs.gpfs.gds_write_support",
+            "resolved_key": "fs.gpfs.gds_write_support",
+            "value": false,
+            "default": false,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "Enable GPFS GDS write support when supported by the stack."
+          },
+          {
+            "path": "fs.gpfs.gds_async_support",
+            "resolved_key": "fs.gpfs.gds_async_support",
+            "value": true,
+            "default": true,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "Enable GPFS async GDS support."
+          },
+          {
+            "path": "fs.gpfs.rdma_dev_addr_list",
+            "resolved_key": "fs.gpfs.rdma_dev_addr_list",
+            "value": [],
+            "default": [],
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "GPFS-specific RDMA client addresses."
+          },
+          {
+            "path": "fs.gpfs.mount_table",
+            "resolved_key": "fs.gpfs.mount_table",
+            "value": {},
+            "default": {},
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "Per-mount GPFS RDMA routing table."
+          },
+          {
+            "path": "fs.gpfs.use_pci_p2pdma",
+            "resolved_key": "fs.gpfs.use_pci_p2pdma",
+            "value": false,
+            "default": false,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "Unsupported P2PDMA-looking key; the GDS library does not support P2PDMA for GPFS."
+          },
+          {
+            "path": "fs.virtiofs.use_pci_p2pdma",
+            "resolved_key": "fs.virtiofs.use_pci_p2pdma",
+            "value": false,
+            "default": false,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "filesystem",
+            "description": "Enable P2PDMA/C2C for virtiofs."
+          },
+          {
+            "path": "block.nvme.use_pci_p2pdma",
+            "resolved_key": "block.nvme.use_pci_p2pdma",
+            "value": true,
+            "default": false,
+            "source": "file fallback",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "block",
+            "description": "Enable P2PDMA/C2C for local NVMe."
+          },
+          {
+            "path": "block.nvmeof.use_pci_p2pdma",
+            "resolved_key": "block.nvmeof.use_pci_p2pdma",
+            "value": false,
+            "default": false,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "block",
+            "description": "Enable P2PDMA/C2C for NVMe-oF."
+          },
+          {
+            "path": "block.raid.use_pci_p2pdma",
+            "resolved_key": "block.raid.use_pci_p2pdma",
+            "value": false,
+            "default": false,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "block",
+            "description": "Enable P2PDMA/C2C for RAID0 when the installed GDS stack supports that route."
+          },
+          {
+            "path": "block.raid1.use_pci_p2pdma",
+            "resolved_key": "block.raid1.use_pci_p2pdma",
+            "value": false,
+            "default": false,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "block",
+            "description": "Known cufile.json P2PDMA/C2C setting for RAID1 stacks; route support must be confirmed with the installed GDS stack."
+          },
+          {
+            "path": "block.raid10.use_pci_p2pdma",
+            "resolved_key": "block.raid10.use_pci_p2pdma",
+            "value": false,
+            "default": false,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "block",
+            "description": "Known cufile.json P2PDMA/C2C setting for RAID10 stacks; route support must be confirmed with the installed GDS stack."
+          },
+          {
+            "path": "denylist.drivers",
+            "resolved_key": "denylist.drivers",
+            "value": [],
+            "default": [],
+            "source": "file fallback",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "admin",
+            "description": "Disable supported storage drivers on this node."
+          },
+          {
+            "path": "denylist.devices",
+            "resolved_key": "denylist.devices",
+            "value": [],
+            "default": [],
+            "source": "file fallback",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "admin",
+            "description": "Disable specific block devices on this node."
+          },
+          {
+            "path": "denylist.mounts",
+            "resolved_key": "denylist.mounts",
+            "value": [],
+            "default": [],
+            "source": "file fallback",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "admin",
+            "description": "Disable specific supported mounts on this node."
+          },
+          {
+            "path": "denylist.filesystems",
+            "resolved_key": "denylist.filesystems",
+            "value": [],
+            "default": [],
+            "source": "file fallback",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "admin",
+            "description": "Disable specific supported filesystem types on this node."
+          },
+          {
+            "path": "miscellaneous.api_check_aggressive",
+            "resolved_key": "miscellaneous.api_check_aggressive",
+            "value": false,
+            "default": false,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "misc",
+            "description": "Enable aggressive API checking."
+          },
+          {
+            "path": "miscellaneous.skip_topology_detection",
+            "resolved_key": "miscellaneous.skip_topology_detection",
+            "value": false,
+            "default": false,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "misc",
+            "description": "Skip topology detection to reduce compat-mode startup latency."
+          },
+          {
+            "path": "miscellaneous.stream_memops_bypass",
+            "resolved_key": "miscellaneous.stream_memops_bypass",
+            "value": false,
+            "default": false,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "misc",
+            "description": "Bypass stream memory operations where supported."
+          },
+          {
+            "path": "miscellaneous.enable_static_routing",
+            "resolved_key": "miscellaneous.enable_static_routing",
+            "value": false,
+            "default": false,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "misc",
+            "description": "Enable static topology routing using a user-supplied topology.json file."
+          },
+          {
+            "path": "miscellaneous.static_routing_filepath",
+            "resolved_key": "miscellaneous.static_routing_filepath",
+            "value": "/etc/topology.json",
+            "default": "/etc/topology.json",
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "misc",
+            "description": "Path to the static topology JSON consumed when static routing is enabled."
+          },
+          {
+            "path": "miscellaneous.enable_static_config",
+            "resolved_key": "miscellaneous.enable_static_config",
+            "value": false,
+            "default": false,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "misc",
+            "description": "Enable reading per-GPU hardware config (BAR size, p2pdma) from a user-supplied JSON file."
+          },
+          {
+            "path": "miscellaneous.static_config_filepath",
+            "resolved_key": "miscellaneous.static_config_filepath",
+            "value": "",
+            "default": "",
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "misc",
+            "description": "Path to the static hardware config JSON consumed when static config is enabled."
+          },
+          {
+            "path": "miscellaneous.rdma_token_reset_timeout_secs",
+            "resolved_key": "miscellaneous.rdma_token_reset_timeout_secs",
+            "value": 30,
+            "default": 30,
+            "source": "default",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "misc",
+            "description": "Timeout in seconds for RDMA token reset handling."
+          },
+          {
+            "path": "execution.max_io_queue_depth",
+            "resolved_key": "execution.max_io_queue_depth",
+            "value": 128,
+            "default": 128,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "execution",
+            "description": "Maximum pending work items in cuFile threadpool."
+          },
+          {
+            "path": "execution.max_io_threads",
+            "resolved_key": "execution.max_io_threads",
+            "value": 4,
+            "default": 4,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "execution",
+            "description": "Threadpool threads per GPU."
+          },
+          {
+            "path": "execution.parallel_io",
+            "resolved_key": "execution.parallel_io",
+            "value": true,
+            "default": true,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "execution",
+            "description": "Enable threadpool parallel IO."
+          },
+          {
+            "path": "execution.min_io_threshold_size_kb",
+            "resolved_key": "execution.min_io_threshold_size_kb",
+            "value": 8192,
+            "default": 8192,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "execution",
+            "description": "Threshold for splitting IO into parallel work."
+          },
+          {
+            "path": "execution.max_request_parallelism",
+            "resolved_key": "execution.max_request_parallelism",
+            "value": 4,
+            "default": 4,
+            "source": "gdscheck",
+            "status": "OK",
+            "risk": "",
+            "recommendation": "",
+            "detail": "",
+            "scope": "execution",
+            "description": "Maximum parallel buffers per request."
+          }
+        ],
+        "tool": {
+          "name": "gds-diag",
+          "version": "1.0.0",
+          "git_commit": "d49288c99f5d"
+        }
+      }
+    },
+    {
+      "command": "mount-check",
+      "display": "mount-check /mnt/nvme1/gdstrace-smoke",
+      "exit_code": 0,
+      "result": {
+        "path": "/mnt/nvme1/gdstrace-smoke",
+        "filesystem": "ext4",
+        "modes": [
+          {
+            "mode": "Native GDS (nvidia-fs)",
+            "applicable": true,
+            "status": "PASS",
+            "checks": [
+              {
+                "check": "Kernel version",
+                "status": "PASS",
+                "exempted": false,
+                "why": "Kernel 6.8.0 meets minimum 4.15 for Native GDS (nvidia-fs).",
+                "mitigation": null,
+                "evidence": null
+              },
+              {
+                "check": "CONFIG_ZONE_DEVICE",
+                "status": "PASS",
+                "exempted": false,
+                "why": "CONFIG_ZONE_DEVICE=y \u2014 device memory zone support available.",
+                "mitigation": null,
+                "evidence": null
+              },
+              {
+                "check": "IOMMU mode",
+                "status": "PASS",
+                "exempted": false,
+                "why": "IOMMU is disabled. Direct GPU DMA is unrestricted.",
+                "mitigation": null,
+                "evidence": "cmdline: BOOT_IMAGE=/boot/vmlinuz-6.8.0-1051-nvidia root=LABEL=cloudimg-rootfs ro console=tty0 console=ttyS0,115200 no_timer_check gfxpayload=text pci=realloc=off amd_iommu=off"
+              },
+              {
+                "check": "nvidia-fs module",
+                "status": "PASS",
+                "exempted": false,
+                "why": "nvidia_fs module is loaded (version 2.28.4).",
+                "mitigation": null,
+                "evidence": "nvidia_fs loaded; version=2.28.4; source=/sys/module/nvidia_fs/version"
+              },
+              {
+                "check": "NVIDIA driver version",
+                "status": "PASS",
+                "exempted": false,
+                "why": "Driver 570.211 >= minimum 460 for GDS support.",
+                "mitigation": null,
+                "evidence": "nvidia-smi driver_version \u2192 570.211"
+              },
+              {
+                "check": "GPU compute capability",
+                "status": "PASS",
+                "exempted": false,
+                "why": "GPU compute capability 8.0 supports GDS (>= 6.0 required).",
+                "mitigation": null,
+                "evidence": "nvidia-smi compute_cap \u2192 8.0"
+              },
+              {
+                "check": "nvidia-fs kernel log messages",
+                "status": "PASS",
+                "exempted": false,
+                "why": "nvidia-fs kernel-log output shows no P2PDMA rejection messages.",
+                "mitigation": null,
+                "evidence": "nvidia_fs: Initializing nvfs driver module\nnvidia_fs: registered correctly with major number 511"
+              },
+              {
+                "check": "gdscheck",
+                "status": "PASS",
+                "exempted": false,
+                "why": "gdscheck binary found at /usr/local/cuda-12.8/gds/tools/gdscheck.",
+                "mitigation": null,
+                "evidence": "/usr/local/cuda-12.8/gds/tools/gdscheck"
+              },
+              {
+                "check": "NVIDIA Open Driver",
+                "status": "PASS",
+                "exempted": false,
+                "why": "NVIDIA Open Kernel Driver is installed \u2014 required for GDS Native (nvfs) and P2PDMA modes.",
+                "mitigation": null,
+                "evidence": "Nvidia Driver Info Status: Supported(Nvidia Open Driver Installed)"
+              },
+              {
+                "check": "ext4 data mode",
+                "status": "PASS",
+                "exempted": false,
+                "why": "ext4 is explicitly mounted with data=ordered, as required for GDS.",
+                "mitigation": null,
+                "evidence": "/mnt/nvme1 opts: rw,relatime,data=ordered"
+              },
+              {
+                "check": "O_DIRECT support",
+                "status": "PASS",
+                "exempted": false,
+                "why": "O_DIRECT is supported \u2014 required for all native GDS I/O.",
+                "mitigation": null,
+                "evidence": "O_DIRECT open succeeded on /mnt/nvme1/gdstrace-smoke"
+              }
+            ]
+          },
+          {
+            "mode": "P2P DMA/C2C (NVMe\u2194GPU direct)",
+            "applicable": true,
+            "status": "INFO",
+            "checks": [
+              {
+                "check": "P2PDMA kernel support",
+                "status": "PASS",
+                "exempted": false,
+                "why": "pci_p2pdma_add_resource found in /proc/kallsyms \u2014 PCI P2PDMA support is present in this kernel.",
+                "mitigation": null,
+                "evidence": "0000000000000000 T __pfx_pci_p2pdma_add_resource"
+              },
+              {
+                "check": "CONFIG_PCI_P2PDMA",
+                "status": "PASS",
+                "exempted": false,
+                "why": "CONFIG_PCI_P2PDMA=y \u2014 kernel P2PDMA subsystem compiled in.",
+                "mitigation": null,
+                "evidence": null
+              },
+              {
+                "check": "IOMMU mode",
+                "status": "PASS",
+                "exempted": false,
+                "why": "IOMMU is disabled. Direct GPU DMA is unrestricted.",
+                "mitigation": null,
+                "evidence": "cmdline: BOOT_IMAGE=/boot/vmlinuz-6.8.0-1051-nvidia root=LABEL=cloudimg-rootfs ro console=tty0 console=ttyS0,115200 no_timer_check gfxpayload=text pci=realloc=off amd_iommu=off"
+              },
+              {
+                "check": "PCIe topology",
+                "status": "PASS",
+                "exempted": false,
+                "why": "Closest GPU\u2194NVMe pairs found on the same PCIe root complex:\n  GPU 0000:97:00.0 \u2194 NVMe 0000:88:00.0 (shared ancestor)\n  GPU 0000:97:00.0 \u2194 NVMe 0000:87:00.0 (shared ancestor)",
+                "mitigation": null,
+                "evidence": null
+              },
+              {
+                "check": "nvidia-smi topo -m -nvme",
+                "status": "PASS",
+                "exempted": false,
+                "why": "nvidia-smi reports GPU/NVMe topology. Prefer the closest NVMe path for each GPU.",
+                "mitigation": null,
+                "evidence": "Best NVMe per GPU: GPU0 -> NVMe0, NVMe1 (PIX)"
+              },
+              {
+                "check": "PCIe ACS redirect",
+                "status": "PASS",
+                "exempted": false,
+                "why": "No PCIe bridges have ACS P2P Request Redirect (ReqRedir+) enabled.",
+                "mitigation": null,
+                "evidence": null
+              },
+              {
+                "check": "NVIDIA Open Driver",
+                "status": "PASS",
+                "exempted": false,
+                "why": "NVIDIA Open Kernel Driver is installed \u2014 required for GDS Native (nvfs) and P2PDMA modes.",
+                "mitigation": null,
+                "evidence": "Nvidia Driver Info Status: Supported(Nvidia Open Driver Installed)"
+              },
+              {
+                "check": "NVIDIA P2PDMA driver registries",
+                "status": "PASS",
+                "exempted": false,
+                "why": "Loaded NVIDIA driver RegistryDwords include RMForceStaticBar1=1 and RmForceDisableIomapWC=1, which are required for PCI P2PDMA on x86.",
+                "mitigation": null,
+                "evidence": "RegistryDwords: \"RMForceStaticBar1=1;ForceP2P=0;RmForceDisableIomapWC=1;\""
+              },
+              {
+                "check": "NVMe transport",
+                "status": "PASS",
+                "exempted": false,
+                "why": "Backing NVMe transport is pcie; mount-check will use block.nvme.use_pci_p2pdma for the P2PDMA cufile.json check.",
+                "mitigation": null,
+                "evidence": null
+              },
+              {
+                "check": "cufile.json P2PDMA settings",
+                "status": "PASS",
+                "exempted": false,
+                "why": "P2PDMA/C2C enabled in the effective cuFile configuration: properties.use_pci_p2pdma=true, block.nvme.use_pci_p2pdma=true. The use_pci_p2pdma keys are also the knobs for C2C direct mode on NVIDIA Grace Hopper and Grace Blackwell ARM platforms; gdscheck may report the active route as c2c instead of p2pdma.",
+                "mitigation": null,
+                "evidence": null
+              },
+              {
+                "check": "gdscheck P2PDMA/C2C route",
+                "status": "INFO",
+                "exempted": false,
+                "why": "Direct GDS is still available via nvidia-fs/nvfs. This is valid for NVMe/NVMe-oF stacks with the required MLNX_OFED/DOCA GDS patches.",
+                "mitigation": null,
+                "evidence": null
+              }
+            ]
+          },
+          {
+            "mode": "RDMA (network storage)",
+            "applicable": false,
+            "status": "N/A",
+            "checks": [
+              {
+                "check": "Filesystem RDMA support",
+                "status": "N/A",
+                "exempted": false,
+                "why": "RDMA is not applicable for ext4. ext4 is fully supported by GDS.",
+                "mitigation": null,
+                "evidence": null
+              }
+            ]
+          },
+          {
+            "mode": "Compat / CPU bounce buffer",
+            "applicable": true,
+            "status": "PASS",
+            "checks": [
+              {
+                "check": "Compat mode availability",
+                "status": "PASS",
+                "exempted": false,
+                "why": "compat mode is true \u2014 CPU bounce buffer fallback is available.",
+                "mitigation": null,
+                "evidence": null
+              }
+            ]
+          }
+        ],
+        "tool": {
+          "name": "gds-diag",
+          "version": "1.0.0",
+          "git_commit": "d49288c99f5d"
+        },
+        "mode": "mount-check",
+        "path_exists": true,
+        "performance": [
+          "NVMe queue depth is 1023 (recommended \u2265 1024 for GDS throughput).\n  echo 1024 | sudo tee /sys/block/nvme1n1/queue/nr_requests",
+          "NUMA alignment: GPU and NVMe both on NUMA node 1 \u2713",
+          "For NVMe1, prefer GPU(s): GPU0 (PIX)",
+          "Best NVMe per GPU: GPU0 -> NVMe0, NVMe1 (PIX)"
+        ]
+      }
+    }
+  ]
+}

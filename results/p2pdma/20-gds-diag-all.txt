@@ -1,0 +1,952 @@
+
+══════════════════════════════════════════════════════════════════════
+  GDS General Diagnostic
+══════════════════════════════════════════════════════════════════════
+  Environment : host
+  Detection   : No common container markers found.
+  Path        : /mnt/nvme1/gdstrace-smoke
+  Sequence    :
+    1. pre-install
+    2. post-install
+    3. config-audit
+    4. mount-check /mnt/nvme1/gdstrace-smoke
+  Stops at first unsuccessful return code.
+
+  ── pre-install ───────────────────────────────────────────────────
+
+══════════════════════════════════════════════════════════════════════
+  GDS Pre-Install Readiness Check
+══════════════════════════════════════════════════════════════════════
+  Tool: gds-diag 1.0.0 (git d49288c99f5d)
+
+  Runtime Versions
+    Linux kernel  : 6.8.0-1051-nvidia
+    CUDA Toolkit  : 12.8
+    NVIDIA driver : 570.211.01
+    nvidia-fs     : 2.28.4
+    libcufile     : 1.13.1
+
+  ┌─ System  ✓ PASS
+  │
+  │  ✓ PASS  Operating system
+  │  Linux detected: Ubuntu 24.04.4 LTS. GDS is supported.
+  │  Evidence:
+  │    platform.system() = Linux, distro = Ubuntu 24.04.4 LTS
+  │
+  │  ✓ PASS  CPU architecture
+  │  Architecture x86_64 (AMD64) is supported by GDS.
+  │  Evidence:
+  │    platform.machine() = x86_64
+  └────────────────────────────────────────────────────────────
+
+  ┌─ GPU  ✓ PASS
+  │
+  │  ✓ PASS  NVIDIA GPU (lspci)
+  │  Found 1 NVIDIA GPU(s) via lspci.
+  │  Evidence:
+  │    97:00.0 3D controller: NVIDIA Corporation GA100 [A100 PCIe 40GB] (rev a1)
+  │
+  │  ✓ PASS  NVIDIA Open Driver install
+  │  NVIDIA Open Kernel Driver 570.211.01 is installed. post-
+  │  install will verify runtime driver version and GPU
+  │  compute capability.
+  │  Evidence:
+  │    modinfo nvidia: version=570.211.01, license=Dual MIT/GPL
+  └────────────────────────────────────────────────────────────
+
+  ┌─ CUDA Toolkit  ✓ PASS
+  │
+  │  ✓ PASS  CUDA Toolkit
+  │  CUDA Toolkit 12.8 found at /usr/local/cuda-12.8/bin/nvcc.
+  │  Evidence:
+  │    nvcc path: /usr/local/cuda-12.8/bin/nvcc
+  └────────────────────────────────────────────────────────────
+
+  ┌─ DOCA / MLNX_OFED  ⚠ WARN
+  │
+  │  ⚠ WARN  MLNX_OFED / DOCA
+  │  Inbox RDMA drivers found (mlx5_ib) but MLNX_OFED/DOCA not
+  │  detected. Inbox drivers may work for basic RDMA but
+  │  NVIDIA recommends MLNX_OFED for GDS. Pre-install
+  │  advisory: MLNX_OFED/DOCA is recommended for GDS RDMA
+  │  paths and for NVMe/NVMe-oF nvfs deployments that rely on
+  │  NVIDIA-provided storage-stack patches.
+  │  Evidence:
+  │    Inbox modules loaded: mlx5_ib
+  │
+  │  → Mitigation:
+  │    Install MLNX_OFED or DOCA/DOCA-OFED if this host will use GPFS/WekaFS
+  │    userspace RDMA, Lustre/NFS-RDMA, or NVMe/NVMe-oF nvidia-fs/nvfs mode with
+  │    GDS storage-stack patches.
+  │    GDS DOCA requirements:
+  │      https://docs.nvidia.com/gpudirect-storage/troubleshooting-guide/index.html#doca-requirements-and-installation
+  │    DOCA storage installation:
+  │      https://docs.nvidia.com/doca/sdk/doca-host-installation-and-upgrade/index.html#storage-installation
+  │    Verify after install:
+  │      ofed_info -s || doca_version
+  │    If you only plan to use a confirmed upstream PCI P2PDMA route or compat
+  │    mode, this warning may be informational.
+  └────────────────────────────────────────────────────────────
+
+  ┌─ Kernel  ✓ PASS
+  │
+  │  ✓ PASS  P2PDMA kernel support
+  │  pci_p2pdma_add_resource found in /proc/kallsyms — PCI P2PDMA
+  │  support is present in this kernel.
+  │  Evidence:
+  │    0000000000000000 T __pfx_pci_p2pdma_add_resource
+  │
+  │  ✓ PASS  CONFIG_PCI_P2PDMA
+  │  CONFIG_PCI_P2PDMA=y — kernel P2PDMA subsystem compiled in.
+  │
+  │  ✓ PASS  Kernel version
+  │  Running kernel 6.8.
+  │  Evidence:
+  │    uname -r → 6.8.0-1051-nvidia
+  └────────────────────────────────────────────────────────────
+
+  ┌─ IOMMU  ✓ PASS
+  │
+  │  ✓ PASS  IOMMU mode
+  │  IOMMU is disabled. Direct GPU DMA is unrestricted.
+  │  Evidence:
+  │    cmdline: BOOT_IMAGE=/boot/vmlinuz-6.8.0-1051-nvidia root=LABEL=cloudimg-rootfs ro console=tty0 console=ttyS0,115200 no_timer_check gfxpayload=text pci=realloc=off amd_iommu=off
+  └────────────────────────────────────────────────────────────
+
+  ┌─ PCIe / ACS  ✓ PASS
+  │
+  │  ✓ PASS  PCIe ACS redirect
+  │  No PCIe bridges have ACS P2P Request Redirect (ReqRedir+)
+  │  enabled.
+  └────────────────────────────────────────────────────────────
+
+  ┌─ Mounted Filesystems  ⚠ WARN
+  │
+  │  ⚠ WARN  ext4 data mode (/)
+  │  / is not explicitly mounted with data=ordered. GDS requires
+  │  data=ordered to be visible in the active mount options.
+  │  Evidence:
+  │    / opts: rw,relatime (implicit ext4 default)
+  │
+  │  → Mitigation:
+  │    For the root filesystem, add rootflags=data=ordered to GRUB_CMDLINE_LINUX
+  │    in /etc/default/grub, then run:
+  │      sudo update-grub
+  │      sudo reboot
+  │    Verify: findmnt -no OPTIONS / | tr ',' '\n' | grep '^data=ordered$'
+  │
+  │  ℹ INFO  Mount: /boot/efi
+  │  /boot/efi (vfat): O_DIRECT support could not be verified.
+  │  O_DIRECT probe skipped — no write permission in /boot/efi
+  │  Evidence:
+  │    O_DIRECT probe skipped — no write permission in /boot/efi
+  │
+  │  ✓ PASS  Mount: /mnt/nvme1
+  │  /mnt/nvme1 (ext4): O_DIRECT supported. Native=Yes  P2PDMA=NoMP
+  │  Config  RDMA=No  Compat=Yes
+  │  Evidence:
+  │    O_DIRECT open succeeded on /mnt/nvme1
+  └────────────────────────────────────────────────────────────
+
+  11 passed, 1 info, 2 warnings
+
+  Mitigation Plan
+  1. WARN MLNX_OFED / DOCA
+     Section: DOCA / MLNX_OFED
+     Action:
+       Install MLNX_OFED or DOCA/DOCA-OFED if this host will use GPFS/WekaFS
+       userspace RDMA, Lustre/NFS-RDMA, or NVMe/NVMe-oF nvidia-fs/nvfs mode with
+       GDS storage-stack patches.
+       GDS DOCA requirements:
+         https://docs.nvidia.com/gpudirect-storage/troubleshooting-guide/index.html#doca-requirements-and-installation
+       DOCA storage installation:
+         https://docs.nvidia.com/doca/sdk/doca-host-installation-and-upgrade/index.html#storage-installation
+       Verify after install:
+         ofed_info -s || doca_version
+       If you only plan to use a confirmed upstream PCI P2PDMA route or compat
+       mode, this warning may be informational.
+  2. WARN ext4 data mode (/)
+     Section: Mounted Filesystems
+     Action:
+       For the root filesystem, add rootflags=data=ordered to GRUB_CMDLINE_LINUX
+       in /etc/default/grub, then run:
+         sudo update-grub
+         sudo reboot
+       Verify: findmnt -no OPTIONS / | tr ',' '\n' | grep '^data=ordered$'
+
+
+  ── post-install ──────────────────────────────────────────────────
+
+══════════════════════════════════════════════════════════════════════
+  GDS Post-Install Validation
+══════════════════════════════════════════════════════════════════════
+  Tool: gds-diag 1.0.0 (git d49288c99f5d)
+
+  Runtime Versions
+    Linux kernel  : 6.8.0-1051-nvidia
+    CUDA Toolkit  : 12.8
+    NVIDIA driver : 570.211.01
+    nvidia-fs     : 2.28.4
+    libcufile     : 1.13.1
+
+  ┌─ Prerequisites  ✓ PASS
+  │
+  │  ✓ PASS  CUDA Toolkit
+  │  CUDA Toolkit 12.8 found at /usr/local/cuda-12.8/bin/nvcc.
+  │  Evidence:
+  │    nvcc path: /usr/local/cuda-12.8/bin/nvcc
+  │
+  │  ✓ PASS  NVIDIA GPU (lspci)
+  │  Found 1 NVIDIA GPU(s) via lspci.
+  │  Evidence:
+  │    97:00.0 3D controller: NVIDIA Corporation GA100 [A100 PCIe 40GB] (rev a1)
+  │
+  │  ✓ PASS  NVIDIA driver installed
+  │  NVIDIA driver is installed; version and Open Driver checks can
+  │  run.
+  │  Evidence:
+  │    nvidia-smi driver_version → 570.211
+  │    modinfo nvidia: version=570.211.01, license=Dual MIT/GPL
+  │
+  │  ✓ PASS  NVIDIA driver version
+  │  Driver 570.211 >= minimum 460 for GDS support.
+  │  Evidence:
+  │    nvidia-smi driver_version → 570.211
+  │
+  │  ✓ PASS  NVIDIA driver type
+  │  NVIDIA Open Kernel Driver 570.211.01 installed — required for
+  │  GDS (nvfs and P2PDMA).
+  │  Evidence:
+  │    modinfo nvidia: version=570.211.01, license=Dual MIT/GPL
+  └────────────────────────────────────────────────────────────
+
+  ┌─ Installation  ✓ PASS
+  │
+  │  ✓ PASS  gdscheck binary
+  │  gdscheck found at /usr/local/cuda/gds/tools/gdscheck.
+  │  Evidence:
+  │    /usr/local/cuda/gds/tools/gdscheck
+  │
+  │  ✓ PASS  libcufile library
+  │  libcufile detected (cuFileGetVersion API=1.13, file=1.13.1,
+  │  gdscheck release=1.13.1.3)
+  │  Evidence:
+  │    path=/usr/local/cuda-12.8/lib64/libcufile.so.0
+  │    realpath=/usr/local/cuda-12.8/targets/x86_64-linux/lib/libcufile.so.1.13.1
+  │    cuFileGetVersion=1130
+  │
+  │  ✓ PASS  nvidia-fs module
+  │  nvidia_fs module is loaded (version 2.28.4).
+  │  Evidence:
+  │    nvidia_fs loaded; version=2.28.4; source=/sys/module/nvidia_fs/version
+  │
+  │  ✓ PASS  NVIDIA Open Driver
+  │  NVIDIA Open Kernel Driver is installed — required for GDS
+  │  Native (nvfs) and P2PDMA modes.
+  │  Evidence:
+  │    Nvidia Driver Info Status: Supported(Nvidia Open Driver Installed)
+  └────────────────────────────────────────────────────────────
+
+  ┌─ GDS Driver Configuration  ✓ PASS
+  │
+  │  ✓ PASS  GDS active modes
+  │  gdscheck reports the following filesystem modes are active.
+  │  Evidence:
+  │    NVMe P2PDMA: Supported
+  │    NVMe: Supported
+  │    NVMeOF: Unsupported
+  │    SCSI: Unsupported
+  └────────────────────────────────────────────────────────────
+
+  ┌─ P2PDMA/C2C Direct Routes  ✓ PASS
+  │
+  │  ✓ PASS  P2PDMA kernel support
+  │  pci_p2pdma_add_resource found in /proc/kallsyms — PCI P2PDMA
+  │  support is present in this kernel.
+  │  Evidence:
+  │    0000000000000000 T __pfx_pci_p2pdma_add_resource
+  │
+  │  ✓ PASS  CONFIG_PCI_P2PDMA
+  │  CONFIG_PCI_P2PDMA=y — kernel P2PDMA subsystem compiled in.
+  │
+  │  ✓ PASS  NVIDIA P2PDMA driver registries
+  │  Loaded NVIDIA driver RegistryDwords include
+  │  RMForceStaticBar1=1 and RmForceDisableIomapWC=1, which
+  │  are required for PCI P2PDMA on x86.
+  │  Evidence:
+  │    RegistryDwords: "RMForceStaticBar1=1;ForceP2P=0;RmForceDisableIomapWC=1;"
+  │
+  │  ✓ PASS  cufile.json P2PDMA/C2C route preferences
+  │  cufile.json has the direct P2P preference enabled for: local
+  │  NVMe. This permits the route when the kernel, topology,
+  │  filesystem, and GDS library support it; active routes are
+  │  confirmed separately by gdscheck as p2pdma on x86 or c2c
+  │  on supported GH/GB ARM platforms.
+  │  Evidence:
+  │    local NVMe: properties.use_pci_p2pdma=True, block.nvme.use_pci_p2pdma=True -> enabled
+  │    NVMe-oF: properties.use_pci_p2pdma=True, block.nvmeof.use_pci_p2pdma=False -> disabled
+  │    virtiofs: properties.use_pci_p2pdma=True, fs.virtiofs.use_pci_p2pdma=False -> disabled
+  │    RAID0: properties.use_pci_p2pdma=True, block.raid.use_pci_p2pdma=False -> disabled
+  │
+  │  ✓ PASS  P2PDMA topology candidates
+  │  At least one GPU/NVMe pair appears optimal for local NVMe
+  │  P2PDMA.
+  │  Evidence:
+  │    GPU 0000:97:00.0 <-> NVMe 0000:87:00.0: 0000:97:00.0 and 0000:87:00.0 share ancestor 0000:80:01.1
+  │    GPU 0000:97:00.0 <-> NVMe 0000:88:00.0: 0000:97:00.0 and 0000:88:00.0 share ancestor 0000:80:01.1
+  │
+  │  ✓ PASS  PCIe ACS redirect
+  │  No PCIe bridges have ACS P2P Request Redirect (ReqRedir+)
+  │  enabled.
+  │
+  │  ✓ PASS  Active P2PDMA/C2C routes
+  │  gdscheck reports direct P2PDMA/C2C route token(s) as active
+  │  for the following DRIVER CONFIGURATION route(s).
+  │  Evidence:
+  │    NVMe P2PDMA: Supported
+  └────────────────────────────────────────────────────────────
+
+  ┌─ cufile.json  ✓ PASS
+  │
+  │  ✓ PASS  Compat mode availability
+  │  compat mode is true — CPU bounce buffer fallback is available.
+  └────────────────────────────────────────────────────────────
+
+  18 passed
+
+  Mitigation Plan
+  No warnings or errors require mitigation.
+
+
+  ── config-audit ──────────────────────────────────────────────────
+
+══════════════════════════════════════════════════════════════════════
+  GDS cuFile Configuration Audit
+══════════════════════════════════════════════════════════════════════
+  Tool          : gds-diag 1.0.0 (git d49288c99f5d)
+  Config source : gdscheck -p CUFILE CONFIGURATION
+  gdscheck      : /usr/local/cuda/gds/tools/gdscheck
+  File fallback : /etc/cufile.json
+
+  OK  logging.dir
+      value  : 'cwd'  (default)
+      default: 'cwd'
+      Directory for cufile.log output.
+
+  INFO  logging.level
+      value  : 'ERROR'  (file fallback)
+      default: 'ERROR'
+      risk   : Production logging level
+      action : ERROR/WARN is appropriate for production use. Consider
+               CUFILE_LOGGING_LEVEL=DEBUG or TRACE when troubleshooting.
+      GDS log verbosity.
+
+  OK  profile.nvtx
+      value  : False  (gdscheck)
+      default: False
+      Enable NVTX tracing.
+
+  OK  profile.cufile_stats
+      value  : 0  (gdscheck)
+      default: 0
+      Enable cuFile user-level statistics.
+
+  OK  profile.io_batchsize
+      value  : 128  (default)
+      default: 128
+      Maximum profiling batch size.
+
+  OK  properties.force_compat_mode
+      value  : False  (gdscheck)
+      default: False
+      Force all IO through compatibility mode.
+
+  OK  properties.allow_compat_mode
+      value  : True  (gdscheck)
+      alias  : properties.use_compat_mode
+      default: False
+      Allow CPU/POSIX fallback when direct GDS is unavailable.
+
+  OK  properties.use_pci_p2pdma
+      value  : True  (gdscheck)
+      default: False
+      Prefer direct P2P mode when supported by the GDS library route; this is PCI P2PDMA on x86 and C2C on supported Grace/Blackwell ARM platforms.
+
+  OK  properties.gds_rdma_write_support
+      value  : True  (gdscheck)
+      default: True
+      Enable GDS writes for RDMA-backed storage.
+
+  OK  properties.force_odirect_mode
+      value  : False  (gdscheck)
+      default: False
+      Force O_DIRECT mode behavior.
+
+  OK  properties.prefer_iouring
+      value  : False  (gdscheck)
+      default: False
+      Prefer io_uring where supported.
+
+  OK  properties.vanilla_posix_io_mode
+      value  : False  (default)
+      default: False
+      Allow POSIX reads/writes through cuFile without platform checks.
+
+  OK  properties.gds_fallback_io
+      value  : False  (default)
+      default: False
+      Allow RDMA IO to retry compat mode if nvfs IO fails.
+
+  OK  properties.io_batchsize
+      value  : 128  (file fallback)
+      default: 128
+      Default cuFile batch IO size.
+
+  OK  properties.io_priority
+      value  : 'default'  (file fallback)
+      default: 'default'
+      Default IO priority policy.
+
+  OK  properties.allow_rdma_token_reset
+      value  : False  (default)
+      default: False
+      Allow cuFile to reset RDMA tokens when the stack supports token reset.
+
+  OK  properties.compat_odirect_unaligned_read_split
+      value  : False  (default)
+      default: False
+      Split unaligned O_DIRECT reads for compatibility handling.
+
+  OK  properties.compat_odirect_unaligned_read_split_min_size_kb
+      value  : 128  (default)
+      default: 128
+      Minimum IO size for compat O_DIRECT unaligned-read splitting.
+
+  OK  properties.max_direct_io_size_kb
+      value  : 16384  (gdscheck)
+      default: 16384
+      Maximum GDS IO chunk size.
+
+  OK  properties.max_batch_io_size
+      value  : 128  (gdscheck)
+      default: 128
+      Maximum batch IO size.
+
+  OK  properties.max_batch_io_timeout_msecs
+      value  : 5  (gdscheck)
+      default: 5
+      Maximum batch IO timeout.
+
+  OK  properties.max_device_cache_size_kb
+      value  : 131072  (gdscheck)
+      default: 131072
+      Total internal GPU bounce buffer cache size.
+
+  OK  properties.per_buffer_cache_size_kb
+      value  : 1024  (file fallback)
+      default: 1024
+      Size of each internal GPU bounce buffer.
+
+  OK  properties.max_device_pinned_mem_size_kb
+      value  : 33554432  (gdscheck)
+      default: 33554432
+      Maximum per-GPU pinned memory.
+
+  OK  properties.posix_pool_slab_size_kb
+      value  : [4, 1024, 16384]  (gdscheck)
+      default: [4, 1024, 16384]
+      POSIX fallback slab sizes.
+
+  OK  properties.posix_pool_slab_count
+      value  : [128, 64, 64]  (gdscheck)
+      default: [128, 64, 64]
+      POSIX fallback slab counts.
+
+  OK  properties.gpu_bounce_buffer_slab_size_kb
+      value  : None  (default)
+      default: None
+      Flattened GDS GPU bounce buffer slab sizes.
+
+  OK  properties.gpu_bounce_buffer_slab_count
+      value  : None  (default)
+      default: None
+      Flattened GDS GPU bounce buffer slab counts.
+
+  OK  properties.gpu_bounce_buffer_slab_config
+      value  : None  (default)
+      default: None
+      GDS 1.17 per-mode GPU bounce buffer slab config.
+
+  OK  properties.use_poll_mode
+      value  : False  (gdscheck)
+      default: False
+      Poll for completion for small IO.
+
+  OK  properties.poll_mode_max_size_kb
+      value  : 4  (gdscheck)
+      default: 4
+      Maximum size for poll mode.
+
+  OK  sparse.min_p2pdma_threshold_kb
+      value  : 8  (default)
+      default: 8
+      Minimum sparse IO size before direct P2P mode is preferred.
+
+  OK  sparse.p2p_compat_enable
+      value  : True  (default)
+      default: True
+      Allow sparse IO compatibility handling for P2P paths.
+
+  OK  properties.rdma_dev_addr_list
+      value  : []  (file fallback)
+      default: []
+      Client IPv4 addresses for RDMA devices.
+
+  OK  properties.rdma_peer_type
+      value  : 'peer_mem'  (default)
+      default: 'peer_mem'
+      Userspace RDMA peer transport: peer_mem or dmabuf.
+
+  OK  properties.rdma_load_balancing_policy
+      value  : 'RoundRobin'  (gdscheck)
+      alias  : properties.rdma_peer_affinity_policy
+      default: 'RoundRobin'
+      RDMA memory registration peer selection policy.
+
+  OK  properties.rdma_topN_ranks
+      value  : 1  (default)
+      default: 1
+      Number of distinct nearest GPU/NIC distance ranks considered by the RDMA policy.
+
+  OK  properties.rdma_dynamic_routing
+      value  : False  (gdscheck)
+      default: False
+      Enable dynamic routing for GPU/NIC topology.
+
+  OK  properties.rdma_dynamic_routing_order
+      value  : ['GPU_MEM_NVLINKS', 'GPU_MEM', 'SYS_MEM', 'P2P']  (file fallback)
+      default: ['GPU_MEM_NVLINKS', 'GPU_MEM', 'SYS_MEM', 'P2P']
+      Dynamic routing policy preference order.
+
+  OK  properties.rdma_transport_type
+      value  : 'DC_V1'  (default)
+      default: 'DC_V1'
+      RDMA transport flavor used between cuFile and cuObject/filesystem consumers.
+
+  OK  properties.rdma_dc_key
+      value  : None  (default)
+      default: None
+      Optional 32-bit DC key for userspace RDMA.
+
+  OK  properties.rdma_access_mask
+      value  : None  (default)
+      default: None
+      Optional RDMA operation access mask.
+
+  OK  fs.generic.posix_unaligned_writes
+      value  : False  (gdscheck)
+      default: False
+      Use POSIX writes for unaligned writes.
+
+  OK  fs.lustre.posix_gds_min_kb
+      value  : 0  (gdscheck)
+      default: 4
+      Small Lustre IO threshold for POSIX path.
+
+  OK  fs.lustre.rdma_dev_addr_list
+      value  : []  (default)
+      default: []
+      Lustre-specific RDMA client addresses.
+
+  OK  fs.lustre.mount_table
+      value  : {}  (default)
+      default: {}
+      Per-mount Lustre RDMA routing table.
+
+  OK  fs.lustre.use_pci_p2pdma
+      value  : False  (default)
+      default: False
+      Legacy/unsupported P2PDMA-looking key; the GDS library does not support P2PDMA for Lustre.
+
+  OK  fs.beegfs.posix_gds_min_kb
+      value  : 0  (gdscheck)
+      default: 0
+      Small BeeGFS IO threshold for POSIX path.
+
+  OK  fs.beegfs.rdma_dev_addr_list
+      value  : []  (default)
+      default: []
+      BeeGFS-specific RDMA client addresses.
+
+  OK  fs.beegfs.mount_table
+      value  : {}  (default)
+      default: {}
+      Per-mount BeeGFS RDMA routing table.
+
+  OK  fs.beegfs.use_pci_p2pdma
+      value  : False  (default)
+      default: False
+      Legacy/unsupported P2PDMA-looking key; the GDS library does not support P2PDMA for BeeGFS.
+
+  OK  fs.scatefs.posix_gds_min_kb
+      value  : 0  (default)
+      default: 0
+      Small ScaTeFS IO threshold for POSIX path.
+
+  OK  fs.scatefs.use_pci_p2pdma
+      value  : False  (default)
+      default: False
+      Legacy/unsupported P2PDMA-looking key; the GDS library does not support P2PDMA for ScaTeFS.
+
+  OK  fs.nfs.rdma_dev_addr_list
+      value  : []  (default)
+      default: []
+      NFS-specific RDMA client addresses.
+
+  OK  fs.nfs.mount_table
+      value  : {}  (default)
+      default: {}
+      Per-mount NFS RDMA routing table.
+
+  OK  fs.nfs.use_pci_p2pdma
+      value  : False  (default)
+      default: False
+      Legacy NFS P2PDMA-looking key; NFS GDS validation should use the NFSoRDMA path.
+
+  OK  fs.weka.rdma_write_support
+      value  : False  (gdscheck)
+      default: False
+      Enable WekaFS RDMA writes instead of POSIX writes.
+
+  OK  fs.weka.rdma_dev_addr_list
+      value  : []  (default)
+      default: []
+      WekaFS-specific RDMA client addresses.
+
+  OK  fs.weka.mount_table
+      value  : {}  (default)
+      default: {}
+      Per-mount WekaFS RDMA routing table.
+
+  OK  fs.gpfs.gds_write_support
+      value  : False  (gdscheck)
+      default: False
+      Enable GPFS GDS write support when supported by the stack.
+
+  OK  fs.gpfs.gds_async_support
+      value  : True  (gdscheck)
+      default: True
+      Enable GPFS async GDS support.
+
+  OK  fs.gpfs.rdma_dev_addr_list
+      value  : []  (default)
+      default: []
+      GPFS-specific RDMA client addresses.
+
+  OK  fs.gpfs.mount_table
+      value  : {}  (default)
+      default: {}
+      Per-mount GPFS RDMA routing table.
+
+  OK  fs.gpfs.use_pci_p2pdma
+      value  : False  (default)
+      default: False
+      Unsupported P2PDMA-looking key; the GDS library does not support P2PDMA for GPFS.
+
+  OK  fs.virtiofs.use_pci_p2pdma
+      value  : False  (default)
+      default: False
+      Enable P2PDMA/C2C for virtiofs.
+
+  OK  block.nvme.use_pci_p2pdma
+      value  : True  (file fallback)
+      default: False
+      Enable P2PDMA/C2C for local NVMe.
+
+  OK  block.nvmeof.use_pci_p2pdma
+      value  : False  (default)
+      default: False
+      Enable P2PDMA/C2C for NVMe-oF.
+
+  OK  block.raid.use_pci_p2pdma
+      value  : False  (default)
+      default: False
+      Enable P2PDMA/C2C for RAID0 when the installed GDS stack supports that route.
+
+  OK  block.raid1.use_pci_p2pdma
+      value  : False  (default)
+      default: False
+      Known cufile.json P2PDMA/C2C setting for RAID1 stacks; route support must be confirmed with the installed GDS stack.
+
+  OK  block.raid10.use_pci_p2pdma
+      value  : False  (default)
+      default: False
+      Known cufile.json P2PDMA/C2C setting for RAID10 stacks; route support must be confirmed with the installed GDS stack.
+
+  OK  denylist.drivers
+      value  : []  (file fallback)
+      default: []
+      Disable supported storage drivers on this node.
+
+  OK  denylist.devices
+      value  : []  (file fallback)
+      default: []
+      Disable specific block devices on this node.
+
+  OK  denylist.mounts
+      value  : []  (file fallback)
+      default: []
+      Disable specific supported mounts on this node.
+
+  OK  denylist.filesystems
+      value  : []  (file fallback)
+      default: []
+      Disable specific supported filesystem types on this node.
+
+  OK  miscellaneous.api_check_aggressive
+      value  : False  (gdscheck)
+      default: False
+      Enable aggressive API checking.
+
+  OK  miscellaneous.skip_topology_detection
+      value  : False  (default)
+      default: False
+      Skip topology detection to reduce compat-mode startup latency.
+
+  OK  miscellaneous.stream_memops_bypass
+      value  : False  (default)
+      default: False
+      Bypass stream memory operations where supported.
+
+  OK  miscellaneous.enable_static_routing
+      value  : False  (default)
+      default: False
+      Enable static topology routing using a user-supplied topology.json file.
+
+  OK  miscellaneous.static_routing_filepath
+      value  : '/etc/topology.json'  (default)
+      default: '/etc/topology.json'
+      Path to the static topology JSON consumed when static routing is enabled.
+
+  OK  miscellaneous.enable_static_config
+      value  : False  (default)
+      default: False
+      Enable reading per-GPU hardware config (BAR size, p2pdma) from a user-supplied JSON file.
+
+  OK  miscellaneous.static_config_filepath
+      value  : ''  (default)
+      default: ''
+      Path to the static hardware config JSON consumed when static config is enabled.
+
+  OK  miscellaneous.rdma_token_reset_timeout_secs
+      value  : 30  (default)
+      default: 30
+      Timeout in seconds for RDMA token reset handling.
+
+  OK  execution.max_io_queue_depth
+      value  : 128  (gdscheck)
+      default: 128
+      Maximum pending work items in cuFile threadpool.
+
+  OK  execution.max_io_threads
+      value  : 4  (gdscheck)
+      default: 4
+      Threadpool threads per GPU.
+
+  OK  execution.parallel_io
+      value  : True  (gdscheck)
+      default: True
+      Enable threadpool parallel IO.
+
+  OK  execution.min_io_threshold_size_kb
+      value  : 8192  (gdscheck)
+      default: 8192
+      Threshold for splitting IO into parallel work.
+
+  OK  execution.max_request_parallelism
+      value  : 4  (gdscheck)
+      default: 4
+      Maximum parallel buffers per request.
+
+  86 ok, 1 info
+
+  ── mount-check /mnt/nvme1/gdstrace-smoke ─────────────────────────
+Tool: gds-diag 1.0.0 (git d49288c99f5d)
+
+
+══════════════════════════════════════════════════════════════════════
+  GDS Pre-Check Report
+══════════════════════════════════════════════════════════════════════
+  Path       : /mnt/nvme1/gdstrace-smoke
+  Filesystem : ext4
+  Notes      : ext4 is fully supported by GDS. Requires O_DIRECT. For
+               NVMe-backed ext4, direct GDS can use either
+               upstream PCI P2PDMA on x86 (configured with
+               block.nvme.use_pci_p2pdma and NVMe multipath
+               disabled) or C2C on supported NVIDIA CPUs
+               (configured with block.nvme.use_pci_p2pdma; NVMe
+               multipath is not a blocker there) or the nvidia-fs
+               nvfs path when the NVMe stack has GDS patches from
+               MLNX_OFED or DOCA/DOCA-OFED.
+
+  Mode Availability
+  ──────────────────────────────────────────────────────────────────
+  Mode                                   Status         Blockers
+  ──────────────────────────────────────────────────────────────────
+  Native GDS (nvidia-fs)                 ✓ PASS        
+  P2P DMA/C2C (NVMe↔GPU direct)          ℹ INFO        
+  RDMA (network storage)                 – N/A 
+  Compat / CPU bounce buffer             ✓ PASS        
+  ──────────────────────────────────────────────────────────────────
+  2 available, 1 info, 1 N/A
+
+  Detailed Findings
+
+  ┌─ Native GDS (nvidia-fs)  ✓ PASS
+  │
+  │  ✓ PASS  Kernel version
+  │  Kernel 6.8.0 meets minimum 4.15 for Native GDS (nvidia-fs).
+  │
+  │  ✓ PASS  CONFIG_ZONE_DEVICE
+  │  CONFIG_ZONE_DEVICE=y — device memory zone support available.
+  │
+  │  ✓ PASS  IOMMU mode
+  │  IOMMU is disabled. Direct GPU DMA is unrestricted.
+  │  Evidence:
+  │    cmdline: BOOT_IMAGE=/boot/vmlinuz-6.8.0-1051-nvidia root=LABEL=cloudimg-rootfs ro console=tty0 console=ttyS0,115200 no_timer_check gfxpayload=text pci=realloc=off amd_iommu=off
+  │
+  │  ✓ PASS  nvidia-fs module
+  │  nvidia_fs module is loaded (version 2.28.4).
+  │  Evidence:
+  │    nvidia_fs loaded; version=2.28.4; source=/sys/module/nvidia_fs/version
+  │
+  │  ✓ PASS  NVIDIA driver version
+  │  Driver 570.211 >= minimum 460 for GDS support.
+  │  Evidence:
+  │    nvidia-smi driver_version → 570.211
+  │
+  │  ✓ PASS  GPU compute capability
+  │  GPU compute capability 8.0 supports GDS (>= 6.0 required).
+  │  Evidence:
+  │    nvidia-smi compute_cap → 8.0
+  │
+  │  ✓ PASS  nvidia-fs kernel log messages
+  │  nvidia-fs kernel-log output shows no P2PDMA rejection
+  │  messages.
+  │  Evidence:
+  │    nvidia_fs: Initializing nvfs driver module
+  │    nvidia_fs: registered correctly with major number 511
+  │
+  │  ✓ PASS  gdscheck
+  │  gdscheck binary found at
+  │  /usr/local/cuda-12.8/gds/tools/gdscheck.
+  │  Evidence:
+  │    /usr/local/cuda-12.8/gds/tools/gdscheck
+  │
+  │  ✓ PASS  NVIDIA Open Driver
+  │  NVIDIA Open Kernel Driver is installed — required for GDS
+  │  Native (nvfs) and P2PDMA modes.
+  │  Evidence:
+  │    Nvidia Driver Info Status: Supported(Nvidia Open Driver Installed)
+  │
+  │  ✓ PASS  ext4 data mode
+  │  ext4 is explicitly mounted with data=ordered, as required for
+  │  GDS.
+  │  Evidence:
+  │    /mnt/nvme1 opts: rw,relatime,data=ordered
+  │
+  │  ✓ PASS  O_DIRECT support
+  │  O_DIRECT is supported — required for all native GDS I/O.
+  │  Evidence:
+  │    O_DIRECT open succeeded on /mnt/nvme1/gdstrace-smoke
+  └────────────────────────────────────────────────────────────
+
+  ┌─ P2P DMA/C2C (NVMe↔GPU direct)  ℹ INFO
+  │
+  │  ✓ PASS  P2PDMA kernel support
+  │  pci_p2pdma_add_resource found in /proc/kallsyms — PCI P2PDMA
+  │  support is present in this kernel.
+  │  Evidence:
+  │    0000000000000000 T __pfx_pci_p2pdma_add_resource
+  │
+  │  ✓ PASS  CONFIG_PCI_P2PDMA
+  │  CONFIG_PCI_P2PDMA=y — kernel P2PDMA subsystem compiled in.
+  │
+  │  ✓ PASS  IOMMU mode
+  │  IOMMU is disabled. Direct GPU DMA is unrestricted.
+  │  Evidence:
+  │    cmdline: BOOT_IMAGE=/boot/vmlinuz-6.8.0-1051-nvidia root=LABEL=cloudimg-rootfs ro console=tty0 console=ttyS0,115200 no_timer_check gfxpayload=text pci=realloc=off amd_iommu=off
+  │
+  │  ✓ PASS  PCIe topology
+  │  Closest GPU↔NVMe pairs found on the same PCIe root complex:
+  │  GPU 0000:97:00.0 ↔ NVMe 0000:87:00.0 (shared ancestor)
+  │  GPU 0000:97:00.0 ↔ NVMe 0000:88:00.0 (shared ancestor)
+  │
+  │  ✓ PASS  nvidia-smi topo -m -nvme
+  │  nvidia-smi reports GPU/NVMe topology. Prefer the closest NVMe
+  │  path for each GPU.
+  │  Evidence:
+  │    Best NVMe per GPU: GPU0 -> NVMe0, NVMe1 (PIX)
+  │
+  │  ✓ PASS  PCIe ACS redirect
+  │  No PCIe bridges have ACS P2P Request Redirect (ReqRedir+)
+  │  enabled.
+  │
+  │  ✓ PASS  NVIDIA Open Driver
+  │  NVIDIA Open Kernel Driver is installed — required for GDS
+  │  Native (nvfs) and P2PDMA modes.
+  │  Evidence:
+  │    Nvidia Driver Info Status: Supported(Nvidia Open Driver Installed)
+  │
+  │  ✓ PASS  NVIDIA P2PDMA driver registries
+  │  Loaded NVIDIA driver RegistryDwords include
+  │  RMForceStaticBar1=1 and RmForceDisableIomapWC=1, which
+  │  are required for PCI P2PDMA on x86.
+  │  Evidence:
+  │    RegistryDwords: "RMForceStaticBar1=1;ForceP2P=0;RmForceDisableIomapWC=1;"
+  │
+  │  ✓ PASS  NVMe transport
+  │  Backing NVMe transport is pcie; mount-check will use
+  │  block.nvme.use_pci_p2pdma for the P2PDMA cufile.json
+  │  check.
+  │
+  │  ✓ PASS  cufile.json P2PDMA settings
+  │  P2PDMA/C2C enabled in the effective cuFile configuration:
+  │  properties.use_pci_p2pdma=true,
+  │  block.nvme.use_pci_p2pdma=true. The use_pci_p2pdma keys
+  │  are also the knobs for C2C direct mode on NVIDIA Grace
+  │  Hopper and Grace Blackwell ARM platforms; gdscheck may
+  │  report the active route as c2c instead of p2pdma.
+  │
+  │  ℹ INFO  gdscheck P2PDMA/C2C route
+  │  Direct GDS is still available via nvidia-fs/nvfs. This is
+  │  valid for NVMe/NVMe-oF stacks with the required
+  │  MLNX_OFED/DOCA GDS patches.
+  └────────────────────────────────────────────────────────────
+
+  ┌─ RDMA (network storage)  – N/A 
+  │
+  │  – N/A   Filesystem RDMA support
+  │  RDMA is not applicable for ext4. ext4 is fully supported by
+  │  GDS.
+  └────────────────────────────────────────────────────────────
+
+  ┌─ Compat / CPU bounce buffer  ✓ PASS
+  │
+  │  ✓ PASS  Compat mode availability
+  │  compat mode is true — CPU bounce buffer fallback is available.
+  └────────────────────────────────────────────────────────────
+
+  Mitigation Plan
+  No warnings or errors require mitigation.
+
+  Performance Recommendations
+  ──────────────────────────────────────────────────────────────────
+  • NVMe queue depth is 1023 (recommended ≥ 1024 for GDS throughput).
+      echo 1024 | sudo tee /sys/block/nvme1n1/queue/nr_requests
+  • NUMA alignment: GPU and NVMe both on NUMA node 1 ✓
+  • For NVMe1, prefer GPU(s): GPU0 (PIX)
+  • Best NVMe per GPU: GPU0 -> NVMe0, NVMe1 (PIX)
+
+
+All selected diagnostics completed successfully.
