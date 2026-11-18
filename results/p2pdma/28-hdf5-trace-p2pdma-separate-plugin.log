@@ -1,0 +1,13 @@
+--- rep 1
+  chunked-cacheON          | cuFileRead=262  p2pdma_map=0  nvme_setup_cmd=284  posix(pread/read)=7821  -> SILENT COMPAT (0 P2P)
+  chunked-cacheOFF         | cuFileRead=262  p2pdma_map=257  nvme_setup_cmd=272  posix(pread/read)=7831  -> TRUE GDS (p2pdma)
+  contiguous               | cuFileRead=8  p2pdma_map=72  nvme_setup_cmd=81  posix(pread/read)=7642  -> TRUE GDS (p2pdma)
+--- rep 2
+  chunked-cacheON          | cuFileRead=262  p2pdma_map=0  nvme_setup_cmd=284  posix(pread/read)=7832  -> SILENT COMPAT (0 P2P)
+  chunked-cacheOFF         | cuFileRead=262  p2pdma_map=257  nvme_setup_cmd=272  posix(pread/read)=7831  -> TRUE GDS (p2pdma)
+  contiguous               | cuFileRead=8  p2pdma_map=72  nvme_setup_cmd=81  posix(pread/read)=7658  -> TRUE GDS (p2pdma)
+--- rep 3
+  chunked-cacheON          | cuFileRead=262  p2pdma_map=0  nvme_setup_cmd=284  posix(pread/read)=7844  -> SILENT COMPAT (0 P2P)
+  chunked-cacheOFF         | cuFileRead=262  p2pdma_map=257  nvme_setup_cmd=272  posix(pread/read)=7848  -> TRUE GDS (p2pdma)
+  contiguous               | cuFileRead=8  p2pdma_map=72  nvme_setup_cmd=81  posix(pread/read)=7663  -> TRUE GDS (p2pdma)
+DONE

@@ -31,10 +31,10 @@ with gzip.open(sys.argv[1],'rt',errors='replace') as f:
         except: continue
         c[e.get('name','?')]+=1
 cf=c.get('cuFileRead',0)+c.get('cuFileReadAsync',0)+c.get('cuFileBatchIOSubmit',0)
-nv=c.get('nvfs_io',0); p2p=c.get('nvfs_get_p2p_dma_mapping',0); pd=c.get('pci_p2pdma_map_segment',0)
+nv=c.get('nvfs_io',0); p2p=c.get('nvfs_get_p2p_dma_mapping',0)
 nvme=c.get('nvme_setup_cmd',0); px=c.get('pread64',0)+c.get('read',0)
-verdict=('TRUE GDS (p2pdma)' if pd>0 else 'TRUE GDS') if (nv>0 or pd>0) else 'SILENT COMPAT (0 P2P)'
-print(f"cuFileRead={cf}  nvfs_io={nv}  p2p_map={p2p}  p2pdma_map={pd}  nvme_setup_cmd={nvme}  posix(pread/read)={px}  -> {verdict}")
+verdict='TRUE GDS' if nv>0 else 'SILENT COMPAT (0 P2P)'
+print(f"cuFileRead={cf}  nvfs_io={nv}  p2p_map={p2p}  nvme_setup_cmd={nvme}  posix(pread/read)={px}  -> {verdict}")
 PY
 }
 

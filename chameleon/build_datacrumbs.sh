@@ -5,15 +5,18 @@
 # initialized (git submodule update --init --recursive).
 #
 # Produces: ~/dc-prefix (libbpf 1.5 + bpftool 7.5 + datacrumbs), ~/dfa-venv (DFAnalyzer).
+# Overridable for a second tracer install (see build_datacrumbs_p2pdma.sh): PREFIX, HOSTCFG,
+# BUILD (build dir inside external/datacrumbs), SKIP_DFA=1. Defaults are the paper configuration.
 # Verify after:  /opt/gds-tools/... ; see "smoke" at the end.
 set -euo pipefail
-PREFIX=$HOME/dc-prefix
+PREFIX=${PREFIX:-$HOME/dc-prefix}
 SRC=$HOME/src
 REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 DC="$REPO/external/datacrumbs"
 DFA="$REPO/external/dfanalyzer"
 TRACEDIR=${TRACEDIR:-/mnt/nvme1/gdstrace-smoke/dc-traces}
-HOSTCFG=izzet-gdstrace-node        # matches etc/datacrumbs/configs/<host>.yaml + this node's hostname
+HOSTCFG=${HOSTCFG:-izzet-gdstrace-node}   # matches etc/datacrumbs/configs/<host>.yaml + this node's hostname
+BUILD=${BUILD:-build}
 mkdir -p "$PREFIX" "$SRC" "$TRACEDIR"
 say(){ echo; echo "=== $* ==="; }
 
@@ -41,8 +44,8 @@ make -s -C "$SRC/bpftool/src" prefix="$PREFIX" install 2>/dev/null || true
 say "4/6 datacrumbs (cmake/ninja → \$PREFIX)"
 export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
 cd "$DC"
-rm -rf build
-cmake -S . -B build -G Ninja \
+rm -rf "$BUILD"
+cmake -S . -B "$BUILD" -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_INSTALL_PREFIX="$PREFIX" \
   -DCMAKE_PREFIX_PATH="$PREFIX;/usr/lib/llvm-18" \
@@ -57,12 +60,12 @@ cmake -S . -B build -G Ninja \
 # libcufile instead (and the client lib segfaults the kvikio/cupy python stack), so an OFF build
 # collects 0 events for EVERY app, silently and with a successful exit status.
 # generation must precede the BPF-object build (explorer→generator emit per-host *.bpf.c)
-ninja -C build datacrumbs_explorer datacrumbs_generator
-ninja -C build run_explorer
-ninja -C build run_generator
-ninja -C build
-ninja -C build install
-test "$(grep -c undefined build/.ninja_log 2>/dev/null || echo 0)" -ge 0   # noop guard
+ninja -C "$BUILD" datacrumbs_explorer datacrumbs_generator
+ninja -C "$BUILD" run_explorer
+ninja -C "$BUILD" run_generator
+ninja -C "$BUILD"
+ninja -C "$BUILD" install
+# (removed a no-op guard here: `grep -c ... || echo 0` printed "0" twice and aborted the script under set -e)
 
 say "5/6 runtime setup (caps + libbpf on system path)"
 sudo cp -a "$PREFIX"/lib/libbpf.so* /usr/local/lib/ && sudo ldconfig
@@ -70,11 +73,13 @@ sudo setcap cap_sys_admin,cap_bpf,cap_perfmon,cap_dac_read_search+ep "$PREFIX"/s
 getcap "$PREFIX"/sbin/datacrumbs
 
 say "6/6 DFAnalyzer venv (~/dfa-venv) — dfanalyzer NON-editable (namespace merge)"
+if [ "${SKIP_DFA:-0}" = 1 ]; then echo "SKIP_DFA=1: keeping the existing ~/dfa-venv"; else
 python3 -m venv "$HOME/dfa-venv"
 "$HOME/dfa-venv/bin/pip" install -q --upgrade pip wheel
 "$HOME/dfa-venv/bin/pip" install -q "dftracer-utils==0.0.5"   # pin: 0.0.9 renamed Reader→TraceReader
 "$HOME/dfa-venv/bin/pip" install -q "$DFA"                    # NOT -e (editable shadows dftracer.utils)
 "$HOME/dfa-venv/bin/python" -c "import dftracer.analyzer, dftracer.utils; print('DFAnalyzer OK')"
+fi
 
 cat <<EOF
 

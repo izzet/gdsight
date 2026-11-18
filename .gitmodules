@@ -7,7 +7,7 @@
 [submodule "external/datacrumbs"]
 	path = external/datacrumbs
 	url = https://github.com/izzet/datacrumbs.git
-	branch = feat/cufile-gds
+	branch = feat/p2pdma
 [submodule "external/dfanalyzer"]
 	path = external/dfanalyzer
 	url = https://github.com/izzet/dfanalyzer.git
