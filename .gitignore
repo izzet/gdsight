@@ -30,3 +30,6 @@ paper/
 
 # agent orientation, not artifact material
 CLAUDE.md
+
+# P2PDMA run record: the logs are the evidence
+!results/p2pdma/*.log

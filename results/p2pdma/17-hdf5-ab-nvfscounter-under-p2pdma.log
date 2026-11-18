@@ -1,0 +1,3 @@
+  chunked, cache ON (default) | GDS reads +0     (+0 MiB) | BW=0.901 GiB/s
+  chunked, cache OFF (fix)   | GDS reads +0     (+0 MiB) | BW=0.599 GiB/s
+  contiguous                 | GDS reads +0     (+0 MiB) | BW=1.625 GiB/s
