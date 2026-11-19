@@ -1,0 +1,535 @@
+
+=== 1/6 apt deps + asm header symlink ===
+Reading package lists...
+Building dependency tree...
+Reading state information...
+build-essential is already the newest version (12.10ubuntu1).
+cmake is already the newest version (3.28.3-1build7).
+ninja-build is already the newest version (1.11.1-2).
+git is already the newest version (1:2.43.0-1ubuntu7.4).
+patchelf is already the newest version (0.18.0-1.1build1).
+pkg-config is already the newest version (1.8.1-2build1).
+bc is already the newest version (1.07.1-3ubuntu4).
+clang is already the newest version (1:18.0-59~exp2).
+llvm-dev is already the newest version (1:18.0-59~exp2).
+libclang-dev is already the newest version (1:18.0-59~exp2).
+libopenmpi-dev is already the newest version (4.1.6-7ubuntu2).
+libyaml-cpp-dev is already the newest version (0.8.0+dfsg-6build1).
+libjson-c-dev is already the newest version (0.17-1build1).
+libelf-dev is already the newest version (0.190-1.1ubuntu0.1).
+zlib1g-dev is already the newest version (1:1.3.dfsg-3.1ubuntu2.3).
+libssl-dev is already the newest version (3.0.13-0ubuntu3.16).
+python3-venv is already the newest version (3.12.3-0ubuntu2.1).
+The following packages were automatically installed and are no longer required:
+  amd64-microcode nvidia-firmware-560-560.35.05
+Use 'sudo apt autoremove' to remove them.
+0 upgraded, 0 newly installed, 0 to remove and 221 not upgraded.
+
+=== 2/6 libbpf 1.5.0 (source → $PREFIX) ===
+  INSTALL  bpf.h libbpf.h btf.h libbpf_common.h libbpf_legacy.h bpf_helpers.h bpf_helper_defs.h bpf_tracing.h bpf_endian.h bpf_core_read.h skel_internal.h libbpf_version.h usdt.bpf.h
+  INSTALL  ./libbpf.pc
+  INSTALL  ./libbpf.a ./libbpf.so ./libbpf.so.1 ./libbpf.so.1.5.0
+  INSTALL  ../include/uapi/linux/bpf.h ../include/uapi/linux/bpf_common.h ../include/uapi/linux/btf.h
+/home/cc/dc-prefix-p2pdma/lib/libbpf.so.1.5.0
+
+=== 3/6 bpftool 7.5.0 (source → $PREFIX) ===
+...                        libbfd: [ [31mOFF[m ]
+...               clang-bpf-co-re: [ [32mon[m  ]
+...                          llvm: [ [32mon[m  ]
+...                        libcap: [ [31mOFF[m ]
+...                        libbfd: [ [31mOFF[m ]
+...               clang-bpf-co-re: [ [32mon[m  ]
+...                          llvm: [ [32mon[m  ]
+...                        libcap: [ [31mOFF[m ]
+bpftool v7.5.0
+
+=== 4/6 datacrumbs (cmake/ninja → $PREFIX) ===
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- [DATACRUMBS] DATACRUMBS_LIBDIR set to lib
+-- [DATACRUMBS] Detecting system details
+--              - Found libc: /usr/lib/x86_64-linux-gnu/libc.so.6
+--              - Using provided hostname: izzet-gdstrace-node-pcidma
+--              - Using provided bpftool executable: /home/cc/dc-prefix-p2pdma/sbin/bpftool
+--              - Found vmlinux BTF file at: /sys/kernel/btf/vmlinux
+CMake Warning at cmake/modules/datacrumbs-utils.cmake:529 (message):
+  [DATACRUMBS] Kernel headers not found for in /usr/src or /usr/src/kernels.
+Call Stack (most recent call first):
+  CMakeLists.txt:115 (find_system_details)
+
+
+--              - Detected architecture: x86
+-- [DATACRUMBS] Set Variables for CMake
+--              - DATACRUMBS_LOG_LEVEL: 3
+--              - DATACRUMBS_BPFTIME_COMPATIBLE: OFF
+--              - DATACRUMBS_MODE: 1
+--              - DATACRUMBS_ENABLE: 1
+--              - DATACRUMBS_SKIP_SMALL_EVENTS_THRESHOLD_NS: 1000
+--              - DATACRUMBS_TRACE_ALL_PROCESSES: 1
+--              - DATACRUMBS_TIME_INTERVAL_NS: 1000000
+--              - DATACRUMBS_BPF_PRINT_ENABLE_FLAG: 0
+--              - DATACRUMBS_SKIP_PROBE_EXPLORING: OFF
+--              - DATACRUMBS_SKIP_PROBE_GENERATION: OFF
+--              - DATACRUMBS_TRACE_RINGBUF_SIZE_MB: 16
+--              - DATACRUMBS_SRC_GEN_PATH: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs
+--              - DATACRUMBS_LIBC_SO: /usr/lib/x86_64-linux-gnu/libc.so.6
+--              - DATACRUMBS_BUILD_CLIENT_SO: /home/cc/dc-prefix-p2pdma/lib/libdatacrumbs_client.so
+--              - DATACRUMBS_CONFIG_PATH: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/configs
+--              - DATACRUMBS_LOG_DIR: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/logs
+--              - DATACRUMBS_DATA_DIR: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data
+--              - DATACRUMBS_ENABLE_INCLUSION_PATH: 0
+--              - Kernel Version: 6.8.0
+--              - DATACRUMBS_BUILD_ONLY: OFF
+--              - DATACRUMBS_INSTALL_USER: cc
+--              - DATACRUMBS_USER: cc
+--              - DATACRUMBS_KERNEL_VERSION: 6.8.0
+--              - Found kernel headers at: 
+--              - DATACRUMBS_KERNEL_UNAME_R: 6.8.0-1051-nvidia
+--              - DATACRUMBS_CONFIGURED_TRACE_DIR: /mnt/nvme1/gdstrace-smoke/dc-traces
+--              - DATACRUMBS_CONFIGURED_LOG_DIR: /tmp
+--              - DATACRUMBS_LAUNCHER_TYPE: SLURM
+--              - DATACRUMBS_SCHEDULER_JOBID_ENV_VAR: SLURM_JOB_ID
+--              - DATACRUMBS_SCHEDULER_NODES_CMD_OPT: -N
+--              - DATACRUMBS_SCHEDULER_PPN_CMD_OPT: --ntasks-per-node
+--              - DATACRUMBS_SCHEDULER_RUN_CMD: srun
+CMake Warning at CMakeLists.txt:188 (message):
+  [DATACRUMBS] No data files to copy for user 'cc' and host
+  'izzet-gdstrace-node-pcidma'
+
+
+-- [DATACRUMBS] Detecting dependencies
+-- Found PkgConfig: /usr/bin/pkg-config (found version "1.8.1") 
+-- Checking for module 'libbpf'
+--   Found libbpf, version 1.5.0
+-- Performing Test HAVE_FFI_CALL
+-- Performing Test HAVE_FFI_CALL - Success
+-- Found FFI: /usr/lib/x86_64-linux-gnu/libffi.so  
+-- Could NOT find LibEdit (missing: LibEdit_INCLUDE_DIRS LibEdit_LIBRARIES) 
+-- Performing Test Terminfo_LINKABLE
+-- Performing Test Terminfo_LINKABLE - Success
+-- Found Terminfo: /usr/lib/x86_64-linux-gnu/libtinfo.so  
+-- Found ZLIB: /usr/lib/x86_64-linux-gnu/libz.so (found version "1.3")  
+-- Found zstd: /usr/lib/x86_64-linux-gnu/libzstd.so  
+-- Found LibXml2: /usr/lib/x86_64-linux-gnu/libxml2.so (found version "2.9.14") 
+-- Could NOT find CURL (missing: CURL_LIBRARY CURL_INCLUDE_DIR) 
+--              - Found libbpf:1.5.0 at include:/home/cc/dc-prefix-p2pdma/include lib:/home/cc/dc-prefix-p2pdma/lib
+--              - Found yaml-cpp:0.8.0 at include:/usr/include lib:/usr/lib/x86_64-linux-gnu
+--              - Found llvm:18.1.3 at include:/usr/lib/llvm-18/include lib:/usr/lib/llvm-18/lib clang:/usr/lib/llvm-18/bin/clang
+--              - Found json-c:unknown at include:/usr/lib/include lib:/usr/lib/x86_64-linux-gnu
+--              - Found zlib:1.3 at include:/usr/include lib:/usr/lib/x86_64-linux-gnu
+--              - Found mpi:3.1 at include:/usr/lib/x86_64-linux-gnu/openmpi/include;/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi lib:/usr/lib/x86_64-linux-gnu/openmpi/lib
+--              - DEPENDENCY_LIBRARY_DIRS for RPATH:/home/cc/dc-prefix-p2pdma/lib;/usr/lib/x86_64-linux-gnu;/usr/lib/x86_64-linux-gnu/openmpi/lib
+--              - DEPENDENCY_LIB for linking :-lpthread;-L/home/cc/dc-prefix-p2pdma/lib;-lbpf;-lelf;-L/usr/lib/x86_64-linux-gnu;-lyaml-cpp;-lclang;-ljson-c;-lz;-L/usr/lib/x86_64-linux-gnu/openmpi/lib;/usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi_cxx.so;/usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so
+-- /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma
+-- [DATACRUMBS] Capture probes: custom1;cufile;block;p2pdma
+-- Found MPI_C: /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so (found version "3.1") 
+-- Found MPI_CXX: /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi_cxx.so (found version "3.1") 
+-- Found MPI: TRUE (found version "3.1")  
+-- Found mpirun: /usr/bin/mpirun
+-- IOR binary not found. IOR tests will be disabled.
+-- Configuring done (2.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma
+ninja: Entering directory `build-p2pdma'
+[1/12] Cleaning BPF build artifacts (ignoring if cannot remove)
+[2/12] Building CXX object CMakeFiles/datacrumbs_client.dir/src/datacrumbs/client/library.cpp.o
+[3/12] Linking CXX shared library libdatacrumbs_client.so
+[4/12] Building CXX object CMakeFiles/datacrumbs_explorer.dir/src/datacrumbs/explorer/mechanism/header_capture.cpp.o
+[5/12] Building CXX object CMakeFiles/datacrumbs_explorer.dir/src/datacrumbs/explorer/mechanism/ksym_capture.cpp.o
+[6/12] Building CXX object CMakeFiles/datacrumbs_explorer.dir/src/datacrumbs/explorer/mechanism/elf_capture.cpp.o
+[7/12] Building CXX object CMakeFiles/datacrumbs_explorer.dir/src/datacrumbs/common/configuration_manager.cpp.o
+[8/12] Building CXX object CMakeFiles/datacrumbs_explorer.dir/src/datacrumbs/explorer/probe_explorer.cpp.o
+[9/12] Linking CXX executable bin/datacrumbs_explorer
+[10/12] Building CXX object CMakeFiles/datacrumbs_generator.dir/src/datacrumbs/common/configuration_manager.cpp.o
+[11/12] Building CXX object CMakeFiles/datacrumbs_generator.dir/src/datacrumbs/generator/generator.cpp.o
+[12/12] Linking CXX executable bin/datacrumbs_generator
+ninja: Entering directory `build-p2pdma'
+[1/2] Cleaning BPF build artifacts (ignoring if cannot remove)
+[2/2] Running datacrumbs_explorer with argument 'izzet-gdstrace-node-pcidma'
+[WARN] [ConfigurationManager] Category map file does not exist: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/categories-cc-izzet-gdstrace-node-pcidma.json for rank: 0
+[INFO] [ConfigurationManager] Final configuration:
+[INFO] [ConfigurationManager] Capture probes loaded: 4
+[INFO] [ConfigurationManager] Category map loaded with 0 entries.
+[INFO]   Path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/configs
+[INFO]   Name: izzet-gdstrace-node-pcidma
+[INFO]   Trace log dir: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/logs
+[INFO]   Trace file path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/logs/trace-cc-0-0-1-izzet-gdstrace-node-pcidma.pfw.gz
+[INFO]   Data dir: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data
+[INFO]   Probe file path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/probes-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Probe exclusion file path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/probes-exclusion-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Probe invalid file path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/probes-invalid-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Manual probe path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/manual-probes-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Category map path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/categories-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Profiling interval: 0.001000
+[INFO]   Runtime User: cc
+[INFO]   Install user: cc
+[INFO]   Hostname: izzet-gdstrace-node
+[INFO]   Capture probes: 4
+[INFO]   Mode: Tracing
+[INFO]   Inclusion path: Not set
+[INFO]     Probe: name=custom1, type=4, probe_type=4, regex=
+[INFO]     Probe: name=cufile, type=4, probe_type=4, regex=
+[INFO]     Probe: name=block, type=4, probe_type=4, regex=
+[INFO]     Probe: name=p2pdma, type=4, probe_type=4, regex=
+[INFO] [ConfigurationManager] Initialization complete.
+[INFO] No existing probe file found at: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/probes-cc-izzet-gdstrace-node-pcidma.json
+[INFO] Loaded 0 existing probes
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: custom1
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: cufile
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: block
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: p2pdma
+[INFO] Probe: custom1
+[INFO] Probe: cufile
+[INFO] Probe: block
+[INFO] Probe: p2pdma
+[PRINT] Elapsed time in Probe Explorer: 0.001013 seconds
+ninja: Entering directory `build-p2pdma'
+[1/3] Cleaning BPF build artifacts (ignoring if cannot remove)
+[2/3] Running datacrumbs_explorer with argument 'izzet-gdstrace-node-pcidma'
+[WARN] [ConfigurationManager] Category map file does not exist: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/categories-cc-izzet-gdstrace-node-pcidma.json for rank: 0
+[INFO] [ConfigurationManager] Final configuration:
+[INFO] [ConfigurationManager] Capture probes loaded: 4
+[INFO] [ConfigurationManager] Category map loaded with 0 entries.
+[INFO]   Path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/configs
+[INFO]   Name: izzet-gdstrace-node-pcidma
+[INFO]   Trace log dir: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/logs
+[INFO]   Trace file path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/logs/trace-cc-0-0-1-izzet-gdstrace-node-pcidma.pfw.gz
+[INFO]   Data dir: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data
+[INFO]   Probe file path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/probes-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Probe exclusion file path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/probes-exclusion-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Probe invalid file path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/probes-invalid-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Manual probe path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/manual-probes-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Category map path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/categories-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Profiling interval: 0.001000
+[INFO]   Runtime User: cc
+[INFO]   Install user: cc
+[INFO]   Hostname: izzet-gdstrace-node
+[INFO]   Capture probes: 4
+[INFO]   Mode: Tracing
+[INFO]   Inclusion path: Not set
+[INFO]     Probe: name=custom1, type=4, probe_type=4, regex=
+[INFO]     Probe: name=cufile, type=4, probe_type=4, regex=
+[INFO]     Probe: name=block, type=4, probe_type=4, regex=
+[INFO]     Probe: name=p2pdma, type=4, probe_type=4, regex=
+[INFO] [ConfigurationManager] Initialization complete.
+[INFO] Loaded 4 existing probes
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: custom1
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: cufile
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: block
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: p2pdma
+[INFO] Probe: custom1
+[INFO] Probe: cufile
+[INFO] Probe: block
+[INFO] Probe: p2pdma
+[PRINT] Elapsed time in Probe Explorer: 0.001073 seconds
+[3/3] Running datacrumbs_generator with argument 'izzet-gdstrace-node-pcidma'
+[WARN] [ConfigurationManager] Category map file does not exist: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/categories-cc-izzet-gdstrace-node-pcidma.json for rank: 0
+[INFO] [ConfigurationManager] Final configuration:
+[INFO] [ConfigurationManager] Capture probes loaded: 4
+[INFO] [ConfigurationManager] Category map loaded with 0 entries.
+[INFO]   Path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/configs
+[INFO]   Name: izzet-gdstrace-node-pcidma
+[INFO]   Trace log dir: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/logs
+[INFO]   Trace file path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/logs/trace-cc-0-0-1-izzet-gdstrace-node-pcidma.pfw.gz
+[INFO]   Data dir: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data
+[INFO]   Probe file path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/probes-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Probe exclusion file path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/probes-exclusion-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Probe invalid file path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/probes-invalid-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Manual probe path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/manual-probes-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Category map path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/categories-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Profiling interval: 0.001000
+[INFO]   Runtime User: cc
+[INFO]   Install user: cc
+[INFO]   Hostname: izzet-gdstrace-node
+[INFO]   Capture probes: 4
+[INFO]   Mode: Tracing
+[INFO]   Inclusion path: Not set
+[INFO]     Probe: name=custom1, type=4, probe_type=4, regex=
+[INFO]     Probe: name=cufile, type=4, probe_type=4, regex=
+[INFO]     Probe: name=block, type=4, probe_type=4, regex=
+[INFO]     Probe: name=p2pdma, type=4, probe_type=4, regex=
+[INFO] [ConfigurationManager] Initialization complete.
+[INFO] [ProbeGenerator] Reading probes file: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/probes-cc-izzet-gdstrace-node-pcidma.json
+[INFO] [ProbeGenerator] Number of probes: 4
+[INFO] [ProbeGenerator] Processing probe: custom1
+[INFO] [ProbeGenerator] Generated 21 functions file: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/src/custom1.bpf.c
+[INFO] [ProbeGenerator] Processing probe: cufile
+[INFO] [ProbeGenerator] Generated 10 functions file: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/src/cufile.bpf.c
+[INFO] [ProbeGenerator] Processing probe: block
+[INFO] [ProbeGenerator] Generated 1 functions file: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/src/block.bpf.c
+[INFO] [ProbeGenerator] Processing probe: p2pdma
+[INFO] [ProbeGenerator] Generated 1 functions file: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/src/p2pdma.bpf.c
+[INFO] No manual probes were added.
+[INFO] [ProbeGenerator] All process headers included in: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/process/generated_process.h
+[INFO] [ProbeGenerator] Writing category map...
+[PRINT] [ProbeGenerator] Total number of probes generated: 33
+[PRINT] Total time elapsed for Probe Generator: 0.000995 seconds
+ninja: Entering directory `build-p2pdma'
+[1/32] Cleaning BPF build artifacts (ignoring if cannot remove)
+[2/32] Running datacrumbs_explorer with argument 'izzet-gdstrace-node-pcidma'
+[INFO] [ConfigurationManager] Final configuration:
+[INFO] [ConfigurationManager] Capture probes loaded: 4
+[INFO] [ConfigurationManager] Category map loaded with 36 entries.
+[INFO]   Path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/configs
+[INFO]   Name: izzet-gdstrace-node-pcidma
+[INFO]   Trace log dir: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/logs
+[INFO]   Trace file path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/logs/trace-cc-0-0-1-izzet-gdstrace-node-pcidma.pfw.gz
+[INFO]   Data dir: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data
+[INFO]   Probe file path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/probes-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Probe exclusion file path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/probes-exclusion-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Probe invalid file path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/probes-invalid-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Manual probe path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/manual-probes-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Category map path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/categories-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Profiling interval: 0.001000
+[INFO]   Runtime User: cc
+[INFO]   Install user: cc
+[INFO]   Hostname: izzet-gdstrace-node
+[INFO]   Capture probes: 4
+[INFO]   Mode: Tracing
+[INFO]   Inclusion path: Not set
+[INFO]     Probe: name=custom1, type=4, probe_type=4, regex=
+[INFO]     Probe: name=cufile, type=4, probe_type=4, regex=
+[INFO]     Probe: name=block, type=4, probe_type=4, regex=
+[INFO]     Probe: name=p2pdma, type=4, probe_type=4, regex=
+[INFO] [ConfigurationManager] Initialization complete.
+[INFO] Loaded 4 existing probes
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: custom1
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: cufile
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: block
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: p2pdma
+[INFO] Probe: custom1
+[INFO] Probe: cufile
+[INFO] Probe: block
+[INFO] Probe: p2pdma
+[PRINT] Elapsed time in Probe Explorer: 0.001185 seconds
+[3/32] Running datacrumbs_generator with argument 'izzet-gdstrace-node-pcidma'
+[INFO] [ConfigurationManager] Final configuration:
+[INFO] [ConfigurationManager] Capture probes loaded: 4
+[INFO] [ConfigurationManager] Category map loaded with 36 entries.
+[INFO]   Path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/configs
+[INFO]   Name: izzet-gdstrace-node-pcidma
+[INFO]   Trace log dir: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/logs
+[INFO]   Trace file path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/logs/trace-cc-0-0-1-izzet-gdstrace-node-pcidma.pfw.gz
+[INFO]   Data dir: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data
+[INFO]   Probe file path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/probes-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Probe exclusion file path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/probes-exclusion-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Probe invalid file path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/probes-invalid-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Manual probe path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/manual-probes-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Category map path: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/categories-cc-izzet-gdstrace-node-pcidma.json
+[INFO]   Profiling interval: 0.001000
+[INFO]   Runtime User: cc
+[INFO]   Install user: cc
+[INFO]   Hostname: izzet-gdstrace-node
+[INFO]   Capture probes: 4
+[INFO]   Mode: Tracing
+[INFO]   Inclusion path: Not set
+[INFO]     Probe: name=custom1, type=4, probe_type=4, regex=
+[INFO]     Probe: name=cufile, type=4, probe_type=4, regex=
+[INFO]     Probe: name=block, type=4, probe_type=4, regex=
+[INFO]     Probe: name=p2pdma, type=4, probe_type=4, regex=
+[INFO] [ConfigurationManager] Initialization complete.
+[INFO] [ProbeGenerator] Reading probes file: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/data/probes-cc-izzet-gdstrace-node-pcidma.json
+[INFO] [ProbeGenerator] Number of probes: 4
+[INFO] [ProbeGenerator] Processing probe: custom1
+[INFO] [ProbeGenerator] Generated 21 functions file: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/src/custom1.bpf.c
+[INFO] [ProbeGenerator] Processing probe: cufile
+[INFO] [ProbeGenerator] Generated 10 functions file: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/src/cufile.bpf.c
+[INFO] [ProbeGenerator] Processing probe: block
+[INFO] [ProbeGenerator] Generated 1 functions file: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/src/block.bpf.c
+[INFO] [ProbeGenerator] Processing probe: p2pdma
+[INFO] [ProbeGenerator] Generated 1 functions file: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/src/p2pdma.bpf.c
+[INFO] No manual probes were added.
+[INFO] [ProbeGenerator] All process headers included in: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/process/generated_process.h
+[INFO] [ProbeGenerator] Writing category map...
+[PRINT] [ProbeGenerator] Total number of probes generated: 33
+[PRINT] Total time elapsed for Probe Generator: 0.001439 seconds
+[4/32] [DATACRUMBS] Generating vmlinux.h from /sys/kernel/btf/vmlinux (timed)
+[5/32] Building CXX object tools/CMakeFiles/callgraph_creator.dir/callgraph_vis.cpp.o
+[6/32] Linking CXX executable bin/callgraph_creator
+[7/32] Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/objects/p2pdma.o (timed)
+Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/objects/p2pdma.o (timed)
+Elapsed time for /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/objects/p2pdma.o: 0:00.33
+[8/32] Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/validator/bpf/objects/probe.bpf.o (timed)
+Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/validator/bpf/objects/probe.bpf.o (timed)
+Elapsed time for /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/validator/bpf/objects/probe.bpf.o: 0:00.33
+[9/32] Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/objects/common.o (timed)
+Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/objects/common.o (timed)
+Elapsed time for /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/objects/common.o: 0:00.33
+[10/32] Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/objects/init.o (timed)
+Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/objects/init.o (timed)
+Elapsed time for /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/objects/init.o: 0:00.34
+[11/32] Linking all BPF objects into /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/objects/validator.o (timed)
+Linking all BPF objects into /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/objects/validator.o (timed)
+Elapsed time for linking: 0:00.02
+[12/32] Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/objects/block.o (timed)
+Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/objects/block.o (timed)
+Elapsed time for /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/objects/block.o: 0:00.39
+[13/32] Generating BPF skeleton: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/include/datacrumbs/validator/bpf/datacrumbs_validator.skel.h
+[14/32] Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/objects/cufile.o (timed)
+Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/objects/cufile.o (timed)
+Elapsed time for /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/objects/cufile.o: 0:00.42
+[15/32] Building CXX object tests/unittests/io_tests/CMakeFiles/df_tracer_test_stdio.dir/test_stdio.cpp.o
+[16/32] Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/objects/custom1.o (timed)
+Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/objects/custom1.o (timed)
+Elapsed time for /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/server/bpf/objects/custom1.o: 0:00.52
+[17/32] Building CXX object tests/unittests/io_tests/CMakeFiles/df_tracer_test.dir/test.cpp.o
+[18/32] Linking CXX executable bin/df_tracer_test_stdio
+[19/32] Linking all BPF objects into /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/objects/datacrumbs.bpf.o (timed)
+Linking all BPF objects into /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/libexec/datacrumbs/objects/datacrumbs.bpf.o (timed)
+Elapsed time for linking: 0:00.02
+[20/32] Linking CXX executable bin/df_tracer_test
+[21/32] Generating BPF skeleton: /home/cc/projects/gdsight/external/datacrumbs/build-p2pdma/include/datacrumbs/server/bpf/datacrumbs.skel.h
+[22/32] Building CXX object tools/CMakeFiles/aggregate_trace.dir/aggregate_trace.cpp.o
+[23/32] Linking CXX executable bin/aggregate_trace
+[24/32] Building CXX object CMakeFiles/datacrumbs_validator.dir/src/datacrumbs/validator/probe_validator.cpp.o
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/validator/probe_validator.cpp: In function ‘int main(int, char**)’:
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/validator/probe_validator.cpp:363:10: warning: ignoring return value of ‘int chown(const char*, __uid_t, __gid_t)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  363 |     chown(configManager_->probe_invalid_file_path.c_str(), uid, gid);
+      |     ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[25/32] Building CXX object CMakeFiles/datacrumbs_obj.dir/src/datacrumbs/server/process/writer/chrome_writer.cpp.o
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/writer/chrome_writer.cpp: In constructor ‘datacrumbs::ChromeWriter::ChromeWriter()’:
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/writer/chrome_writer.cpp:30:8: warning: ignoring return value of ‘int chown(const char*, __uid_t, __gid_t)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+   30 |   chown(configManager_->trace_file_path.c_str(), uid, gid);
+      |   ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[26/32] Building CXX object CMakeFiles/datacrumbs_obj.dir/src/datacrumbs/server/process/event_processor.cpp.o
+[27/32] Building CXX object CMakeFiles/datacrumbs.dir/src/datacrumbs/server/process/server.cpp.o
+In file included from /home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.cpp:3:
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp: In function ‘pid_t daemonize()’:
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp:307:6: warning: ignoring return value of ‘int dup(int)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  307 |   dup(0);                     // stdout
+      |   ~~~^~~
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp:308:6: warning: ignoring return value of ‘int dup(int)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  308 |   dup(0);                     // stderr
+      |   ~~~^~~
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp: In function ‘void redirect_output(const std::string&, const std::string&)’:
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp:338:10: warning: ignoring return value of ‘FILE* freopen(const char*, const char*, FILE*)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  338 |   freopen(logfile.c_str(), "a+", stderr);
+      |   ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp:343:8: warning: ignoring return value of ‘int chown(const char*, __uid_t, __gid_t)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  343 |   chown(logfile.c_str(), uid, gid);
+      |   ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp: In function ‘void write_pid_file(const std::string&, const std::string&)’:
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp:359:8: warning: ignoring return value of ‘int chown(const char*, __uid_t, __gid_t)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  359 |   chown(pidfile.c_str(), uid, gid);
+      |   ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp: In function ‘int main_process(int, char**, datacrumbs::EventProcessor*, bool)’:
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp:537:12: warning: ignoring return value of ‘int chown(const char*, __uid_t, __gid_t)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  537 |       chown(ready_file.c_str(), uid, gid);
+      |       ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp:815:12: warning: ignoring return value of ‘int chown(const char*, __uid_t, __gid_t)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  815 |       chown(status_file.c_str(), uid, gid);
+      |       ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[28/32] Building CXX object CMakeFiles/datacrumbs_obj.dir/src/datacrumbs/common/configuration_manager.cpp.o
+[29/32] Building CXX object CMakeFiles/datacrumbs_validator.dir/src/datacrumbs/common/configuration_manager.cpp.o
+[30/32] Linking CXX shared library libdatacrumbs_obj.so
+[31/32] Linking CXX executable bin/datacrumbs_validator
+[32/32] Linking CXX executable bin/datacrumbs
+ninja: Entering directory `build-p2pdma'
+[0/1] Install the project...
+-- Install configuration: "Release"
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/composable/include/datacrumbs/datacrumbs_config.h
+-- Installing: /home/cc/dc-prefix-p2pdma/lib/libdatacrumbs_client.so
+-- Set non-toolchain portion of runtime path of "/home/cc/dc-prefix-p2pdma/lib/libdatacrumbs_client.so" to "/home/cc/dc-prefix-p2pdma/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu/openmpi/lib"
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/objects/common.o
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/objects/init.o
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/objects/custom1.o
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/objects/cufile.o
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/objects/block.o
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/objects/p2pdma.o
+-- Installing: /home/cc/dc-prefix-p2pdma/lib/libdatacrumbs_obj.so
+-- Set non-toolchain portion of runtime path of "/home/cc/dc-prefix-p2pdma/lib/libdatacrumbs_obj.so" to "/home/cc/dc-prefix-p2pdma/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu/openmpi/lib"
+-- Installing: /home/cc/dc-prefix-p2pdma/sbin/datacrumbs
+-- Set non-toolchain portion of runtime path of "/home/cc/dc-prefix-p2pdma/sbin/datacrumbs" to "/home/cc/dc-prefix-p2pdma/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu/openmpi/lib"
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/objects/datacrumbs.bpf.o
+-- Installing: /home/cc/dc-prefix-p2pdma/sbin/datacrumbs_validator
+-- Set non-toolchain portion of runtime path of "/home/cc/dc-prefix-p2pdma/sbin/datacrumbs_validator" to "/home/cc/dc-prefix-p2pdma/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu/openmpi/lib"
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/composable/cmake/modules/datacrumbs-utils.cmake
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/composable/CMakeLists.txt
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/composable/src/datacrumbs/composable/process/server.cpp
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/composable/include/datacrumbs/server/process/generated_process.h
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/composable/include/datacrumbs/server/process/event_processor.h
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/composable/include/datacrumbs/server/process/writer/chrome_writer.h
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/composable/include/datacrumbs/server/process/compress/zlib_compressor.h
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/composable/include/datacrumbs/common/configuration_manager.h
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/composable/include/datacrumbs/common/data_structures.h
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/composable/include/datacrumbs/common/enumerations.h
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/composable/include/datacrumbs/common/logging.h
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/composable/include/datacrumbs/common/utils.h
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/composable/include/datacrumbs/common/constants.h
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/composable/include/datacrumbs/common/typedefs.h
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/composable/include/datacrumbs/server/bpf/shared.h
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/composable/include/datacrumbs/server/bpf/compat/map.h
+-- Installing: /home/cc/dc-prefix-p2pdma/libexec/datacrumbs/composable/src/datacrumbs/server/process/server.impl.cpp
+-- Installing: /home/cc/dc-prefix-p2pdma/etc/datacrumbs/configs/project.env.local
+-- Installing: /home/cc/dc-prefix-p2pdma/etc/datacrumbs/configs/izzet-gdstrace-node-pcidma.yaml
+-- Installing: /home/cc/dc-prefix-p2pdma/etc/datacrumbs/data/categories-cc-izzet-gdstrace-node-pcidma.json
+-- Installing: /home/cc/dc-prefix-p2pdma/etc/datacrumbs/data/probes-cc-izzet-gdstrace-node-pcidma.json
+-- Installing: /home/cc/dc-prefix-p2pdma/etc/datacrumbs/lmod/modulefiles/datacrumbs/0.0.4.lua
+-- Installing: /home/cc/dc-prefix-p2pdma/etc/datacrumbs/flux/cli/plugins/datacrumbs.py
+-- Installing: /home/cc/dc-prefix-p2pdma/bin/datacrumbs_setup
+-- Installing: /home/cc/dc-prefix-p2pdma/bin/datacrumbs_utility
+-- Installing: /home/cc/dc-prefix-p2pdma/bin/datacrumbs_args
+-- Installing: /home/cc/dc-prefix-p2pdma/bin/datacrumbs_logging
+-- Installing: /home/cc/dc-prefix-p2pdma/bin/datacrumbs_run
+-- Installing: /home/cc/dc-prefix-p2pdma/sbin/datacrumbs_run_validator
+-- Installing: /home/cc/dc-prefix-p2pdma/bin/datacrumbs_track
+-- Installing: /home/cc/dc-prefix-p2pdma/bin/datacrumbs_untrack
+-- Installing: /home/cc/dc-prefix-p2pdma/bin/datacrumbs_wrap
+-- Installing: /home/cc/dc-prefix-p2pdma/sbin/datacrumbs_compose
+-- Installing: /home/cc/dc-prefix-p2pdma/bin/datacrumbs_compose_run
+-- Installing: /home/cc/dc-prefix-p2pdma/sbin/datacrumbs_stop
+-- Installing: /home/cc/dc-prefix-p2pdma/sbin/datacrumbs_compose_wrapper
+-- Installing: /home/cc/dc-prefix-p2pdma/bin/datacrumbs_create_log_dir
+-- Installing: /home/cc/dc-prefix-p2pdma/sbin/datacrumbs_server_run.sh
+-- Installing: /home/cc/dc-prefix-p2pdma/sbin/datacrumbs_server_stop.sh
+-- Installing: /home/cc/dc-prefix-p2pdma/etc/datacrumbs/systemd/datacrumbs@.service
+-- Installing: /home/cc/dc-prefix-p2pdma/sbin/datacrumbs_service_common.sh
+-- Installing: /home/cc/dc-prefix-p2pdma/sbin/datacrumbs_service_run.sh
+-- Installing: /home/cc/dc-prefix-p2pdma/sbin/datacrumbs_service_stop.sh
+-- Installing: /home/cc/dc-prefix-p2pdma/bin/datacrumbs_salloc
+
+=== 5/6 runtime setup (caps + libbpf on system path) ===
+/home/cc/dc-prefix-p2pdma/sbin/datacrumbs cap_dac_read_search,cap_sys_admin,cap_perfmon,cap_bpf=ep
+
+=== 6/6 DFAnalyzer venv (~/dfa-venv) — dfanalyzer NON-editable (namespace merge) ===
+SKIP_DFA=1: keeping the existing ~/dfa-venv
+
+DONE. Toolchain in /home/cc/dc-prefix-p2pdma ; analyzer in ~/dfa-venv .
+Smoke (overhead): N=3 bash /home/cc/projects/gdsight/tools/overhead_bench.sh
+NOTE: trace-write on stop is currently buggy (see ../docs/DATACRUMBS-GDS-BUILD-LOG.md:
+  sticky run_id + log-perm trips set -e in stop → 0-byte .pfw.gz). Overhead numbers
+  do NOT depend on it (probes attach & fire regardless). dc_reset between runs.

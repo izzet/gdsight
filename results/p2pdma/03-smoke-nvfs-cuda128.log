@@ -1,0 +1,70 @@
+
+============ 0. SANITY ============
+kernel cmdline:
+BOOT_IMAGE=/boot/vmlinuz-6.8.0-1051-nvidia root=LABEL=cloudimg-rootfs ro console=tty0 console=ttyS0,115200 no_timer_check gfxpayload=text pci=realloc=off amd_iommu=off
+nvidia license: Dual MIT/GPL  (want Dual MIT/GPL)
+nvidia_fs loaded: 2
+IOMMU in dmesg:
+[    6.541398] iommu: Default domain type: Translated
+
+============ 1. MOUNT /dev/nvme1n1 -> /mnt/nvme1 (no format) ============
+/dev/nvme1n1 ext4   /mnt/nvme1
+
+============ 2. ENSURE NVMe REGISTERED WITH nvidia-fs ============
+
+============ 3. THE GATE: gdscheck -p ============
+ Platform: x86_64
+ NVMe P2PDMA        : Unsupported
+ NVMe               : Supported
+ properties.use_compat_mode : true
+ GPU index 0 NVIDIA A100-PCIE-40GB bar:1 bar size (MiB):65536 supports GDS, IOMMU State: Disabled
+ Found ACS enabled for switch 0000:86:10.0
+ Found ACS enabled for switch 0000:84:10.0
+ Found ACS enabled for switch 0000:82:00.0
+ Found ACS enabled for switch 0000:80:01.1
+ IOMMU: disabled
+ Platform: PowerEdge R6525, Arch: x86_64(Linux 6.8.0-1051-nvidia)
+ Platform verification succeeded
+
+>>> GATE PASSED: NVMe Supported — true GDS path is live.
+    (use_compat_mode:true just means compat is ALLOWED as fallback; true-GDS is
+     proven by gds_stats/kvikio posix=0 below.)
+
+============ 4. STEP 1 — create file (dd, NOT a GDS write) + read ceiling x0/x1/x2 ============
+--- seq read -x0 ---
+IoType: READ XferType: GPUD Threads: 4 DataSetSize: 8385536/8388608(KiB) IOSize: 1024(KiB) Throughput: 2.894479 GiB/sec, Avg_Latency: 1349.085675 usecs ops: 8189 total_time 2.762870 secs
+--- seq read -x1 ---
+IoType: READ XferType: CPUONLY Threads: 4 DataSetSize: 8385536/8388608(KiB) IOSize: 1024(KiB) Throughput: 2.893180 GiB/sec, Avg_Latency: 1349.786118 usecs ops: 8189 total_time 2.764111 secs
+--- seq read -x2 ---
+IoType: READ XferType: CPU_GPU Threads: 4 DataSetSize: 8385536/8388608(KiB) IOSize: 1024(KiB) Throughput: 2.934284 GiB/sec, Avg_Latency: 1330.499510 usecs ops: 8189 total_time 2.725391 secs
+
+============ 5. STEP 2 — silent pathology: aligned vs unaligned randread (-x0) ============
+--- aligned   randread 4K ---
+IoType: RANDREAD XferType: GPUD Threads: 4 DataSetSize: 8367464/8388608(KiB) IOSize: 4(KiB) Throughput: 0.147170 GiB/sec, Avg_Latency: 103.679159 usecs ops: 2091866 total_time 54.221740 secs
+--- UNaligned randread 4K ---
+IoType: RANDREAD XferType: GPUD Threads: 4 DataSetSize: 8372456/8388608(KiB) IOSize: 4(KiB) Throughput: 0.115450 GiB/sec, Avg_Latency: 132.165766 usecs ops: 2093114 total_time 69.160723 secs
+--- aligned   randread 64K ---
+IoType: RANDREAD XferType: GPUD Threads: 4 DataSetSize: 8288768/8388608(KiB) IOSize: 64(KiB) Throughput: 0.692505 GiB/sec, Avg_Latency: 352.577488 usecs ops: 129512 total_time 11.414775 secs
+--- UNaligned randread 64K ---
+IoType: RANDREAD XferType: GPUD Threads: 4 DataSetSize: 8341248/8388608(KiB) IOSize: 64(KiB) Throughput: 0.636622 GiB/sec, Avg_Latency: 383.470022 usecs ops: 130332 total_time 12.495382 secs
+--- aligned   randread 1M ---
+IoType: RANDREAD XferType: GPUD Threads: 4 DataSetSize: 8385536/8388608(KiB) IOSize: 1024(KiB) Throughput: 2.923113 GiB/sec, Avg_Latency: 1335.751559 usecs ops: 8189 total_time 2.735806 secs
+--- UNaligned randread 1M ---
+IoType: RANDREAD XferType: GPUD Threads: 4 DataSetSize: 8349696/8388608(KiB) IOSize: 1024(KiB) Throughput: 2.723740 GiB/sec, Avg_Latency: 1433.018478 usecs ops: 8154 total_time 2.923513 secs
+
+============ 6. gds_stats attaches to a live GDS process (impossible in compat mode) ============
+PosixBatchEnqueued: ok = 0 err = 0
+PosixBatchProcessed: ok = 0 err = 0
+Total Read Size (MiB): 334
+Read BandWidth (GiB/s): 0.144558
+Avg Read Latency (us): 98
+Write BandWidth (GiB/s): 0
+Total Batch Read Size (MiB): 0
+Batch Read BandWidth (GiB/s): 0
+Batch Write BandWidth (GiB/s): 0
+GPU 0(UUID: c67a5fea76ac621c6dd3a5c9af607896) Read: bw=0.144562 util(%)=395 n=85691 posix=0 unalign=0 dr=0 r_sparse=0 r_inline=0 err=0 MiB=334 Write: bw=0 util(%)=0 n=0 posix=0 unalign=0 dr=0 err=0 MiB=0 BufRegister: n=4 err=0 free=0 MiB=0
+PER_GPU POSIX POOL BUFFER STATS:
+PER GPU THREAD POOL STATS:
+
+ALL DONE. Raw outputs in /home/cc/projects/gdstrace/results/chameleon/  | cufile.log in /mnt/nvme1/gdstrace-smoke/
+If the gate passed: snapshot now ->  sudo cc-snapshot CC-Ubuntu24.04-CUDA-GDS-$(date +%Y%m%d)

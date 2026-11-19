@@ -1,0 +1,54 @@
+diff --git a/etc/datacrumbs/plugins/custom_probes/cufile/cufile.bpf.c b/etc/datacrumbs/plugins/custom_probes/cufile/cufile.bpf.c
+index 307a9a6..7d0f8cb 100644
+--- a/etc/datacrumbs/plugins/custom_probes/cufile/cufile.bpf.c
++++ b/etc/datacrumbs/plugins/custom_probes/cufile/cufile.bpf.c
+@@ -14,7 +14,7 @@ struct cufile_reap_t { unsigned long long nr_ptr; unsigned long long ev_ptr; };
+ DATACRUMBS_MAP(cufile_reap_map, u64, struct cufile_reap_t);
+ 
+ #define CUFILE_EVENT_ID_START 200000
+-#define CUFILE_LIB "/usr/local/cuda-12.6/targets/x86_64-linux/lib/libcufile.so"
++#define CUFILE_LIB "/usr/local/cuda-12.8/targets/x86_64-linux/lib/libcufile.so"
+ 
+ /* CUfileIOParams_t layout (cufile.h): stride 64 B; file_offset @ +16, size @ +32 (union.batch). */
+ #define CUFILE_IOPARAMS_STRIDE 64
+diff --git a/etc/datacrumbs/plugins/custom_probes/cufile/probes.json b/etc/datacrumbs/plugins/custom_probes/cufile/probes.json
+index 6e77274..27463e9 100644
+--- a/etc/datacrumbs/plugins/custom_probes/cufile/probes.json
++++ b/etc/datacrumbs/plugins/custom_probes/cufile/probes.json
+@@ -2,7 +2,7 @@
+     {
+         "type": 2,
+         "name": "cufile",
+-        "binary_path": "/usr/local/cuda-12.6/targets/x86_64-linux/lib/libcufile.so",
++        "binary_path": "/usr/local/cuda-12.8/targets/x86_64-linux/lib/libcufile.so",
+         "functions": [
+             "cuFileRead",
+             "cuFileWrite",
+diff --git a/etc/datacrumbs/plugins/custom_probes/nvidiafs/nvidiafs.bpf.c b/etc/datacrumbs/plugins/custom_probes/nvidiafs/nvidiafs.bpf.c
+index 1e910da..fcd1f54 100644
+--- a/etc/datacrumbs/plugins/custom_probes/nvidiafs/nvidiafs.bpf.c
++++ b/etc/datacrumbs/plugins/custom_probes/nvidiafs/nvidiafs.bpf.c
+@@ -44,3 +44,9 @@ int BPF_KPROBE(nvfs_p2p_k) { return nvfs_point(ctx, NVFS_EVENT_ID_START + 1); }
+ /* data staged through a host shadow/bounce buffer (NOT zero-copy) */
+ SEC("kprobe/nvfs_mgroup_pin_shadow_pages")
+ int BPF_KPROBE(nvfs_shadow_k) { return nvfs_point(ctx, NVFS_EVENT_ID_START + 2); }
++
++/* TRUE P2P on the upstream kernel PCI P2PDMA transport (CUDA >= 12.8, use_pci_p2pdma): the DMA
++ * mapping layer calls this once per scatter-gather segment that targets P2P (GPU BAR) memory.
++ * nvidia-fs is bypassed on that path, so nvfs_get_p2p_dma_mapping never fires there. */
++SEC("kprobe/pci_p2pdma_map_segment")
++int BPF_KPROBE(pci_p2pdma_map_k) { return nvfs_point(ctx, NVFS_EVENT_ID_START + 3); }
+diff --git a/etc/datacrumbs/plugins/custom_probes/nvidiafs/probes.json b/etc/datacrumbs/plugins/custom_probes/nvidiafs/probes.json
+index 3a98107..54362f2 100644
+--- a/etc/datacrumbs/plugins/custom_probes/nvidiafs/probes.json
++++ b/etc/datacrumbs/plugins/custom_probes/nvidiafs/probes.json
+@@ -5,7 +5,8 @@
+         "functions": [
+             "nvfs_io",
+             "nvfs_get_p2p_dma_mapping",
+-            "nvfs_mgroup_pin_shadow_pages"
++            "nvfs_mgroup_pin_shadow_pages",
++            "pci_p2pdma_map_segment"
+         ]
+     }
+ ]

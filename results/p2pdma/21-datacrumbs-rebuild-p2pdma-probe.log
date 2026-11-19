@@ -1,0 +1,337 @@
+ninja: Entering directory `build'
+[1/1] Cleaning BPF build artifacts (ignoring if cannot remove)
+ninja: Entering directory `build'
+[1/2] Cleaning BPF build artifacts (ignoring if cannot remove)
+[2/2] Running datacrumbs_explorer with argument 'izzet-gdstrace-node'
+[INFO] [ConfigurationManager] Final configuration:
+[INFO] [ConfigurationManager] Capture probes loaded: 4
+[INFO] [ConfigurationManager] Category map loaded with 38 entries.
+[INFO]   Path: /home/cc/projects/gdsight/external/datacrumbs/build/configs
+[INFO]   Name: izzet-gdstrace-node
+[INFO]   Trace log dir: /home/cc/projects/gdsight/external/datacrumbs/build/logs
+[INFO]   Trace file path: /home/cc/projects/gdsight/external/datacrumbs/build/logs/trace-cc-0-0-1-izzet-gdstrace-node.pfw.gz
+[INFO]   Data dir: /home/cc/projects/gdsight/external/datacrumbs/build/data
+[INFO]   Probe file path: /home/cc/projects/gdsight/external/datacrumbs/build/data/probes-cc-izzet-gdstrace-node.json
+[INFO]   Probe exclusion file path: /home/cc/projects/gdsight/external/datacrumbs/build/data/probes-exclusion-cc-izzet-gdstrace-node.json
+[INFO]   Probe invalid file path: /home/cc/projects/gdsight/external/datacrumbs/build/data/probes-invalid-cc-izzet-gdstrace-node.json
+[INFO]   Manual probe path: /home/cc/projects/gdsight/external/datacrumbs/build/data/manual-probes-cc-izzet-gdstrace-node.json
+[INFO]   Category map path: /home/cc/projects/gdsight/external/datacrumbs/build/data/categories-cc-izzet-gdstrace-node.json
+[INFO]   Profiling interval: 0.001000
+[INFO]   Runtime User: cc
+[INFO]   Install user: cc
+[INFO]   Hostname: izzet-gdstrace-node
+[INFO]   Capture probes: 4
+[INFO]   Mode: Tracing
+[INFO]   Inclusion path: Not set
+[INFO]     Probe: name=custom1, type=4, probe_type=4, regex=
+[INFO]     Probe: name=cufile, type=4, probe_type=4, regex=
+[INFO]     Probe: name=block, type=4, probe_type=4, regex=
+[INFO]     Probe: name=nvidiafs, type=4, probe_type=4, regex=
+[INFO] [ConfigurationManager] Initialization complete.
+[INFO] Loaded 4 existing probes
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: custom1
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: cufile
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: block
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: nvidiafs
+[INFO] Probe: custom1
+[INFO] Probe: cufile
+[INFO] Probe: block
+[INFO] Probe: nvidiafs
+[PRINT] Elapsed time in Probe Explorer: 0.002845 seconds
+ninja: Entering directory `build'
+[1/3] Cleaning BPF build artifacts (ignoring if cannot remove)
+[2/3] Running datacrumbs_explorer with argument 'izzet-gdstrace-node'
+[INFO] [ConfigurationManager] Final configuration:
+[INFO] [ConfigurationManager] Capture probes loaded: 4
+[INFO] [ConfigurationManager] Category map loaded with 38 entries.
+[INFO]   Path: /home/cc/projects/gdsight/external/datacrumbs/build/configs
+[INFO]   Name: izzet-gdstrace-node
+[INFO]   Trace log dir: /home/cc/projects/gdsight/external/datacrumbs/build/logs
+[INFO]   Trace file path: /home/cc/projects/gdsight/external/datacrumbs/build/logs/trace-cc-0-0-1-izzet-gdstrace-node.pfw.gz
+[INFO]   Data dir: /home/cc/projects/gdsight/external/datacrumbs/build/data
+[INFO]   Probe file path: /home/cc/projects/gdsight/external/datacrumbs/build/data/probes-cc-izzet-gdstrace-node.json
+[INFO]   Probe exclusion file path: /home/cc/projects/gdsight/external/datacrumbs/build/data/probes-exclusion-cc-izzet-gdstrace-node.json
+[INFO]   Probe invalid file path: /home/cc/projects/gdsight/external/datacrumbs/build/data/probes-invalid-cc-izzet-gdstrace-node.json
+[INFO]   Manual probe path: /home/cc/projects/gdsight/external/datacrumbs/build/data/manual-probes-cc-izzet-gdstrace-node.json
+[INFO]   Category map path: /home/cc/projects/gdsight/external/datacrumbs/build/data/categories-cc-izzet-gdstrace-node.json
+[INFO]   Profiling interval: 0.001000
+[INFO]   Runtime User: cc
+[INFO]   Install user: cc
+[INFO]   Hostname: izzet-gdstrace-node
+[INFO]   Capture probes: 4
+[INFO]   Mode: Tracing
+[INFO]   Inclusion path: Not set
+[INFO]     Probe: name=custom1, type=4, probe_type=4, regex=
+[INFO]     Probe: name=cufile, type=4, probe_type=4, regex=
+[INFO]     Probe: name=block, type=4, probe_type=4, regex=
+[INFO]     Probe: name=nvidiafs, type=4, probe_type=4, regex=
+[INFO] [ConfigurationManager] Initialization complete.
+[INFO] Loaded 4 existing probes
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: custom1
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: cufile
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: block
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: nvidiafs
+[INFO] Probe: custom1
+[INFO] Probe: cufile
+[INFO] Probe: block
+[INFO] Probe: nvidiafs
+[PRINT] Elapsed time in Probe Explorer: 0.001054 seconds
+[3/3] Running datacrumbs_generator with argument 'izzet-gdstrace-node'
+[INFO] [ConfigurationManager] Final configuration:
+[INFO] [ConfigurationManager] Capture probes loaded: 4
+[INFO] [ConfigurationManager] Category map loaded with 38 entries.
+[INFO]   Path: /home/cc/projects/gdsight/external/datacrumbs/build/configs
+[INFO]   Name: izzet-gdstrace-node
+[INFO]   Trace log dir: /home/cc/projects/gdsight/external/datacrumbs/build/logs
+[INFO]   Trace file path: /home/cc/projects/gdsight/external/datacrumbs/build/logs/trace-cc-0-0-1-izzet-gdstrace-node.pfw.gz
+[INFO]   Data dir: /home/cc/projects/gdsight/external/datacrumbs/build/data
+[INFO]   Probe file path: /home/cc/projects/gdsight/external/datacrumbs/build/data/probes-cc-izzet-gdstrace-node.json
+[INFO]   Probe exclusion file path: /home/cc/projects/gdsight/external/datacrumbs/build/data/probes-exclusion-cc-izzet-gdstrace-node.json
+[INFO]   Probe invalid file path: /home/cc/projects/gdsight/external/datacrumbs/build/data/probes-invalid-cc-izzet-gdstrace-node.json
+[INFO]   Manual probe path: /home/cc/projects/gdsight/external/datacrumbs/build/data/manual-probes-cc-izzet-gdstrace-node.json
+[INFO]   Category map path: /home/cc/projects/gdsight/external/datacrumbs/build/data/categories-cc-izzet-gdstrace-node.json
+[INFO]   Profiling interval: 0.001000
+[INFO]   Runtime User: cc
+[INFO]   Install user: cc
+[INFO]   Hostname: izzet-gdstrace-node
+[INFO]   Capture probes: 4
+[INFO]   Mode: Tracing
+[INFO]   Inclusion path: Not set
+[INFO]     Probe: name=custom1, type=4, probe_type=4, regex=
+[INFO]     Probe: name=cufile, type=4, probe_type=4, regex=
+[INFO]     Probe: name=block, type=4, probe_type=4, regex=
+[INFO]     Probe: name=nvidiafs, type=4, probe_type=4, regex=
+[INFO] [ConfigurationManager] Initialization complete.
+[INFO] [ProbeGenerator] Reading probes file: /home/cc/projects/gdsight/external/datacrumbs/build/data/probes-cc-izzet-gdstrace-node.json
+[INFO] [ProbeGenerator] Number of probes: 4
+[INFO] [ProbeGenerator] Processing probe: custom1
+[INFO] [ProbeGenerator] Generated 21 functions file: /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/bpf/src/custom1.bpf.c
+[INFO] [ProbeGenerator] Processing probe: cufile
+[INFO] [ProbeGenerator] Generated 10 functions file: /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/bpf/src/cufile.bpf.c
+[INFO] [ProbeGenerator] Processing probe: block
+[INFO] [ProbeGenerator] Generated 1 functions file: /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/bpf/src/block.bpf.c
+[INFO] [ProbeGenerator] Processing probe: nvidiafs
+[INFO] [ProbeGenerator] Generated 4 functions file: /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/bpf/src/nvidiafs.bpf.c
+[INFO] No manual probes were added.
+[INFO] [ProbeGenerator] All process headers included in: /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/process/generated_process.h
+[INFO] [ProbeGenerator] Writing category map...
+[PRINT] [ProbeGenerator] Total number of probes generated: 36
+[PRINT] Total time elapsed for Probe Generator: 0.001930 seconds
+ninja: Entering directory `build'
+[1/16] Cleaning BPF build artifacts (ignoring if cannot remove)
+[2/16] Running datacrumbs_explorer with argument 'izzet-gdstrace-node'
+[INFO] [ConfigurationManager] Final configuration:
+[INFO] [ConfigurationManager] Capture probes loaded: 4
+[INFO] [ConfigurationManager] Category map loaded with 39 entries.
+[INFO]   Path: /home/cc/projects/gdsight/external/datacrumbs/build/configs
+[INFO]   Name: izzet-gdstrace-node
+[INFO]   Trace log dir: /home/cc/projects/gdsight/external/datacrumbs/build/logs
+[INFO]   Trace file path: /home/cc/projects/gdsight/external/datacrumbs/build/logs/trace-cc-0-0-1-izzet-gdstrace-node.pfw.gz
+[INFO]   Data dir: /home/cc/projects/gdsight/external/datacrumbs/build/data
+[INFO]   Probe file path: /home/cc/projects/gdsight/external/datacrumbs/build/data/probes-cc-izzet-gdstrace-node.json
+[INFO]   Probe exclusion file path: /home/cc/projects/gdsight/external/datacrumbs/build/data/probes-exclusion-cc-izzet-gdstrace-node.json
+[INFO]   Probe invalid file path: /home/cc/projects/gdsight/external/datacrumbs/build/data/probes-invalid-cc-izzet-gdstrace-node.json
+[INFO]   Manual probe path: /home/cc/projects/gdsight/external/datacrumbs/build/data/manual-probes-cc-izzet-gdstrace-node.json
+[INFO]   Category map path: /home/cc/projects/gdsight/external/datacrumbs/build/data/categories-cc-izzet-gdstrace-node.json
+[INFO]   Profiling interval: 0.001000
+[INFO]   Runtime User: cc
+[INFO]   Install user: cc
+[INFO]   Hostname: izzet-gdstrace-node
+[INFO]   Capture probes: 4
+[INFO]   Mode: Tracing
+[INFO]   Inclusion path: Not set
+[INFO]     Probe: name=custom1, type=4, probe_type=4, regex=
+[INFO]     Probe: name=cufile, type=4, probe_type=4, regex=
+[INFO]     Probe: name=block, type=4, probe_type=4, regex=
+[INFO]     Probe: name=nvidiafs, type=4, probe_type=4, regex=
+[INFO] [ConfigurationManager] Initialization complete.
+[INFO] Loaded 4 existing probes
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: custom1
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: cufile
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: block
+[INFO] Extracting custom probes...
+[INFO] Deduplicating custom probes...
+[INFO] Valid probe extracted: nvidiafs
+[INFO] Probe: custom1
+[INFO] Probe: cufile
+[INFO] Probe: block
+[INFO] Probe: nvidiafs
+[PRINT] Elapsed time in Probe Explorer: 0.001264 seconds
+[3/16] Running datacrumbs_generator with argument 'izzet-gdstrace-node'
+[INFO] [ConfigurationManager] Final configuration:
+[INFO] [ConfigurationManager] Capture probes loaded: 4
+[INFO] [ConfigurationManager] Category map loaded with 39 entries.
+[INFO]   Path: /home/cc/projects/gdsight/external/datacrumbs/build/configs
+[INFO]   Name: izzet-gdstrace-node
+[INFO]   Trace log dir: /home/cc/projects/gdsight/external/datacrumbs/build/logs
+[INFO]   Trace file path: /home/cc/projects/gdsight/external/datacrumbs/build/logs/trace-cc-0-0-1-izzet-gdstrace-node.pfw.gz
+[INFO]   Data dir: /home/cc/projects/gdsight/external/datacrumbs/build/data
+[INFO]   Probe file path: /home/cc/projects/gdsight/external/datacrumbs/build/data/probes-cc-izzet-gdstrace-node.json
+[INFO]   Probe exclusion file path: /home/cc/projects/gdsight/external/datacrumbs/build/data/probes-exclusion-cc-izzet-gdstrace-node.json
+[INFO]   Probe invalid file path: /home/cc/projects/gdsight/external/datacrumbs/build/data/probes-invalid-cc-izzet-gdstrace-node.json
+[INFO]   Manual probe path: /home/cc/projects/gdsight/external/datacrumbs/build/data/manual-probes-cc-izzet-gdstrace-node.json
+[INFO]   Category map path: /home/cc/projects/gdsight/external/datacrumbs/build/data/categories-cc-izzet-gdstrace-node.json
+[INFO]   Profiling interval: 0.001000
+[INFO]   Runtime User: cc
+[INFO]   Install user: cc
+[INFO]   Hostname: izzet-gdstrace-node
+[INFO]   Capture probes: 4
+[INFO]   Mode: Tracing
+[INFO]   Inclusion path: Not set
+[INFO]     Probe: name=custom1, type=4, probe_type=4, regex=
+[INFO]     Probe: name=cufile, type=4, probe_type=4, regex=
+[INFO]     Probe: name=block, type=4, probe_type=4, regex=
+[INFO]     Probe: name=nvidiafs, type=4, probe_type=4, regex=
+[INFO] [ConfigurationManager] Initialization complete.
+[INFO] [ProbeGenerator] Reading probes file: /home/cc/projects/gdsight/external/datacrumbs/build/data/probes-cc-izzet-gdstrace-node.json
+[INFO] [ProbeGenerator] Number of probes: 4
+[INFO] [ProbeGenerator] Processing probe: custom1
+[INFO] [ProbeGenerator] Generated 21 functions file: /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/bpf/src/custom1.bpf.c
+[INFO] [ProbeGenerator] Processing probe: cufile
+[INFO] [ProbeGenerator] Generated 10 functions file: /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/bpf/src/cufile.bpf.c
+[INFO] [ProbeGenerator] Processing probe: block
+[INFO] [ProbeGenerator] Generated 1 functions file: /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/bpf/src/block.bpf.c
+[INFO] [ProbeGenerator] Processing probe: nvidiafs
+[INFO] [ProbeGenerator] Generated 4 functions file: /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/bpf/src/nvidiafs.bpf.c
+[INFO] No manual probes were added.
+[INFO] [ProbeGenerator] All process headers included in: /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/process/generated_process.h
+[INFO] [ProbeGenerator] Writing category map...
+[PRINT] [ProbeGenerator] Total number of probes generated: 36
+[PRINT] Total time elapsed for Probe Generator: 0.001402 seconds
+[4/16] [DATACRUMBS] Generating vmlinux.h from /sys/kernel/btf/vmlinux (timed)
+[5/16] Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/bpf/objects/nvidiafs.o (timed)
+Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/bpf/objects/nvidiafs.o (timed)
+Elapsed time for /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/bpf/objects/nvidiafs.o: 0:00.48
+[6/16] Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/bpf/objects/block.o (timed)
+Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/bpf/objects/block.o (timed)
+Elapsed time for /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/bpf/objects/block.o: 0:00.49
+[7/16] Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/bpf/objects/cufile.o (timed)
+Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/bpf/objects/cufile.o (timed)
+Elapsed time for /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/bpf/objects/cufile.o: 0:00.52
+[8/16] Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/bpf/objects/custom1.o (timed)
+Compiling BPF object: /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/bpf/objects/custom1.o (timed)
+Elapsed time for /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/server/bpf/objects/custom1.o: 0:00.63
+[9/16] Linking all BPF objects into /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/objects/datacrumbs.bpf.o (timed)
+Linking all BPF objects into /home/cc/projects/gdsight/external/datacrumbs/build/libexec/datacrumbs/objects/datacrumbs.bpf.o (timed)
+Elapsed time for linking: 0:00.02
+[10/16] Generating BPF skeleton: /home/cc/projects/gdsight/external/datacrumbs/build/include/datacrumbs/server/bpf/datacrumbs.skel.h
+[11/16] Building CXX object CMakeFiles/datacrumbs_validator.dir/src/datacrumbs/validator/probe_validator.cpp.o
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/validator/probe_validator.cpp: In function ‘int main(int, char**)’:
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/validator/probe_validator.cpp:363:10: warning: ignoring return value of ‘int chown(const char*, __uid_t, __gid_t)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  363 |     chown(configManager_->probe_invalid_file_path.c_str(), uid, gid);
+      |     ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[12/16] Linking CXX executable bin/datacrumbs_validator
+[13/16] Building CXX object CMakeFiles/datacrumbs_obj.dir/src/datacrumbs/server/process/event_processor.cpp.o
+[14/16] Linking CXX shared library libdatacrumbs_obj.so
+[15/16] Building CXX object CMakeFiles/datacrumbs.dir/src/datacrumbs/server/process/server.cpp.o
+In file included from /home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.cpp:3:
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp: In function ‘pid_t daemonize()’:
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp:307:6: warning: ignoring return value of ‘int dup(int)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  307 |   dup(0);                     // stdout
+      |   ~~~^~~
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp:308:6: warning: ignoring return value of ‘int dup(int)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  308 |   dup(0);                     // stderr
+      |   ~~~^~~
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp: In function ‘void redirect_output(const std::string&, const std::string&)’:
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp:338:10: warning: ignoring return value of ‘FILE* freopen(const char*, const char*, FILE*)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  338 |   freopen(logfile.c_str(), "a+", stderr);
+      |   ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp:343:8: warning: ignoring return value of ‘int chown(const char*, __uid_t, __gid_t)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  343 |   chown(logfile.c_str(), uid, gid);
+      |   ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp: In function ‘void write_pid_file(const std::string&, const std::string&)’:
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp:359:8: warning: ignoring return value of ‘int chown(const char*, __uid_t, __gid_t)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  359 |   chown(pidfile.c_str(), uid, gid);
+      |   ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp: In function ‘int main_process(int, char**, datacrumbs::EventProcessor*, bool)’:
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp:537:12: warning: ignoring return value of ‘int chown(const char*, __uid_t, __gid_t)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  537 |       chown(ready_file.c_str(), uid, gid);
+      |       ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/cc/projects/gdsight/external/datacrumbs/src/datacrumbs/server/process/server.impl.cpp:815:12: warning: ignoring return value of ‘int chown(const char*, __uid_t, __gid_t)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  815 |       chown(status_file.c_str(), uid, gid);
+      |       ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[16/16] Linking CXX executable bin/datacrumbs
+ninja: Entering directory `build'
+[0/1] Install the project...
+-- Install configuration: "Release"
+-- Up-to-date: /home/cc/dc-prefix/libexec/datacrumbs/composable/include/datacrumbs/datacrumbs_config.h
+-- Up-to-date: /home/cc/dc-prefix/lib/libdatacrumbs_client.so
+-- Up-to-date: /home/cc/dc-prefix/libexec/datacrumbs/objects/common.o
+-- Up-to-date: /home/cc/dc-prefix/libexec/datacrumbs/objects/init.o
+-- Installing: /home/cc/dc-prefix/libexec/datacrumbs/objects/custom1.o
+-- Installing: /home/cc/dc-prefix/libexec/datacrumbs/objects/cufile.o
+-- Installing: /home/cc/dc-prefix/libexec/datacrumbs/objects/block.o
+-- Installing: /home/cc/dc-prefix/libexec/datacrumbs/objects/nvidiafs.o
+-- Installing: /home/cc/dc-prefix/lib/libdatacrumbs_obj.so
+-- Set non-toolchain portion of runtime path of "/home/cc/dc-prefix/lib/libdatacrumbs_obj.so" to "/home/cc/dc-prefix/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu/openmpi/lib"
+-- Installing: /home/cc/dc-prefix/sbin/datacrumbs
+-- Set non-toolchain portion of runtime path of "/home/cc/dc-prefix/sbin/datacrumbs" to "/home/cc/dc-prefix/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu/openmpi/lib"
+-- Installing: /home/cc/dc-prefix/libexec/datacrumbs/objects/datacrumbs.bpf.o
+-- Installing: /home/cc/dc-prefix/sbin/datacrumbs_validator
+-- Set non-toolchain portion of runtime path of "/home/cc/dc-prefix/sbin/datacrumbs_validator" to "/home/cc/dc-prefix/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu/openmpi/lib"
+-- Up-to-date: /home/cc/dc-prefix/libexec/datacrumbs/composable/cmake/modules/datacrumbs-utils.cmake
+-- Up-to-date: /home/cc/dc-prefix/libexec/datacrumbs/composable/CMakeLists.txt
+-- Up-to-date: /home/cc/dc-prefix/libexec/datacrumbs/composable/src/datacrumbs/composable/process/server.cpp
+-- Installing: /home/cc/dc-prefix/libexec/datacrumbs/composable/include/datacrumbs/server/process/generated_process.h
+-- Up-to-date: /home/cc/dc-prefix/libexec/datacrumbs/composable/include/datacrumbs/server/process/event_processor.h
+-- Up-to-date: /home/cc/dc-prefix/libexec/datacrumbs/composable/include/datacrumbs/server/process/writer/chrome_writer.h
+-- Up-to-date: /home/cc/dc-prefix/libexec/datacrumbs/composable/include/datacrumbs/server/process/compress/zlib_compressor.h
+-- Up-to-date: /home/cc/dc-prefix/libexec/datacrumbs/composable/include/datacrumbs/common/configuration_manager.h
+-- Up-to-date: /home/cc/dc-prefix/libexec/datacrumbs/composable/include/datacrumbs/common/data_structures.h
+-- Up-to-date: /home/cc/dc-prefix/libexec/datacrumbs/composable/include/datacrumbs/common/enumerations.h
+-- Up-to-date: /home/cc/dc-prefix/libexec/datacrumbs/composable/include/datacrumbs/common/logging.h
+-- Up-to-date: /home/cc/dc-prefix/libexec/datacrumbs/composable/include/datacrumbs/common/utils.h
+-- Up-to-date: /home/cc/dc-prefix/libexec/datacrumbs/composable/include/datacrumbs/common/constants.h
+-- Up-to-date: /home/cc/dc-prefix/libexec/datacrumbs/composable/include/datacrumbs/common/typedefs.h
+-- Up-to-date: /home/cc/dc-prefix/libexec/datacrumbs/composable/include/datacrumbs/server/bpf/shared.h
+-- Up-to-date: /home/cc/dc-prefix/libexec/datacrumbs/composable/include/datacrumbs/server/bpf/compat/map.h
+-- Up-to-date: /home/cc/dc-prefix/libexec/datacrumbs/composable/src/datacrumbs/server/process/server.impl.cpp
+-- Up-to-date: /home/cc/dc-prefix/etc/datacrumbs/configs/project.env.local
+-- Up-to-date: /home/cc/dc-prefix/etc/datacrumbs/configs/izzet-gdstrace-node.yaml
+-- Installing: /home/cc/dc-prefix/etc/datacrumbs/data/categories-cc-izzet-gdstrace-node.json
+-- Installing: /home/cc/dc-prefix/etc/datacrumbs/data/probes-cc-izzet-gdstrace-node.json
+-- Up-to-date: /home/cc/dc-prefix/etc/datacrumbs/lmod/modulefiles/datacrumbs/0.0.4.lua
+-- Up-to-date: /home/cc/dc-prefix/etc/datacrumbs/flux/cli/plugins/datacrumbs.py
+-- Up-to-date: /home/cc/dc-prefix/bin/datacrumbs_setup
+-- Up-to-date: /home/cc/dc-prefix/bin/datacrumbs_utility
+-- Up-to-date: /home/cc/dc-prefix/bin/datacrumbs_args
+-- Up-to-date: /home/cc/dc-prefix/bin/datacrumbs_logging
+-- Up-to-date: /home/cc/dc-prefix/bin/datacrumbs_run
+-- Up-to-date: /home/cc/dc-prefix/sbin/datacrumbs_run_validator
+-- Up-to-date: /home/cc/dc-prefix/bin/datacrumbs_track
+-- Up-to-date: /home/cc/dc-prefix/bin/datacrumbs_untrack
+-- Up-to-date: /home/cc/dc-prefix/bin/datacrumbs_wrap
+-- Up-to-date: /home/cc/dc-prefix/sbin/datacrumbs_compose
+-- Up-to-date: /home/cc/dc-prefix/bin/datacrumbs_compose_run
+-- Up-to-date: /home/cc/dc-prefix/sbin/datacrumbs_stop
+-- Up-to-date: /home/cc/dc-prefix/sbin/datacrumbs_compose_wrapper
+-- Up-to-date: /home/cc/dc-prefix/bin/datacrumbs_create_log_dir
+-- Up-to-date: /home/cc/dc-prefix/sbin/datacrumbs_server_run.sh
+-- Up-to-date: /home/cc/dc-prefix/sbin/datacrumbs_server_stop.sh
+-- Up-to-date: /home/cc/dc-prefix/etc/datacrumbs/systemd/datacrumbs@.service
+-- Up-to-date: /home/cc/dc-prefix/sbin/datacrumbs_service_common.sh
+-- Up-to-date: /home/cc/dc-prefix/sbin/datacrumbs_service_run.sh
+-- Up-to-date: /home/cc/dc-prefix/sbin/datacrumbs_service_stop.sh
+-- Up-to-date: /home/cc/dc-prefix/bin/datacrumbs_salloc

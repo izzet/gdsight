@@ -1,0 +1,12 @@
+--- rep 1
+  chunked, cache ON (default) | GDS reads +0     (+0 MiB) | BW=0.909 GiB/s
+  chunked, cache OFF (fix)   | GDS reads +256   (+64 MiB) | BW=0.585 GiB/s
+  contiguous                 | GDS reads +72    (+65 MiB) | BW=1.598 GiB/s
+--- rep 2
+  chunked, cache ON (default) | GDS reads +0     (+0 MiB) | BW=0.895 GiB/s
+  chunked, cache OFF (fix)   | GDS reads +256   (+65 MiB) | BW=0.570 GiB/s
+  contiguous                 | GDS reads +72    (+64 MiB) | BW=1.636 GiB/s
+--- rep 3
+  chunked, cache ON (default) | GDS reads +0     (+0 MiB) | BW=0.926 GiB/s
+  chunked, cache OFF (fix)   | GDS reads +256   (+65 MiB) | BW=0.587 GiB/s
+  contiguous                 | GDS reads +72    (+64 MiB) | BW=1.621 GiB/s

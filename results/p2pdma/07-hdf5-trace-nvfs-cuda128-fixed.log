@@ -1,0 +1,8 @@
+== trace HDF5 chunk-cache A/B ==
+tools/trace_hdf5_gds.sh: line 41: 10906 Killed                  setsid timeout 180 datacrumbs_run --app "$BIN read $1 $2" > "$OUT/run_$3.log" 2>&1 < /dev/null
+  chunked-cacheON          | cuFileRead=262  nvfs_io=0  p2p_map=0  nvme_setup_cmd=283  posix(pread/read)=12439  -> SILENT COMPAT (0 P2P)
+tools/trace_hdf5_gds.sh: line 41: 12024 Killed                  setsid timeout 180 datacrumbs_run --app "$BIN read $1 $2" > "$OUT/run_$3.log" 2>&1 < /dev/null
+  chunked-cacheOFF         | cuFileRead=262  nvfs_io=256  p2p_map=256  nvme_setup_cmd=271  posix(pread/read)=11691  -> TRUE GDS
+tools/trace_hdf5_gds.sh: line 41: 13106 Killed                  setsid timeout 180 datacrumbs_run --app "$BIN read $1 $2" > "$OUT/run_$3.log" 2>&1 < /dev/null
+  contiguous               | cuFileRead=8  nvfs_io=72  p2p_map=72  nvme_setup_cmd=81  posix(pread/read)=6855  -> TRUE GDS
+  traces saved under /tmp/hdf5_traces/

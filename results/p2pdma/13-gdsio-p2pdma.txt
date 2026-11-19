@@ -1,0 +1,6 @@
+x=0 io=1024K read | Throughput: 2.930962 GiB/sec | nvfs before: Reads				: n=0 ok=0 err=0 readMiB=0 io_state_err=0 | after: Reads				: n=0 ok=0 err=0 readMiB=0 io_state_err=0
+x=0 io=64K randread | Throughput: 0.694368 GiB/sec | nvfs before: Reads				: n=0 ok=0 err=0 readMiB=0 io_state_err=0 | after: Reads				: n=0 ok=0 err=0 readMiB=0 io_state_err=0
+x=0 io=4K randread | Throughput: 0.148031 GiB/sec | nvfs before: Reads				: n=0 ok=0 err=0 readMiB=0 io_state_err=0 | after: Reads				: n=0 ok=0 err=0 readMiB=0 io_state_err=0
+x=1 io=1024K read | Throughput: 2.916004 GiB/sec | nvfs before: Reads				: n=0 ok=0 err=0 readMiB=0 io_state_err=0 | after: Reads				: n=0 ok=0 err=0 readMiB=0 io_state_err=0
+x=1 io=64K randread | Throughput: 0.698703 GiB/sec | nvfs before: Reads				: n=0 ok=0 err=0 readMiB=0 io_state_err=0 | after: Reads				: n=0 ok=0 err=0 readMiB=0 io_state_err=0
+x=1 io=4K randread | Throughput: 0.152439 GiB/sec | nvfs before: Reads				: n=0 ok=0 err=0 readMiB=0 io_state_err=0 | after: Reads				: n=0 ok=0 err=0 readMiB=0 io_state_err=0
