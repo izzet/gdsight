@@ -27,16 +27,18 @@ injection, and no change to the installed GDS stack.
 ## Where the code lives
 
 The eBPF plugins are not in upstream DataCrumbs. They live in a fork, pinned here as the
-`external/datacrumbs` submodule ([`izzet/datacrumbs`](https://github.com/izzet/datacrumbs/tree/feat/cufile-gds),
-branch `feat/cufile-gds`). The offline attribution is in this repository, under `tools/`.
+`external/datacrumbs` submodule ([`izzet/datacrumbs`](https://github.com/izzet/datacrumbs/tree/feat/p2pdma),
+branch `feat/p2pdma`). The offline attribution is in this repository, under `tools/`. The paper uses the
+nvidia-fs transport; [`results/p2pdma/`](results/p2pdma/README.md) covers the kernel PCI P2PDMA transport.
 
 | layer | file | what it records or computes |
 |---|---|---|
-| cuFile (uprobes) | [`plugins/custom_probes/cufile/cufile.bpf.c`](https://github.com/izzet/datacrumbs/blob/feat/cufile-gds/etc/datacrumbs/plugins/custom_probes/cufile/cufile.bpf.c) | per-op offset and size; mints the `corr_id` |
-| nvidia-fs (kprobes) | [`plugins/custom_probes/nvidiafs/nvidiafs.bpf.c`](https://github.com/izzet/datacrumbs/blob/feat/cufile-gds/etc/datacrumbs/plugins/custom_probes/nvidiafs/nvidiafs.bpf.c) | `nvfs_io`, the P2P mapping and shadow-buffer markers |
-| NVMe (kprobe) | [`plugins/custom_probes/block/block.bpf.c`](https://github.com/izzet/datacrumbs/blob/feat/cufile-gds/etc/datacrumbs/plugins/custom_probes/block/block.bpf.c) | `nvme_setup_cmd`: sector, size, direction |
-| correlation | [`plugins/custom_probes/gdstrace_corr.bpf.h`](https://github.com/izzet/datacrumbs/blob/feat/cufile-gds/etc/datacrumbs/plugins/custom_probes/gdstrace_corr.bpf.h) | the `corr_id` maps shared by the three plugins |
-| host config | [`configs/izzet-gdstrace-node.yaml`](https://github.com/izzet/datacrumbs/blob/feat/cufile-gds/etc/datacrumbs/configs/izzet-gdstrace-node.yaml) | which plugins a build loads |
+| cuFile (uprobes) | [`plugins/custom_probes/cufile/cufile.bpf.c`](https://github.com/izzet/datacrumbs/blob/feat/p2pdma/etc/datacrumbs/plugins/custom_probes/cufile/cufile.bpf.c) | per-op offset and size; mints the `corr_id` |
+| nvidia-fs (kprobes) | [`plugins/custom_probes/nvidiafs/nvidiafs.bpf.c`](https://github.com/izzet/datacrumbs/blob/feat/p2pdma/etc/datacrumbs/plugins/custom_probes/nvidiafs/nvidiafs.bpf.c) | `nvfs_io`, the P2P mapping and shadow-buffer markers |
+| NVMe (kprobe) | [`plugins/custom_probes/block/block.bpf.c`](https://github.com/izzet/datacrumbs/blob/feat/p2pdma/etc/datacrumbs/plugins/custom_probes/block/block.bpf.c) | `nvme_setup_cmd`: sector, size, direction |
+| P2PDMA (kprobe) | [`plugins/custom_probes/p2pdma/p2pdma.bpf.c`](https://github.com/izzet/datacrumbs/blob/feat/p2pdma/etc/datacrumbs/plugins/custom_probes/p2pdma/p2pdma.bpf.c) | `pci_p2pdma_map_segment`: the P2P marker when nvidia-fs is bypassed |
+| correlation | [`plugins/custom_probes/gdstrace_corr.bpf.h`](https://github.com/izzet/datacrumbs/blob/feat/p2pdma/etc/datacrumbs/plugins/custom_probes/gdstrace_corr.bpf.h) | the `corr_id` maps shared by the plugins |
+| host configs | [`configs/izzet-gdstrace-node.yaml`](https://github.com/izzet/datacrumbs/blob/feat/p2pdma/etc/datacrumbs/configs/izzet-gdstrace-node.yaml), [`izzet-gdstrace-node-pcidma.yaml`](https://github.com/izzet/datacrumbs/blob/feat/p2pdma/etc/datacrumbs/configs/izzet-gdstrace-node-pcidma.yaml) | which plugins a build loads: the paper's (nvidia-fs) and the P2PDMA set |
 | address basis | `tools/lba_match.py`, `tools/batch_addr_attr.py`, `tools/posix_addr_attr.py` | sector to FIEMAP to the covering operation |
 | composition | `tools/compose_score.py` | address first; time only when its key is valid |
 | validation | `tools/oracle_score.py` | scoring against disjoint-slot ground truth |
