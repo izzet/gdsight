@@ -3,6 +3,7 @@
 # layer's documentation reports, and is only knowable by cross-layer measurement.
 #   documented (device LBA / NVMe spec / sysfs): printed below
 #   effective (measured by GDSight on the true-P2P path): device bytes per aligned read
+REPO=${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}   # repository root (override with REPO=...)
 set -u
 PREFIX=$HOME/dc-prefix; NIXL_PY=${NIXL_PY:-$HOME/nixl-venv/bin/python}
 CUDALIB=/usr/local/cuda-12.6/targets/x86_64-linux/lib:/usr/local/cuda-12.6/lib64
@@ -21,10 +22,10 @@ for S in 512 2048 2560 4096 6144; do
   sudo rm -f /var/run/datacrumbs/* /tmp/datacrumbs_*.log >/dev/null 2>&1 || true
   sync; echo 3 | sudo tee /proc/sys/vm/drop_caches >/dev/null
   N=200
-  APP="env LD_PRELOAD=$SYSCUFILE LD_LIBRARY_PATH=$CUDALIB $NIXL_PY $HOME/projects/gdstrace/workloads/nixl_gds_kv.py --file $F --na 0 --nb $N --sb $S --batch 32 --kv-align 0"
+  APP="env LD_PRELOAD=$SYSCUFILE LD_LIBRARY_PATH=$CUDALIB $NIXL_PY $REPO/workloads/nixl_gds_kv.py --file $F --na 0 --nb $N --sb $S --batch 32 --kv-align 0"
   datacrumbs_run --app "$APP" >/dev/null 2>&1
   sleep 1; T=$(ls -t "$TRACEDIR"/*/*/*/*.pfw.gz 2>/dev/null | head -1)
-  read devB ab nvme batches devB_exact < <(python3 $HOME/projects/gdstrace/tools/nixl_devbytes.py "$T" "$F" $((N*S)))
+  read devB ab nvme batches devB_exact < <(python3 $REPO/tools/nixl_devbytes.py "$T" "$F" $((N*S)))
   perread=$(python3 -c "print(round($devB_exact/$N))")
   spec=$(( ((S+511)/512)*512 )); eff=$(( ((S+4095)/4096)*4096 ))
   printf "  req=%-5sB aligned -> MEASURED device/read=%-5sB | if 512-block: %-5sB | if 4096-block: %-5sB\n" "$S" "$perread" "$spec" "$eff"

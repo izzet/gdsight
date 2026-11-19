@@ -3,6 +3,7 @@
 # python, via DATACRUMBS trace-all -- no injection) reading file->GPU with NIXL's heterogeneous
 # KV access pattern, then attribute per-class cross-layer. Reproducible: deps in
 # chameleon/setup_nixl_venv.sh; workload in workloads/nixl_gds_kv.py.
+REPO=${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}   # repository root (override with REPO=...)
 set -u
 PREFIX=$HOME/dc-prefix
 NIXL_PY=${NIXL_PY:-$HOME/nixl-venv/bin/python}   # created by chameleon/setup_nixl_venv.sh
@@ -16,7 +17,7 @@ sync; echo 3 | sudo tee /proc/sys/vm/drop_caches >/dev/null
 # LD_PRELOAD the SYSTEM libcufile so NIXL uses the exact .so our uprobe sits on (the nixl wheel
 # otherwise loads its bundled cu13 libcufile -> different inode -> cuFileBatchIOSubmit uprobe misses).
 SYSCUFILE=/usr/local/cuda-12.6/targets/x86_64-linux/lib/libcufile.so.0
-APP="env LD_PRELOAD=$SYSCUFILE LD_LIBRARY_PATH=$CUDALIB $NIXL_PY $HOME/projects/gdstrace/workloads/nixl_gds_kv.py --file $F --na $NA --sa $SA --nb $NB --sb $SB --batch $BATCH"
+APP="env LD_PRELOAD=$SYSCUFILE LD_LIBRARY_PATH=$CUDALIB $NIXL_PY $REPO/workloads/nixl_gds_kv.py --file $F --na $NA --sa $SA --nb $NB --sb $SB --batch $BATCH"
 echo "=== traced run (real nixl_agent + GDS backend, trace-all) ==="
 datacrumbs_run --app "$APP" 2>&1 | grep -iE 'NIXL_GDS_KV|Permission|ERR' | head
 sleep 2

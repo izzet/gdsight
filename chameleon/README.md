@@ -2,7 +2,7 @@
 
 GPUDirect Storage bring-up + smoke-test toolkit for the Chameleon A100 snapshot
 **`grc-ub2404-nvk-gds-a100-cu126-v2`**. Everything here is captured in the image and is
-group-accessible. (Also symlinked at `~/projects/gdstrace/chameleon`.)
+group-accessible. The same scripts are in `chameleon/` of the repository.
 
 ## TL;DR — make a relaunched node GDS-ready (per-instance steps)
 ```bash
@@ -46,10 +46,6 @@ Step-by-step relaunch guide: **`launch-from-snapshot-README.md`**.
 - ext4 must be mounted **`-o data=ordered`** explicitly (cuFile verifies it); `mount_gds_nvme.sh` does this.
 - GDS **reads** are safe; GDS **writes** are riskier (first surfaced the controller drop) — create test files with `dd`.
 
-## Full build record / results (in this dir)
-- `../docs/CHAMELEON-GDS-BRINGUP-LOG.md` — chronological worklog (every issue + fix).
-- `../results/SMOKE-TEST-REPORT-CHAMELEON.md` — gate + smoke results.
-
-The research *workspace* (pre-proposal brief, DeltaAI/Delta reports, `results/`) is intentionally
-**NOT** in this image — it lives in the user's home / git. These two docs are copied here so the
-image self-documents.
+## Related
+- `launch-from-snapshot-README.md`: relaunching a node from the snapshot image.
+- `build_datacrumbs.sh`: building the tracer on a fresh node.
