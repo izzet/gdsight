@@ -158,4 +158,4 @@ tools/run_write_sweep.sh       # size x alignment sweep
 tools/rmw_proof.py TRACE FILE  # the three RMW checks
 ```
 Requires the direction-aware block probe (`req->cmd_flags & REQ_OP_MASK`); see
-`../../docs/DATACRUMBS-GDS-BUILD-LOG.md` for the build ordering it depends on.
+`../../chameleon/build_datacrumbs.sh` for the build ordering it depends on.

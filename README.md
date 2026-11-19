@@ -24,6 +24,23 @@ Built as three eBPF plugins (`cufile`, `nvidiafs`, `block`) on the
 [DFTracer](https://github.com/llnl-asr/dftracer) format. It needs no source changes, no library
 injection, and no change to the installed GDS stack.
 
+## Where the code lives
+
+The eBPF plugins are not in upstream DataCrumbs. They live in a fork, pinned here as the
+`external/datacrumbs` submodule ([`izzet/datacrumbs`](https://github.com/izzet/datacrumbs/tree/feat/cufile-gds),
+branch `feat/cufile-gds`). The offline attribution is in this repository, under `tools/`.
+
+| layer | file | what it records or computes |
+|---|---|---|
+| cuFile (uprobes) | [`plugins/custom_probes/cufile/cufile.bpf.c`](https://github.com/izzet/datacrumbs/blob/feat/cufile-gds/etc/datacrumbs/plugins/custom_probes/cufile/cufile.bpf.c) | per-op offset and size; mints the `corr_id` |
+| nvidia-fs (kprobes) | [`plugins/custom_probes/nvidiafs/nvidiafs.bpf.c`](https://github.com/izzet/datacrumbs/blob/feat/cufile-gds/etc/datacrumbs/plugins/custom_probes/nvidiafs/nvidiafs.bpf.c) | `nvfs_io`, the P2P mapping and shadow-buffer markers |
+| NVMe (kprobe) | [`plugins/custom_probes/block/block.bpf.c`](https://github.com/izzet/datacrumbs/blob/feat/cufile-gds/etc/datacrumbs/plugins/custom_probes/block/block.bpf.c) | `nvme_setup_cmd`: sector, size, direction |
+| correlation | [`plugins/custom_probes/gdstrace_corr.bpf.h`](https://github.com/izzet/datacrumbs/blob/feat/cufile-gds/etc/datacrumbs/plugins/custom_probes/gdstrace_corr.bpf.h) | the `corr_id` maps shared by the three plugins |
+| host config | [`configs/izzet-gdstrace-node.yaml`](https://github.com/izzet/datacrumbs/blob/feat/cufile-gds/etc/datacrumbs/configs/izzet-gdstrace-node.yaml) | which plugins a build loads |
+| address basis | `tools/lba_match.py`, `tools/batch_addr_attr.py`, `tools/posix_addr_attr.py` | sector to FIEMAP to the covering operation |
+| composition | `tools/compose_score.py` | address first; time only when its key is valid |
+| validation | `tools/oracle_score.py` | scoring against disjoint-slot ground truth |
+
 ## Paper
 
 > Izzet Yildirim, Xian-He Sun, Anthony Kougkas.
@@ -57,12 +74,11 @@ Each diagnosis resolves to a specific layout or configuration change, measured b
 
 | path | what |
 |---|---|
-| `tools/` | tracer plugins, offline attribution and scoring, experiment drivers, figure generation |
+| `tools/` | offline attribution and scoring, experiment drivers, figure generation |
 | `workloads/` | GDS workload drivers (KvikIO, NIXL, HDF5, DALI, `gdsio` harnesses) |
 | `chameleon/` | bring-up and smoke toolkit for a Chameleon bare-metal GPU node |
 | `results/` | measurement outputs, one directory per experiment family |
 | `results/xlayer/` | the cross-layer attribution evidence trail, one note per experiment |
-| `docs/` | bring-up and build worklogs, plus background analysis |
 | `external/` | pinned submodules for the substrate, analyzer and evaluated stacks; see [release manifest](RELEASE-MANIFEST.md) |
 
 ## Reproducing
@@ -83,22 +99,20 @@ bash chameleon/setup_datacrumbs_runtime.sh                            # eBPF cap
 The last step is required before any traced run. Without it the tracer exits silently and traced
 runs produce empty traces.
 
-Several helper scripts currently resolve paths against `$HOME/projects/gdstrace`, so either check
-out there or adjust the path at the top of the scripts you run.
+Scripts resolve paths relative to the repository checkout; set `REPO=/path/to/gdsight` to override.
 
 Each case has its own driver:
 
 ```bash
 bash tools/run_ucb_kvikio_fix.sh      # KvikIO bypass, before and after coalescing
 bash tools/run_hdf5_gds.sh            # HDF5 chunk cache and the rdcc sweep
-bash tools/run_nixl_crosscheck.sh     # NIXL keystone: every observer against per-op attribution
+bash tools/run_nixl_crosscheck.sh     # NIXL: every observer against per-op attribution
 bash tools/run_write_keystone.sh      # unaligned writes and read-modify-write attribution
 bash tools/oracle_run.sh              # attribution against disjoint-slot ground truth
 ```
 
 `chameleon/launch-from-snapshot-README.md` covers relaunching from the snapshot image.
-`chameleon/README.md` and `docs/CHAMELEON-GDS-BRINGUP-LOG.md` record the operational constraints
-found during bring-up, including that ACS must remain enabled and that `gdscheck` output must not be
+`chameleon/README.md` records the operational constraints found during bring-up, including that ACS must remain enabled and that `gdscheck` output must not be
 piped to `grep -q` under `set -o pipefail`.
 
 ## License

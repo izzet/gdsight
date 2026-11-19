@@ -9,6 +9,7 @@
 #
 # Overhead is independent of the trace-write flush bug: probes attach & fire during the
 # run regardless of whether the .pfw.gz flushes on stop (verified via bpftool run_cnt).
+REPO=${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}   # repository root (override with REPO=...)
 set -u
 PREFIX=$HOME/dc-prefix
 CUDA=/usr/local/cuda-12.6
@@ -22,7 +23,7 @@ SIZES=(4K 16K 64K 256K 1M 4M) # x4 steps from 4K
 PATTERNS=${PATTERNS:-seq rand} # which patterns to run this invocation
 TAG=${TAG:-}                   # filename suffix to avoid clobbering prior runs
 export PATH="$PREFIX/sbin:$PREFIX/bin:$PATH" LD_LIBRARY_PATH="$PREFIX/lib"
-OUT=/home/cc/projects/gdstrace/results/step5-overhead
+OUT=$REPO/results/step5-overhead
 mkdir -p "$OUT"; RAW="$OUT/overhead_raw${TAG}.txt"; TAB="$OUT/overhead${TAG}.txt"; : >"$RAW"
 
 # 2 GiB backing file (room for random spread); recreate if missing/too small

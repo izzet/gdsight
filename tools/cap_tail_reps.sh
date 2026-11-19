@@ -8,6 +8,7 @@
 # tail number live in one documented regime, and runs REPS repetitions per cap.
 #
 # Must run from a script file, not inline: the pkill pattern matches any command line containing it.
+REPO=${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}   # repository root (override with REPO=...)
 set -u
 export PATH=$HOME/dc-prefix/sbin:$HOME/dc-prefix/bin:$PATH LD_LIBRARY_PATH=$HOME/dc-prefix/lib
 REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
@@ -15,7 +16,7 @@ CUDA=/usr/local/cuda-12.6
 BIN=/tmp/gds_interfere
 F=/mnt/nvme1/gdstrace-smoke/ovh.dat
 TD=/mnt/nvme1/gdstrace-smoke/dc-traces
-SELF=$HOME/projects/gdstrace
+SELF=$REPO
 DEV=nvme1n1
 REPS=${REPS:-3}
 OUT=$SELF/results/xlayer/cap_tail_reps.csv

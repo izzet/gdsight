@@ -13,6 +13,7 @@
 #   control:  overlapping ranges (8 KiB reads on a 4 KiB stride) at batch=1, so each operation is
 #             alone in flight and every overlap is purely historical. POSITIVE arm - the gate must
 #             resolve all of them. Confirms the fix does something.
+REPO=${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}   # repository root (override with REPO=...)
 set -u
 PREFIX=$HOME/dc-prefix
 NIXL_PY=${NIXL_PY:-$HOME/nixl-venv/bin/python}
@@ -21,8 +22,8 @@ SYSCUFILE=/usr/local/cuda-12.6/targets/x86_64-linux/lib/libcufile.so.0
 export PATH="$PREFIX/sbin:$PREFIX/bin:$PATH" LD_LIBRARY_PATH="$PREFIX/lib"
 F=/mnt/nvme1/gdstrace-smoke/ovh.dat
 TRACEDIR=/mnt/nvme1/gdstrace-smoke/dc-traces
-OUT=$HOME/projects/gdstrace/results/xlayer/candidate-lifetime.txt
-KV=$HOME/projects/gdstrace/workloads/nixl_gds_kv.py
+OUT=$REPO/results/xlayer/candidate-lifetime.txt
+KV=$REPO/workloads/nixl_gds_kv.py
 
 # NOTE: run this from a script file, never by pasting the body into a shell. The datacrumbs stop path
 # runs `pkill -f 'sbin/datacrumbs run'`, which matches an interactive shell's own command line.
@@ -44,7 +45,7 @@ arm() { # label args...
     echo "## $label"
     echo "# workload: $*"
     echo "# trace: $(basename "$T")"
-    python3 "$HOME/projects/gdstrace/tools/batch_addr_attr.py" "$T" "$F"
+    python3 "$REPO/tools/batch_addr_attr.py" "$T" "$F"
   } >> "$OUT"
 }
 

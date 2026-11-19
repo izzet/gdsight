@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+REPO=${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}   # repository root (override with REPO=...)
 set -u
 PREFIX=$HOME/dc-prefix
 REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
@@ -10,7 +11,7 @@ SIZE=65536; NREADS=4000
 [ -x /tmp/gds_oracle ] || gcc -O2 -o /tmp/gds_oracle "$REPO/workloads/gds_oracle.c" \
   -I"$CUDA/include" -L"$CUDA/lib64" -lcufile -lcudart -lcuda -lpthread
 cp /tmp/gds_oracle /tmp/gds_oracle_dc; datacrumbs_track --executable /tmp/gds_oracle_dc >/dev/null 2>&1
-OUT=/home/cc/projects/gdstrace/results/xlayer/oracle.csv
+OUT=$REPO/results/xlayer/oracle.csv
 echo "regime,nvme_scored,corr_id_pct,lba_unique_pct" > "$OUT"
 run(){ local label="$1"; shift                       # remaining args = app args after the file
   sudo pkill -9 -f 'sbin/datacrumbs run' >/dev/null 2>&1 || true
@@ -20,7 +21,7 @@ run(){ local label="$1"; shift                       # remaining args = app args
   sleep 1
   local T; T=$(ls -t "$TRACEDIR"/*/*/*/*.pfw.gz 2>/dev/null | head -1)
   grep -iE 'ORACLE' /tmp/orc_$label.out || true
-  local line; line=$(python3 ~/projects/gdstrace/tools/oracle_score.py --trace "$T" --file "$F" --slot "$SIZE" --label "$label")
+  local line; line=$(python3 $REPO/tools/oracle_score.py --trace "$T" --file "$F" --slot "$SIZE" --label "$label")
   echo "$line"; echo "$line" | grep '^CSV,' | sed 's/^CSV,//' >> "$OUT"
   echo "----------------------------------------"
 }

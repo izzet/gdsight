@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Reproduce the 3 curated GDS anti-patterns where standard tools mislead but GDSight gives the right
-# fix. See results/curated-pathologies.md. Run as the regular user (datacrumbs needs passwordless sudo).
+# fix. Run as the regular user (datacrumbs needs passwordless sudo).
 set -uo pipefail
 PREFIX=/home/cc/dc-prefix
 export PATH=$PREFIX/sbin:$PREFIX/bin:$PATH LD_LIBRARY_PATH=$PREFIX/lib
@@ -35,4 +35,3 @@ echo "  standard (gds_stats/iostat): one blended aggregate byte-amp -> 'some was
 echo "  GDSight per-read-class:"
 ~/dfa-venv/bin/python "$HERE/tools/dfa_drive.py" $d /tmp/cs3_dfa 2>/dev/null | sed -n '/byte amplification BY/,/DONE/p' | grep -E '3072|4096|op_size'
 echo
-echo "Full write-up + decision tables: results/curated-pathologies.md"

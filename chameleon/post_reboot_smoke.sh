@@ -2,12 +2,13 @@
 # post_reboot_smoke.sh — run AFTER `sudo reboot` (with amd_iommu=off in effect).
 # Clears THE GATE and runs Appendix-A smoke tests on the true-GDS path.
 # Safe: never formats; uses a scratch subdir on an existing-ext4 local NVMe.
+REPO=${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}   # repository root (override with REPO=...)
 set -uo pipefail
 GDS=/usr/local/cuda-12.6/gds/tools
 DEV=/dev/nvme1n1            # local data NVMe (ext4) — NOT the OS root (sda)
 MNT=/mnt/nvme1
 SCRATCH=$MNT/gdstrace-smoke
-OUT=/home/cc/projects/gdstrace/results/chameleon
+OUT=$REPO/results/chameleon
 mkdir -p "$OUT"
 SIZE=${SIZE:-8G}; IOSZ=${IOSZ:-1M}; THREADS=${THREADS:-4}
 say(){ echo; echo "============ $* ============"; }

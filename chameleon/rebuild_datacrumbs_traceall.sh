@@ -3,10 +3,11 @@
 # Use after editing a plugin .bpf.c, instead of the full build_datacrumbs.sh.
 # TRACE_ALL_PROCESSES_OPT defaults to OFF and a plain rebuild silently drops it -> 0 events for
 # every app. This script always re-asserts it.
+REPO=${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}   # repository root (override with REPO=...)
 set -euo pipefail
 
 PREFIX="${PREFIX:-$HOME/dc-prefix}"
-DC="${DC:-$HOME/projects/gdstrace/external/datacrumbs}"
+DC="${DC:-$REPO/external/datacrumbs}"
 HOSTCFG="${HOSTCFG:-izzet-gdstrace-node}"
 TRACEDIR="${TRACEDIR:-/mnt/nvme1/gdstrace-smoke/dc-traces}"
 

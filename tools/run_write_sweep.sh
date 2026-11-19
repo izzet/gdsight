@@ -6,7 +6,7 @@
 # the app-level op count gdsio reports: gds_ops << app_ops means cuFile silently served the writes off
 # the GDS path.
 #
-# Needs: rw_stats_enabled=1 (per boot), else every nvidia-fs counter reads 0. See CLAUDE.md.
+# Needs: rw_stats_enabled=1 (per boot), else every nvidia-fs counter reads 0 (tools/run_hdf5_gds.sh sets it).
 # Usage: tools/run_write_sweep.sh [file] [size]
 set -uo pipefail
 GDSIO=${GDSIO:-/usr/local/cuda-12.6/gds/tools/gdsio}

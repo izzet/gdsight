@@ -8,6 +8,7 @@
 #   (A) nvidia-fs /proc/driver/nvidia-fs/stats   = what gds_stats-class tools report (aggregate GDS)
 #   (B) /proc/diskstats nvme1n1                  = what iostat reports (aggregate device)
 #   (C) our eBPF trace                           = per-op cuFile<->nvfs<->NVMe (LBA per class + corr_id)
+REPO=${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}   # repository root (override with REPO=...)
 set -u
 PREFIX=$HOME/dc-prefix
 NIXL_PY=${NIXL_PY:-$HOME/nixl-venv/bin/python}
@@ -16,7 +17,7 @@ SYSCUFILE=/usr/local/cuda-12.6/targets/x86_64-linux/lib/libcufile.so.0
 export PATH="$PREFIX/sbin:$PREFIX/bin:$PATH" LD_LIBRARY_PATH="$PREFIX/lib"
 F=/mnt/nvme1/gdstrace-smoke/ovh.dat; TRACEDIR=/mnt/nvme1/gdstrace-smoke/dc-traces
 NA=${NA:-200}; SA=${SA:-1048576}; NB=${NB:-2000}; SB=${SB:-2048}; BATCH=${BATCH:-64}
-OUT=/home/cc/projects/gdstrace/results/xlayer; mkdir -p "$OUT"
+OUT=$REPO/results/xlayer; mkdir -p "$OUT"
 sudo pkill -9 -f 'sbin/datacrumbs run' >/dev/null 2>&1 || true
 sudo rm -f /var/run/datacrumbs/* /tmp/datacrumbs_*.log >/dev/null 2>&1 || true
 echo 1 | sudo tee /sys/module/nvidia_fs/parameters/rw_stats_enabled >/dev/null   # fair: nvidia-fs IO stats ON
@@ -26,7 +27,7 @@ dev=nvme1n1
 nvfs_before=$(grep -iE 'Ops|^Reads|Bar1-map|IO stats' /proc/driver/nvidia-fs/stats 2>/dev/null)
 disk_before=$(grep " $dev " /proc/diskstats 2>/dev/null)
 
-APP="env LD_PRELOAD=$SYSCUFILE LD_LIBRARY_PATH=$CUDALIB $NIXL_PY $HOME/projects/gdstrace/workloads/nixl_gds_kv.py --file $F --na $NA --sa $SA --nb $NB --sb $SB --batch $BATCH"
+APP="env LD_PRELOAD=$SYSCUFILE LD_LIBRARY_PATH=$CUDALIB $NIXL_PY $REPO/workloads/nixl_gds_kv.py --file $F --na $NA --sa $SA --nb $NB --sb $SB --batch $BATCH"
 echo "=== running real NIXL GDS workload (traced) ==="
 datacrumbs_run --app "$APP" 2>&1 | grep -iE 'NIXL_GDS_KV|ERR' | head
 
@@ -46,7 +47,7 @@ echo "BEFORE sectors=$db  AFTER sectors=$da  -> device read delta = $(( (da-db)*
 
 reqA=$(( NA*SA )); reqB=$(( NB*SB ))
 echo "=== (C) OUR per-op cross-layer view (known reqA=$((reqA/1024/1024))MiB reqB=$(awk "BEGIN{printf \"%.2f\",$reqB/1048576}")MiB) ===" | tee -a "$OUT/nixl_crosscheck.txt"
-python3 $HOME/projects/gdstrace/tools/keystone_gds_score.py "$T" "$F" "$reqA" "$reqB" 2>/dev/null | tee -a "$OUT/nixl_crosscheck.txt"
+python3 $REPO/tools/keystone_gds_score.py "$T" "$F" "$reqA" "$reqB" 2>/dev/null | tee -a "$OUT/nixl_crosscheck.txt"
 echo "cuFileBatchIOSubmit events (cuFile-API layer): $(zcat "$T" 2>/dev/null | grep -oc cuFileBatchIOSubmit)" | tee -a "$OUT/nixl_crosscheck.txt"
 echo "nvfs_io=$(zcat "$T" 2>/dev/null|grep -oc nvfs_io) p2p=$(zcat "$T" 2>/dev/null|grep -oc nvfs_get_p2p_dma_mapping) nvme=$(zcat "$T" 2>/dev/null|grep -oc nvme_setup_cmd)" | tee -a "$OUT/nixl_crosscheck.txt"
 echo "$T" > /tmp/nixl_last_trace.txt

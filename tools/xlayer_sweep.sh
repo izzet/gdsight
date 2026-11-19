@@ -2,6 +2,7 @@
 # xlayer_sweep.sh — Study A/B sweep: trace gdsio across I/O size x pattern x path,
 # then measure per-op cross-layer amplification (tools/xlayer_amp.py) for each cell.
 # Produces the amplification-law table: A_cmd(S), A_byte(S), effective device max-xfer.
+REPO=${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}   # repository root (override with REPO=...)
 set -u
 PREFIX=$HOME/dc-prefix; CUDA=/usr/local/cuda-12.6
 GDSIO=$CUDA/gds/tools/gdsio; TGDSIO=/tmp/gdsio_dc
@@ -12,7 +13,7 @@ PATTERNS=${PATTERNS:-seq}          # seq|rand (gdsio -I 0|2)
 XFER=${XFER:-0}                    # 0 = GDS (-x0), 2 = bounce (-x2) for divergence study
 TRACEDIR=/mnt/nvme1/gdstrace-smoke/dc-traces
 export PATH="$PREFIX/sbin:$PREFIX/bin:$PATH" LD_LIBRARY_PATH="$PREFIX/lib"
-OUT=/home/cc/projects/gdstrace/results/xlayer; mkdir -p "$OUT"
+OUT=$REPO/results/xlayer; mkdir -p "$OUT"
 TAG=${TAG:-x${XFER}}; CSV="$OUT/amp_${TAG}.csv"
 echo "label,cufile_ops,A_cmd_mean,A_byte_mean,dev_maxKiB,unattributed" > "$CSV"
 
@@ -28,7 +29,7 @@ for pat in $PATTERNS; do
     sleep 1
     T=$(ls -t "$TRACEDIR"/*/*/*/*.pfw.gz 2>/dev/null | head -1)
     label="x${XFER}_${pat}_${sz}"
-    line=$(python3 ~/projects/gdstrace/tools/xlayer_amp.py "$T" "$label" 2>/dev/null)
+    line=$(python3 $REPO/tools/xlayer_amp.py "$T" "$label" 2>/dev/null)
     echo "$line"
     echo "$line" | grep '^CSV,' | sed 's/^CSV,//' >> "$CSV"
     echo "------------------------------------------------------------"

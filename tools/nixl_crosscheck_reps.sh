@@ -12,8 +12,9 @@
 #
 # Must run from a script file, not inline: the driver's pkill pattern matches any command line
 # containing it, so inlining makes pkill kill the invoking shell.
+REPO=${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}   # repository root (override with REPO=...)
 set -u
-SELF=$HOME/projects/gdstrace
+SELF=$REPO
 OUT=$SELF/results/xlayer
 REPS=${REPS:-3}
 SB=${SB:-2048}
