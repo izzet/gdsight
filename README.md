@@ -43,6 +43,27 @@ nvidia-fs transport; [`results/p2pdma/`](results/p2pdma/README.md) covers the ke
 | composition | `tools/compose_score.py` | address first; time only when its key is valid |
 | validation | `tools/oracle_score.py` | scoring against disjoint-slot ground truth |
 
+## GDSight and gds-diag
+
+NVIDIA's [gds-diag](https://github.com/NVIDIA/MagnumIO/tree/main/gds-diag) checks whether a platform is ready
+for GDS. GDSight shows what a workload's operations actually did. Between them sits a runtime check, prototyped
+as a gds-diag subcommand in `external/nvidia-magnum-io` (fork `izzet/nvidia-magnum-io`, branch
+`feat/gdsight-runtime-check`).
+
+| question | tool | evidence |
+|---|---|---|
+| Can this platform do GDS? | `gds-diag mount-check <path>` | drivers, kernel options, IOMMU, topology, `cufile.json`, `gdscheck` |
+| Did this run use it? | `gds-diag runtime-check --path <path> -- <cmd>` | nvidia-fs read counter, device reads, optional kernel function counts (`--kernel-trace`) |
+| Which operations did not, why, and at what cost? | GDSight | per-operation attribution across cuFile, nvidia-fs or P2PDMA, and NVMe |
+
+The runtime check also separates platform causes from application causes: when a run's reads go through host
+memory although `gdscheck` reports the direct route active, the cause is the application or an I/O library. On
+the HDF5 case it reports exactly that, where `mount-check` passes the path; GDSight then names the chunk cache.
+Validation: [`results/gds-diag-runtime-check/`](results/gds-diag-runtime-check/README.md).
+
+`external/nvidia-magnum-io` is only needed for this work. It is a shallow submodule, but MagnumIO has its own
+nested submodules (kvikio, cuCIM) that `--recurse-submodules` also fetches.
+
 ## Paper
 
 > Izzet Yildirim, Xian-He Sun, Anthony Kougkas.

@@ -1,0 +1,89 @@
+{
+  "tool": {
+    "name": "gds-diag",
+    "version": "1.0.0",
+    "git_commit": null
+  },
+  "mode": "runtime-check",
+  "path": "/mnt/nvme1/gdstrace-smoke",
+  "fs_type": "ext4",
+  "device": "nvme1n1",
+  "platform_routes": {
+    "native": true,
+    "p2pdma": false,
+    "detail": "NVMe: Supported"
+  },
+  "observation": {
+    "command": "/tmp/hdf5_gds read /mnt/nvme1/gdstrace-smoke/h5_chunk.h5 on",
+    "exit_code": 0,
+    "seconds": 1.83,
+    "device_read_mib": 64.0546875,
+    "nvfs_stats_enabled": true,
+    "nvfs_reads": 0,
+    "nvfs_read_mib": 0,
+    "kernel_counts": {
+      "pci_p2pdma_map_segment": 0,
+      "nvfs_get_p2p_dma_mapping": 0,
+      "filemap_read": 296,
+      "iomap_dio_rw": 10
+    },
+    "kernel_trace_note": null
+  },
+  "sections": {
+    "Workload": [
+      {
+        "check": "Workload exit status",
+        "status": "PASS",
+        "finding": "The workload exited 0 after 1.8 s.",
+        "mitigation": null,
+        "evidence": "/tmp/hdf5_gds read /mnt/nvme1/gdstrace-smoke/h5_chunk.h5 on"
+      }
+    ],
+    "Observed Data Path": [
+      {
+        "check": "nvidia-fs reads",
+        "status": "INFO",
+        "finding": "No reads were served by nvidia-fs during the run.",
+        "mitigation": null,
+        "evidence": "/proc/driver/nvidia-fs/stats: Reads n= delta 0"
+      },
+      {
+        "check": "PCI P2PDMA mappings",
+        "status": "INFO",
+        "finding": "No segment was mapped to GPU memory by the kernel P2PDMA path.",
+        "mitigation": null,
+        "evidence": "pci_p2pdma_map_segment: 0 calls (system-wide)"
+      },
+      {
+        "check": "nvidia-fs P2P mappings",
+        "status": "INFO",
+        "finding": "nvidia-fs mapped no GPU buffer for P2P DMA.",
+        "mitigation": null,
+        "evidence": "nvfs_get_p2p_dma_mapping: 0 calls (system-wide)"
+      },
+      {
+        "check": "Host read path",
+        "status": "INFO",
+        "finding": "Buffered reads through the page cache: 296 calls; direct-I/O calls: 10. Both are system-wide counts.",
+        "mitigation": null,
+        "evidence": "filemap_read=296, iomap_dio_rw=10"
+      },
+      {
+        "check": "Device reads",
+        "status": "INFO",
+        "finding": "64.1 MiB were read from nvme1n1 during the run (all processes using the device).",
+        "mitigation": null,
+        "evidence": "/sys/class/block/nvme1n1/stat sectors-read delta"
+      }
+    ],
+    "Diagnosis": [
+      {
+        "check": "Host-staged reads despite an active direct route",
+        "status": "WARN",
+        "finding": "gdscheck reports the nvidia-fs route active for this filesystem, yet no read in this run reached GPU memory directly while 64.1 MiB were read from the device. The data went through host memory, so the cause is in the application or an I/O library rather than the platform.",
+        "mitigation": "Check whether the application or a library stages reads in host memory: an I/O library cache (HDF5's raw-data chunk cache stages chunks that fit in it), file descriptors opened without O_DIRECT, or reads below a library's GDS size threshold. To attribute each read to the operation that issued it, trace the run with a per-operation tracer such as GDSight (https://github.com/izzet/gdsight).",
+        "evidence": null
+      }
+    ]
+  }
+}

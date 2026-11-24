@@ -12,3 +12,8 @@
 	path = external/dfanalyzer
 	url = https://github.com/izzet/dfanalyzer.git
 	branch = fix/pandas-2.2-datacrumbs
+[submodule "external/nvidia-magnum-io"]
+	path = external/nvidia-magnum-io
+	url = https://github.com/izzet/nvidia-magnum-io.git
+	branch = feat/gdsight-runtime-check
+	shallow = true

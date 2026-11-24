@@ -1,0 +1,89 @@
+{
+  "tool": {
+    "name": "gds-diag",
+    "version": "1.0.0",
+    "git_commit": null
+  },
+  "mode": "runtime-check",
+  "path": "/mnt/nvme1/gdstrace-smoke",
+  "fs_type": "ext4",
+  "device": "nvme1n1",
+  "platform_routes": {
+    "native": true,
+    "p2pdma": false,
+    "detail": "NVMe: Supported"
+  },
+  "observation": {
+    "command": "/tmp/hdf5_gds read /mnt/nvme1/gdstrace-smoke/h5_chunk.h5 off",
+    "exit_code": 0,
+    "seconds": 1.912,
+    "device_read_mib": 65.08203125,
+    "nvfs_stats_enabled": true,
+    "nvfs_reads": 256,
+    "nvfs_read_mib": 65,
+    "kernel_counts": {
+      "pci_p2pdma_map_segment": 0,
+      "nvfs_get_p2p_dma_mapping": 256,
+      "filemap_read": 40,
+      "iomap_dio_rw": 266
+    },
+    "kernel_trace_note": null
+  },
+  "sections": {
+    "Workload": [
+      {
+        "check": "Workload exit status",
+        "status": "PASS",
+        "finding": "The workload exited 0 after 1.9 s.",
+        "mitigation": null,
+        "evidence": "/tmp/hdf5_gds read /mnt/nvme1/gdstrace-smoke/h5_chunk.h5 off"
+      }
+    ],
+    "Observed Data Path": [
+      {
+        "check": "nvidia-fs reads",
+        "status": "PASS",
+        "finding": "256 reads (65 MiB) were served by nvidia-fs during the run.",
+        "mitigation": null,
+        "evidence": "/proc/driver/nvidia-fs/stats: Reads n= delta 256"
+      },
+      {
+        "check": "PCI P2PDMA mappings",
+        "status": "INFO",
+        "finding": "No segment was mapped to GPU memory by the kernel P2PDMA path.",
+        "mitigation": null,
+        "evidence": "pci_p2pdma_map_segment: 0 calls (system-wide)"
+      },
+      {
+        "check": "nvidia-fs P2P mappings",
+        "status": "PASS",
+        "finding": "nvidia-fs mapped 256 GPU buffers for P2P DMA.",
+        "mitigation": null,
+        "evidence": "nvfs_get_p2p_dma_mapping: 256 calls (system-wide)"
+      },
+      {
+        "check": "Host read path",
+        "status": "INFO",
+        "finding": "Buffered reads through the page cache: 40 calls; direct-I/O calls: 266. Both are system-wide counts.",
+        "mitigation": null,
+        "evidence": "filemap_read=40, iomap_dio_rw=266"
+      },
+      {
+        "check": "Device reads",
+        "status": "INFO",
+        "finding": "65.1 MiB were read from nvme1n1 during the run (all processes using the device).",
+        "mitigation": null,
+        "evidence": "/sys/class/block/nvme1n1/stat sectors-read delta"
+      }
+    ],
+    "Diagnosis": [
+      {
+        "check": "Direct GDS in this run",
+        "status": "PASS",
+        "finding": "Reads reached GPU memory directly through nvidia-fs. Some reads may still have taken the host path; this check counts the run as a whole.",
+        "mitigation": null,
+        "evidence": null
+      }
+    ]
+  }
+}

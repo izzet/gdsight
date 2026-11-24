@@ -1,0 +1,70 @@
+{
+  "tool": {
+    "name": "gds-diag",
+    "version": "1.0.0",
+    "git_commit": null
+  },
+  "mode": "runtime-check",
+  "path": "/mnt/nvme1/gdstrace-smoke",
+  "fs_type": "ext4",
+  "device": "nvme1n1",
+  "platform_routes": {
+    "native": true,
+    "p2pdma": false,
+    "detail": "NVMe: Supported"
+  },
+  "observation": {
+    "command": "/tmp/hdf5_gds read /mnt/nvme1/gdstrace-smoke/h5_contig.h5 on",
+    "exit_code": 0,
+    "seconds": 1.805,
+    "device_read_mib": 64.0703125,
+    "nvfs_stats_enabled": true,
+    "nvfs_reads": 72,
+    "nvfs_read_mib": 64,
+    "kernel_counts": null,
+    "kernel_trace_note": "--kernel-trace was not given"
+  },
+  "sections": {
+    "Workload": [
+      {
+        "check": "Workload exit status",
+        "status": "PASS",
+        "finding": "The workload exited 0 after 1.8 s.",
+        "mitigation": null,
+        "evidence": "/tmp/hdf5_gds read /mnt/nvme1/gdstrace-smoke/h5_contig.h5 on"
+      }
+    ],
+    "Observed Data Path": [
+      {
+        "check": "nvidia-fs reads",
+        "status": "PASS",
+        "finding": "72 reads (64 MiB) were served by nvidia-fs during the run.",
+        "mitigation": null,
+        "evidence": "/proc/driver/nvidia-fs/stats: Reads n= delta 72"
+      },
+      {
+        "check": "Kernel data-path trace",
+        "status": "INFO",
+        "finding": "Not collected: --kernel-trace was not given. Without it, reads on the PCI P2PDMA route cannot be seen, because they bypass nvidia-fs.",
+        "mitigation": "Rerun with --kernel-trace as root (sudo -E keeps the environment).",
+        "evidence": null
+      },
+      {
+        "check": "Device reads",
+        "status": "INFO",
+        "finding": "64.1 MiB were read from nvme1n1 during the run (all processes using the device).",
+        "mitigation": null,
+        "evidence": "/sys/class/block/nvme1n1/stat sectors-read delta"
+      }
+    ],
+    "Diagnosis": [
+      {
+        "check": "Direct GDS in this run",
+        "status": "PASS",
+        "finding": "Reads reached GPU memory directly through nvidia-fs. Some reads may still have taken the host path; this check counts the run as a whole.",
+        "mitigation": null,
+        "evidence": null
+      }
+    ]
+  }
+}
