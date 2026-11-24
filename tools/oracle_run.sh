@@ -6,6 +6,7 @@ REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 CUDA=/usr/local/cuda-12.6
 export PATH="$PREFIX/sbin:$PREFIX/bin:$PATH" LD_LIBRARY_PATH="$PREFIX/lib:/usr/local/cuda-12.6/targets/x86_64-linux/lib:/usr/local/cuda-12.6/lib64"
 F=/mnt/nvme1/gdstrace-smoke/ovh.dat
+bash "$(dirname "${BASH_SOURCE[0]}")/ensure_data_file.sh" "$F"   # create the 2 GiB test file on a fresh node
 TRACEDIR=/mnt/nvme1/gdstrace-smoke/dc-traces
 SIZE=65536; NREADS=4000
 [ -x /tmp/gds_oracle ] || gcc -O2 -o /tmp/gds_oracle "$REPO/workloads/gds_oracle.c" \

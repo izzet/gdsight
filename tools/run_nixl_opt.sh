@@ -14,6 +14,7 @@ CUDALIB=/usr/local/cuda-12.6/targets/x86_64-linux/lib:/usr/local/cuda-12.6/lib64
 SYSCUFILE=/usr/local/cuda-12.6/targets/x86_64-linux/lib/libcufile.so.0
 export PATH="$PREFIX/sbin:$PREFIX/bin:$PATH" LD_LIBRARY_PATH="$PREFIX/lib"
 F=/mnt/nvme1/gdstrace-smoke/ovh.dat; TRACEDIR=/mnt/nvme1/gdstrace-smoke/dc-traces
+bash "$(dirname "${BASH_SOURCE[0]}")/ensure_data_file.sh" "$F"   # create the 2 GiB test file on a fresh node
 NA=1; SA=1048576; NB=${NB:-120000}; SB=${SB:-2048}; STRIDE=${STRIDE:-8192}; BATCH=${BATCH:-64}
 OUT=$REPO/results/xlayer; CSV="$OUT/optimization.csv"
 echo 1 | sudo tee /sys/module/nvidia_fs/parameters/rw_stats_enabled >/dev/null

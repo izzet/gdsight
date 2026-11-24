@@ -10,6 +10,7 @@ CUDALIB=/usr/local/cuda-12.6/targets/x86_64-linux/lib:/usr/local/cuda-12.6/lib64
 SYSCUFILE=/usr/local/cuda-12.6/targets/x86_64-linux/lib/libcufile.so.0
 export PATH="$PREFIX/sbin:$PREFIX/bin:$PATH" LD_LIBRARY_PATH="$PREFIX/lib"
 F=/mnt/nvme1/gdstrace-smoke/ovh.dat; TRACEDIR=/mnt/nvme1/gdstrace-smoke/dc-traces; dev=nvme1n1
+bash "$(dirname "${BASH_SOURCE[0]}")/ensure_data_file.sh" "$F"   # create the 2 GiB test file on a fresh node
 echo "=== DOCUMENTED granularity (where a practitioner looks up 'block size') ==="
 for p in logical_block_size physical_block_size minimum_io_size max_sectors_kb max_hw_sectors_kb; do
   echo "  /sys/block/$dev/queue/$p = $(cat /sys/block/$dev/queue/$p 2>/dev/null)"

@@ -7,6 +7,7 @@ set -u
 PREFIX=$HOME/dc-prefix; CUDA=/usr/local/cuda-12.6
 GDSIO=$CUDA/gds/tools/gdsio; TGDSIO=/tmp/gdsio_dc
 F=/mnt/nvme1/gdstrace-smoke/ovh.dat
+bash "$(dirname "${BASH_SOURCE[0]}")/ensure_data_file.sh" "$F"   # create the 2 GiB test file on a fresh node
 S=${S:-256M}; THREADS=${THREADS:-1}
 SIZES=(${SIZES:-4K 16K 64K 256K 1M 4M})
 PATTERNS=${PATTERNS:-seq}          # seq|rand (gdsio -I 0|2)
