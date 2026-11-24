@@ -6,6 +6,7 @@ REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 CUDA=/usr/local/cuda-12.6
 BIN=/tmp/gds_interfere_lat
 F=/mnt/nvme1/gdstrace-smoke/ovh.dat
+bash "$(dirname "${BASH_SOURCE[0]}")/ensure_data_file.sh" "$F"   # create the 2 GiB test file on a fresh node
 OUT=$REPO/results/xlayer/tail_untraced.csv
 gcc -O2 -o "$BIN" "$REPO/workloads/gds_interfere_lat.c" \
   -I"$CUDA/include" -L"$CUDA/lib64" -lcufile -lcudart -lcuda -lpthread

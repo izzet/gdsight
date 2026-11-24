@@ -7,6 +7,7 @@ REPO=${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}   # repository ro
 set -u
 CUDA=/usr/local/cuda-12.6; GDSIO=$CUDA/gds/tools/gdsio
 F=/mnt/nvme1/gdstrace-smoke/ovh.dat
+bash "$(dirname "${BASH_SOURCE[0]}")/ensure_data_file.sh" "$F"   # create the 2 GiB test file on a fresh node
 DEV=nvme1n1; Q=/sys/block/$DEV/queue/max_sectors_kb
 S=${S:-512M}; N=${N:-5}
 SIZES=(${SIZES:-1M 4M 8M 16M}); CAPS=(${CAPS:-1280 2048}); THREADS=(${THREADS:-1 4})

@@ -7,6 +7,7 @@ set -u
 PREFIX=$HOME/dc-prefix
 PROBE=/tmp/gds_align_probe; PROBE_DC=/tmp/gds_align_probe_dc
 F=/mnt/nvme1/gdstrace-smoke/ovh.dat
+bash "$(dirname "${BASH_SOURCE[0]}")/ensure_data_file.sh" "$F"   # create the 2 GiB test file on a fresh node
 COUNT=${COUNT:-2000}; STRIDE=${STRIDE:-524288}
 TRACEDIR=/mnt/nvme1/gdstrace-smoke/dc-traces
 export PATH="$PREFIX/sbin:$PREFIX/bin:$PATH" LD_LIBRARY_PATH="$PREFIX/lib:/usr/local/cuda-12.6/targets/x86_64-linux/lib:/usr/local/cuda-12.6/lib64"

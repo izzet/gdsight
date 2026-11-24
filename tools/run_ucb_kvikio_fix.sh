@@ -9,6 +9,7 @@ KVIKIO_PY=/opt/gds-venv/bin/python
 CUDALIB=/usr/local/cuda-12.6/targets/x86_64-linux/lib:/usr/local/cuda-12.6/lib64
 export PATH="$PREFIX/sbin:$PREFIX/bin:$PATH" LD_LIBRARY_PATH="$PREFIX/lib"
 F=/mnt/nvme1/gdstrace-smoke/ovh.dat; TRACEDIR=/mnt/nvme1/gdstrace-smoke/dc-traces
+bash "$(dirname "${BASH_SOURCE[0]}")/ensure_data_file.sh" "$F"   # create the 2 GiB test file on a fresh node
 bash "$REPO/chameleon/setup_datacrumbs_runtime.sh" >/dev/null 2>&1 || true
 "$KVIKIO_PY" -c "import kvikio,cupy" 2>/dev/null && echo "kvikio venv OK" || { echo "kvikio import failed"; exit 1; }
 

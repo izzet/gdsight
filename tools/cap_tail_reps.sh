@@ -15,6 +15,7 @@ REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 CUDA=/usr/local/cuda-12.6
 BIN=/tmp/gds_interfere
 F=/mnt/nvme1/gdstrace-smoke/ovh.dat
+bash "$(dirname "${BASH_SOURCE[0]}")/ensure_data_file.sh" "$F"   # create the 2 GiB test file on a fresh node
 TD=/mnt/nvme1/gdstrace-smoke/dc-traces
 SELF=$REPO
 DEV=nvme1n1

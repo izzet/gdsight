@@ -56,8 +56,10 @@ P2PDMA transport that GDS supports from CUDA 12.8, and records what GDSight need
 - IOMMU on. The DMA mapping path may handle P2P segments differently there.
 - The first traced set (`22-...`) lost one cache-off run to a known DataCrumbs stop-time issue. The final set
   (`28-...`) has all 9 runs.
-- Unexplained: on GDS 1.13 the contiguous read issues 72 P2P mappings and 81 NVMe commands, against 136 and 148 on
-  GDS 1.11 (nvidia-fs path both times).
+- Contiguous-read mapping counts: on GDS 1.13 the contiguous read issued 72 P2P mappings and 81 NVMe commands,
+  against 136 and 148 on GDS 1.11 on the same node. A fresh node (liqid07, 2026-11-24) on the paper's GDS 1.11
+  stack with a newly formatted drive also gives 72 mappings, so the difference follows the file's on-disk layout
+  (an aged, shared filesystem) rather than the GDS version. Not tested further.
 
 ## Node note
 

@@ -29,6 +29,7 @@ SYSCUFILE=$CUDA/targets/x86_64-linux/lib/libcufile.so.0
 H5=${H5_PREFIX:-$HOME/hdf5-gds}; VFD=${VFD_PREFIX:-$HOME/vfd-gds}
 SCRATCH=${SCRATCH:-/mnt/nvme1/gdstrace-smoke}
 F=$SCRATCH/ovh.dat
+bash "$(dirname "${BASH_SOURCE[0]}")/ensure_data_file.sh" "$F"   # create the 2 GiB test file on a fresh node
 KVW=$SELF/workloads/nixl_gds_kv.py
 H5BIN=/tmp/hdf5_gds_reps
 
