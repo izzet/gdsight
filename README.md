@@ -64,7 +64,7 @@ report health:
 | case | what GDSight attributes |
 |---|---|
 | KvikIO retrieval mix | 91% of operations bypass GDS entirely, and those reads cost 2.67x at the device |
-| HDF5 via the GDS VFD | `nvfs_io=0`, so the chunk cache host-stages every read, at 27% more host CPU than true GDS |
+| HDF5 via the GDS VFD | `nvfs_io=0`, so the chunk cache host-stages every read, at 27% more host CPU than true GDS (measured on the previous `nv-legate` VFD; the default `hpc-io` 1.0.3 VFD shows the same staging, [compared here](results/xlayer/hdf5-gds-hpc-io.md)) |
 | NIXL KV-cache reads | a 4 KiB filesystem grid rounds every 2048 B read to 4x device bytes |
 | unaligned writes | 46,956 device commands, of which 14,194 are reads, from read-modify-write on a pure-write workload |
 | small reads under contention | p99 inflates 22x while the median moves 9%, from device contention: 3–8 overlapping large commands per slow operation |

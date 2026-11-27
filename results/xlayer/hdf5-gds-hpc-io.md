@@ -1,7 +1,9 @@
-# HDF5 + GDS on the upstream `hpc-io/vfd-gds` 1.0.3
+# HDF5 + GDS on the default VFD, `hpc-io/vfd-gds` 1.0.3
 
-A comparison of the two GDS VFD forks on the HDF5 case of [`hdf5-gds.md`](hdf5-gds.md). The published
-numbers use `nv-legate/vfd-gds`. This note records whether the finding depends on that choice.
+The HDF5 case of [`hdf5-gds.md`](hdf5-gds.md) on the repository's default VFD, upstream
+`hpc-io/vfd-gds` 1.0.3, next to the previous implementation's VFD, NVIDIA's `nv-legate/vfd-gds`
+(archived 2026-10-05), which produced the published numbers. This note records whether the finding
+depends on the fork.
 
 ## Setup
 - Measured 2026-11-26 on Chameleon `liqid07`, the same stack as the paper: nvidia-fs transport, cuFile
@@ -9,16 +11,18 @@ numbers use `nv-legate/vfd-gds`. This note records whether the finding depends o
 - HDF5 1.14.5 (serial), the same workload (`workloads/hdf5_gds.c`): 64 MiB dataset, 256 KiB chunks, cold
   page cache, three runs per case. The counts were identical across runs.
 - Forks:
-  - `nv-legate/vfd-gds`: archived 2026-10-05, last commit Nov 2024. Opens the file `O_DIRECT`, sends only
-    device-pointer reads to `cuFileRead`, and issues host-buffer reads with plain `pread`.
-  - `hpc-io/vfd-gds` release 1.0.3 (commit `551077e`, 2026-03-25), not archived. Does not set `O_DIRECT`
+  - `hpc-io/vfd-gds` release 1.0.3 (commit `551077e`, 2026-03-25), the default. Does not set `O_DIRECT`
     itself. cuFile reopens the file `O_DIRECT` internally: in a standalone test, a plain fd registered
     with `cuFileHandleRegister` still gave 64 nvidia-fs reads for 64 MiB.
-- Built with `VFD_FORK=hpc-io bash chameleon/build_hdf5_gds.sh`.
+  - `nv-legate/vfd-gds`, the previous implementation: archived 2026-10-05, last commit Nov 2024. Opens
+    the file `O_DIRECT`, sends only device-pointer reads to `cuFileRead`, and issues host-buffer reads
+    with plain `pread`.
+- Built with `bash chameleon/build_hdf5_gds.sh` (hpc-io) and `VFD_FORK=nv-legate bash
+  chameleon/build_hdf5_gds.sh`.
 
 ## Results
 
-| | nv-legate | hpc-io 1.0.3 |
+| | nv-legate (previous) | hpc-io 1.0.3 (default) |
 |---|---|---|
 | nvidia-fs reads, chunk cache on (default) | 0 | 0 (device read 64 MiB) |
 | nvidia-fs reads, chunk cache off | 256 | 256 (257 mappings) |

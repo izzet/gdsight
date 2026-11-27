@@ -12,10 +12,11 @@ accepted-paper artifact as Git submodules. Clone with
 | `external/nixl` | NIXL workload provenance | [ai-dynamo/nixl](https://github.com/ai-dynamo/nixl) | `77d79d88f958c371f6184fafdb03fa90022de995` |
 
 HDF5 1.14.5 and its GDS VFD are not submodules; `chameleon/build_hdf5_gds.sh` fetches and builds
-them. `VFD_FORK` selects the VFD: `nv-legate` (the default,
-[nv-legate/vfd-gds](https://github.com/nv-legate/vfd-gds), behind the published numbers) or `hpc-io`
-([hpc-io/vfd-gds](https://github.com/hpc-io/vfd-gds) tag `1.0.3`, compared in
-[`results/xlayer/hdf5-gds-hpc-io.md`](results/xlayer/hdf5-gds-hpc-io.md)).
+them. `VFD_FORK` selects the VFD: `hpc-io` (the default,
+[hpc-io/vfd-gds](https://github.com/hpc-io/vfd-gds) tag `1.0.3`) or `nv-legate`
+([nv-legate/vfd-gds](https://github.com/nv-legate/vfd-gds), archived 2026-10-05), the previous
+implementation's VFD, which produced the published HDF5 numbers. The two are compared in
+[`results/xlayer/hdf5-gds-hpc-io.md`](results/xlayer/hdf5-gds-hpc-io.md).
 
 DataCrumbs and DFAnalyzer are built from these checkouts. The NIXL workload
 uses the `nixl-cu12` package, while trace parsing uses `dftracer-utils`; the
