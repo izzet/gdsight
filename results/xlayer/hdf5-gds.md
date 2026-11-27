@@ -9,7 +9,9 @@ A scientific-HPC keystone for GDSight, on real middleware (HDF5) and the communi
 - HW: Chameleon bare-metal A100-PCIE-40GB, Samsung PM983-class NVMe (ext4 `data=ordered`), CUDA 12.6,
   nvidia-fs 2.28, GDS 1.11.1 (libcufile; nvidia-fs stats header prints 1.17.1), kernel `6.8.0-1051-nvidia`, IOMMU off.
 - SW: **HDF5 1.14.5** (serial) + **`nv-legate/vfd-gds`** — NVIDIA's maintained GPUDirect-Storage VFD
-  (opens `O_DIRECT`, branches on device pointers; used in production by Legate). The VFD is the direct
+  (opens `O_DIRECT`, branches on device pointers; used in production by Legate; the repository was
+  archived 2026-10-05, last commit Nov 2024). The upstream `hpc-io/vfd-gds` 1.0.3 is compared in
+  [`hdf5-gds-hpc-io.md`](hdf5-gds-hpc-io.md). The VFD is the direct
   descendant of Ravi/Byna/Koziol's PDSW'20 "GPU Direct I/O with HDF5" driver.
 - Workload `workloads/hdf5_gds.c`: file created host-side with the default SEC2 VFD (no GDS writes);
   read into a GPU buffer via the GDS VFD (`H5Pset_fapl_gds`), toggling the raw-data chunk cache
@@ -94,8 +96,14 @@ supply none of them.
 - The chunk-cache→host staging is understandable in hindsight (raw-data cache lives in host memory); the
   contribution is that it is **silent** to every shipping GDS tool and that a per-op cross-layer view
   attributes it — on real middleware, on the community's production VFD.
-- A second, lesser bug in the *other* fork (`hpc-io/vfd-gds`) — it never opens `O_DIRECT`, so it is
-  compat even for contiguous — is noted only in passing; the primary result uses NVIDIA's fork.
+- The other fork, `hpc-io/vfd-gds` 1.0.3, also reaches the GDS path: it does not open `O_DIRECT`
+  itself, but cuFile reopens the file `O_DIRECT` internally, and it goes direct exactly where
+  nv-legate does. It differs in how staged reads are issued (no `O_DIRECT` on open, every read goes
+  through cuFile), which changes bandwidth and host CPU but not the host-staging finding. The
+  "~2× throughput for contiguous" ratio and the +27% CPU figure above are nv-legate-specific. The
+  published numbers use nv-legate. Measured comparison: [`hdf5-gds-hpc-io.md`](hdf5-gds-hpc-io.md).
+  (An earlier note here said hpc-io never takes the GDS path; that is false for 1.0.3 and was only
+  possibly true for an older commit.)
 
 ## Lineage / novelty
 Ravi et al. (PDSW'20) *enabled* GDS in HDF5 (the VFD); their own microbenchmarks already showed GDS
@@ -106,6 +114,7 @@ cache), and which lever (layout) fixes it. Same library, same community, same ve
 ## Reproduce
 ```
 bash chameleon/build_hdf5_gds.sh          # HDF5 1.14.5 + nv-legate/vfd-gds -> ~/hdf5-gds, ~/vfd-gds
+VFD_FORK=hpc-io bash chameleon/build_hdf5_gds.sh   # hpc-io/vfd-gds 1.0.3 -> ~/vfd-gds-hpcio (comparison only)
 bash tools/run_hdf5_gds.sh 64 256         # A/B via nvidia-fs Reads counter (needs rw_stats_enabled=1)
 bash tools/trace_hdf5_gds.sh              # GDSight cross-layer trace: cuFileRead vs nvfs_io per case
 ```
