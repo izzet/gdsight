@@ -1,4 +1,4 @@
-# Relaunching the GDS snapshot — `grc-ub2404-nvk-gds-a100-cu126-v2`
+# Relaunching the GDS snapshot — `grc-ub2404-nvk-gds-a100-cu126-v5`
 
 This image is **GDS-capable out of the box**: open NVIDIA driver (560.35.05, Dual MIT/GPL),
 the **`linux-nvidia` 6.8.0-1051 kernel with the GDS-patched nvme**, nvidia-fs 2.28.4 (+ symvers
@@ -17,7 +17,7 @@ Lease an **A100 bare-metal node** (the `compute_liqid` / A100 class at CHI@TACC)
 GUI or `openstack reservation`. The image is built for this hardware (AMD EPYC + A100-PCIE).
 
 ## 2. Launch from the snapshot
-Launch an instance choosing image **`grc-ub2404-nvk-gds-a100-cu126-v2`** (NOT the base
+Launch an instance choosing image **`grc-ub2404-nvk-gds-a100-cu126-v5`** (NOT the base
 `CC-Ubuntu24.04-CUDA`). Associate a floating IP, then `ssh cc@<ip>`.
 > One instance per bare-metal node: to relaunch on the *same* physical node, delete the current
 > instance first. To run old + new together, lease a second node.

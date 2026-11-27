@@ -1,7 +1,7 @@
 # GDS toolkit — `/opt/gds-tools`
 
 GPUDirect Storage bring-up + smoke-test toolkit for the Chameleon A100 snapshot
-**`grc-ub2404-nvk-gds-a100-cu126-v2`**. Everything here is captured in the image and is
+**`grc-ub2404-nvk-gds-a100-cu126-v5`**. Everything here is captured in the image and is
 group-accessible. The same scripts are in `chameleon/` of the repository.
 
 ## TL;DR — make a relaunched node GDS-ready (per-instance steps)
