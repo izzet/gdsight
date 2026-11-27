@@ -6,7 +6,7 @@ release `v1.0.2`; `git checkout v1.0.2 && git submodule update` restores that st
 
 | Path | Role | Source | Pinned commit |
 | --- | --- | --- | --- |
-| `external/datacrumbs` | tracer build (branch `feat/p2pdma`) | [izzet/datacrumbs](https://github.com/izzet/datacrumbs) | `f900647d99086707f102c4569ecdf915dfc9713c` |
+| `external/datacrumbs` | tracer build (branch `develop`) | [izzet/datacrumbs](https://github.com/izzet/datacrumbs) | `4b24f79ac2faf915a59f19a2678152b7ce05a2ec` |
 | `external/dfanalyzer` | offline attribution build | [izzet/dfanalyzer](https://github.com/izzet/dfanalyzer) | `6525f47ded068281750c37e03cec3d0dd23aee2f` |
 | `external/dftracer` | trace-format provenance | [izzet/dftracer](https://github.com/izzet/dftracer) | `3c2f1d83673f388854ee77c358010dc273f5d596` |
 | `external/nixl` | NIXL workload provenance | [ai-dynamo/nixl](https://github.com/ai-dynamo/nixl) | `77d79d88f958c371f6184fafdb03fa90022de995` |
