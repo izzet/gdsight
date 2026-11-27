@@ -3,7 +3,7 @@
 Run on 2026-11-27 on Chameleon `liqid07-grc`: A100-PCIE-40GB, Samsung MZ1LB3T8HMLA NVMe (`nvme1n1`, ext4
 `data=ordered`), kernel `6.8.0-1051-nvidia`, IOMMU off. The node moved from the paper's stack (driver 560.35.05,
 CUDA 12.6, cuFile 1.11.1.6) to driver 570.211.01, CUDA 12.8.2, cuFile 1.13.1.3, nvidia-fs 2.28.4, the same
-versions as the liqid05 run in [`../README.md`](../README.md).
+versions as the liqid05 run in [`../liqid05/`](../liqid05/README.md).
 
 The same workload and script run twice: on the nvidia-fs transport with cuFile 1.13 (`03-…`), then on the
 P2PDMA transport (`06-…`). The first run separates the cuFile version from the transport.

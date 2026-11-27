@@ -32,6 +32,5 @@ paper/
 CLAUDE.md
 
 # P2PDMA run record: the logs are the evidence
-!results/p2pdma/*.log
-!results/p2pdma/setup-logs/*.log
-!results/p2pdma/liqid07/*.log
+!results/p2pdma/*/*.log
+!results/p2pdma/*/setup-logs/*.log
