@@ -1,0 +1,29 @@
+name: Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Shell syntax (bash -n)
+        run: |
+          status=0
+          for f in $(git ls-files '*.sh'); do
+            bash -n "$f" || { echo "::error file=$f::bash -n failed"; status=1; }
+          done
+          exit $status
+      - name: ShellCheck (errors only)
+        run: git ls-files '*.sh' | xargs shellcheck --severity=error
+      - name: Python syntax (py_compile)
+        run: python -m py_compile $(git ls-files 'tools/*.py' 'workloads/*.py' 'chameleon/*.py')
