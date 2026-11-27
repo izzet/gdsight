@@ -1,0 +1,86 @@
+pread64(3</usr/lib/x86_64-linux-gnu/libc.so.6>, "\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"..., 784, 64) = 784
+pread64(3</usr/lib/x86_64-linux-gnu/libc.so.6>, "\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"..., 784, 64) = 784
++++ exited with 0 +++
++++ exited with 0 +++
++++ exited with 0 +++
++++ exited with 0 +++
++++ exited with 0 +++
++++ exited with 0 +++
++++ exited with 0 +++
++++ exited with 0 +++
++++ exited with 0 +++
++++ exited with 0 +++
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 0) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 1048576) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 2097152) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 3145728) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 4194304) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 5242880) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 6291456) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 7340032) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 4096, 8388608) = 4096
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 8388608) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 9437184) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 10485760) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 11534336) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 12582912) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 13631488) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 14680064) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 15728640) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 4096, 16777216) = 4096
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 16777216) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 17825792) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 18874368) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 19922944) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 20971520) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 22020096) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 23068672) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 24117248) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 4096, 25165824) = 4096
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 25165824) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 26214400) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 27262976) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 28311552) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 29360128) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 30408704) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 31457280) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 32505856) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 4096, 33554432) = 4096
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 33554432) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 34603008) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 35651584) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 36700160) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 37748736) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 38797312) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 39845888) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 40894464) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 4096, 41943040) = 4096
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 41943040) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 42991616) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 44040192) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 45088768) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 46137344) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 47185920) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 48234496) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 49283072) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 4096, 50331648) = 4096
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 50331648) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 51380224) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 52428800) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 53477376) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 54525952) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 55574528) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 56623104) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 57671680) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 4096, 58720256) = 4096
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 58720256) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 59768832) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 60817408) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 61865984) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 62914560) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 63963136) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 65011712) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 1048576, 66060288) = 1048576
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, 0x701ccd300000, 4096, 67108864) = 2048
+pread64(53</mnt/nvme1/gdstrace-smoke/cu128/contig.h5>, "", 2048, 67110912) = 0
++++ exited with 0 +++

@@ -11,6 +11,8 @@
 #   3. /etc/modprobe.d/nvme.conf: nvme_core multipath=N
 #   4. update-initramfs for the running kernel
 # The original cufile.json is saved once as /etc/cufile.json.pre-p2pdma; --revert restores it.
+# /etc/cufile.json is usually a symlink (via /etc/alternatives into the CUDA tree): the backup copies
+# the file it points to, and --revert writes the contents back through the link.
 #
 # Usage: bash chameleon/enable_p2pdma.sh [--revert]    then: sudo reboot
 set -euo pipefail
@@ -20,14 +22,20 @@ NV=/etc/modprobe.d/nvidia-p2pdma.conf
 NVME=/etc/modprobe.d/nvme.conf
 
 if [ "${1:-}" = "--revert" ]; then
-  [ -f "$BAK" ] && sudo cp -a "$BAK" "$CFG" && echo "restored $CFG from $BAK"
+  if [ -L "$BAK" ]; then
+    echo "WARNING: $BAK is a symlink to the live file, not a backup; restore cufile.json from the libcufile package."
+  elif [ -f "$BAK" ]; then
+    sudo cp "$BAK" "$(readlink -f "$CFG")" && echo "restored $(readlink -f "$CFG") from $BAK"
+  fi
   sudo rm -f "$NV" "$NVME" && echo "removed $NV $NVME"
   sudo update-initramfs -u -k "$(uname -r)"
   echo "Reverted. Reboot, then check: gdscheck -p shows 'NVMe P2PDMA : Unsupported'."
   exit 0
 fi
 
-[ -f "$BAK" ] || sudo cp -a "$CFG" "$BAK"
+# A backup that is itself a symlink (from an earlier version of this script) points at the live file.
+[ -L "$BAK" ] && sudo rm "$BAK"
+[ -f "$BAK" ] || sudo cp -L "$CFG" "$BAK"
 
 # 1. cufile.json (JSON with // comments): flip the properties key, add block.nvme if absent.
 sudo python3 - "$CFG" <<'PY'

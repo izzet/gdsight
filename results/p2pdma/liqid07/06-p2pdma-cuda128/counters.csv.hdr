@@ -1,0 +1,6 @@
+# phase=06-p2pdma-cuda128 Fri Nov 27 03:03:37 UTC 2026 kernel=6.8.0-1051-nvidia driver=570.211.01
+ GDS release version: 1.13.1.3
+ NVMe P2PDMA        : Supported
+ NVMe               : Supported
+# traced functions: pci_p2pdma_map_segment nvfs_get_p2p_dma_mapping filemap_read iomap_dio_rw
+fork,case,rep,nvfs_reads,dev_MiB,BW_GiBs,kernel_hits

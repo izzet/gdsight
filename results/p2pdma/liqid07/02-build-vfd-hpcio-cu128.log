@@ -1,0 +1,62 @@
+== deps ==
+== HDF5 already built (/home/cc/hdf5-gds/lib/libhdf5.so) — skip (FORCE=1 to rebuild) ==
+== vfd-gds (hpc-io) -> /home/cc/vfd-gds-hpcio-cu128 ==
+Cloning into '/home/cc/src/vfd-gds-hpcio-1.0.3'...
+Note: switching to '551077e9d756d78647dd21e8f534efdb70bae2dd'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+-- The C compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Found CUDAToolkit: /usr/local/cuda-12.8/targets/x86_64-linux/include (found version "12.8.93") 
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE  
+-- Could NOT find HDF5 (missing: HDF5_DIR)
+-- Found HDF5: /home/cc/hdf5-gds/lib/libhdf5.so (found version "1.14.5")  
+-- Found Git: /usr/bin/git (found version "2.43.0") 
+-- Could not use git to determine source version, using version 1.0.2
+-- Configuring hdf5_vfd_gds v1.0.2
+-- GCC detected, setting additional flags
+-- Configuring done (0.6s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/cc/src/vfd-gds-hpcio-1.0.3/build
+[ 50%] Building C object src/CMakeFiles/hdf5_vfd_gds.dir/H5FDgds.c.o
+[100%] Linking C shared library ../bin/libhdf5_vfd_gds.so
+[100%] Built target hdf5_vfd_gds
+[100%] Built target hdf5_vfd_gds
+Install the project...
+-- Install configuration: "Release"
+-- Installing: /home/cc/vfd-gds-hpcio-cu128/include/H5FDgds.h
+-- Installing: /home/cc/vfd-gds-hpcio-cu128/lib/libhdf5_vfd_gds.so.1.0.2
+-- Installing: /home/cc/vfd-gds-hpcio-cu128/lib/libhdf5_vfd_gds.so.1
+-- Set non-toolchain portion of runtime path of "/home/cc/vfd-gds-hpcio-cu128/lib/libhdf5_vfd_gds.so.1.0.2" to "/home/cc/hdf5-gds/lib:/usr/local/cuda-12.8/lib64"
+-- Installing: /home/cc/vfd-gds-hpcio-cu128/lib/libhdf5_vfd_gds.so
+-- Installing: /home/cc/vfd-gds-hpcio-cu128/share/cmake/hdf5_vfd_gds/hdf5_vfd_gds-targets.cmake
+-- Installing: /home/cc/vfd-gds-hpcio-cu128/share/cmake/hdf5_vfd_gds/hdf5_vfd_gds-targets-release.cmake
+-- Installing: /home/cc/vfd-gds-hpcio-cu128/share/cmake/hdf5_vfd_gds/hdf5_vfd_gds-config.cmake
+-- Installing: /home/cc/vfd-gds-hpcio-cu128/share/cmake/hdf5_vfd_gds/hdf5_vfd_gds-config-version.cmake
+-- Installing: /home/cc/vfd-gds-hpcio-cu128/lib/pkgconfig/hdf5_vfd_gds.pc
+  VFD installed: /home/cc/vfd-gds-hpcio-cu128/lib/libhdf5_vfd_gds.so
+
+DONE (hpc-io VFD). To use:
+  export HDF5_PLUGIN_PATH=/home/cc/vfd-gds-hpcio-cu128/lib
+  export LD_LIBRARY_PATH=/home/cc/hdf5-gds/lib:/home/cc/vfd-gds-hpcio-cu128/lib:$LD_LIBRARY_PATH
+  H5_PREFIX=/home/cc/hdf5-gds  VFD_PREFIX=/home/cc/vfd-gds-hpcio-cu128

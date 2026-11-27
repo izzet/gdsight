@@ -7,6 +7,10 @@ two Samsung MZ1LB3T8HMLA NVMe drives (GPU and both drives on NUMA node 1, same P
 The paper measures GDS on the nvidia-fs transport (CUDA 12.6). This directory tests the upstream kernel PCI
 P2PDMA transport that GDS supports from CUDA 12.8, and records what GDSight needs to change for it.
 
+[`liqid07/`](liqid07/README.md) repeats the HDF5 case on a second node (2026-11-27) with both VFD forks
+(`hpc-io/vfd-gds` 1.0.3 and `nv-legate/vfd-gds`), on nvidia-fs with cuFile 1.13 and then on P2PDMA, and adds
+syscall counts: on P2PDMA the direct reads appear as `pread64` calls into GPU memory.
+
 ## Results
 
 1. **The paper's P2P evidence goes blind on P2PDMA.** With P2PDMA active, the nvidia-fs read counter is 0 for

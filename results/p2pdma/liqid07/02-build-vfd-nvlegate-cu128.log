@@ -1,0 +1,75 @@
+== deps ==
+== HDF5 already built (/home/cc/hdf5-gds/lib/libhdf5.so) — skip (FORCE=1 to rebuild) ==
+== vfd-gds (nv-legate) -> /home/cc/vfd-gds-nvlegate-cu128 ==
+-- The C compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Found CUDAToolkit: /usr/local/cuda-12.8/targets/x86_64-linux/include (found version "12.8.93") 
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE  
+-- Found Git: /usr/bin/git (found version "2.43.0") 
+-- Could not use git to determine source version, using version 1.0.2
+-- Configuring hdf5_vfd_gds v1.0.2
+-- GCC detected, setting additional flags
+-- Configuring done (0.3s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/cc/src/vfd-gds-nvidia/build
+[ 50%] Building C object src/CMakeFiles/hdf5_vfd_gds.dir/H5FDgds.c.o
+/home/cc/src/vfd-gds-nvidia/src/H5FDgds.c:21: warning: "_GNU_SOURCE" redefined
+   21 | #define _GNU_SOURCE /* For O_DIRECT flag */
+      | 
+<command-line>: note: this is the location of the previous definition
+In file included from /home/cc/src/vfd-gds-nvidia/src/H5FDgds.c:44:
+/home/cc/src/vfd-gds-nvidia/src/H5FDgds.h:33: warning: "CBSIZE_DEF" redefined
+   33 | #define CBSIZE_DEF    16 * 1024 * 1024
+      | 
+In file included from /home/cc/hdf5-gds/include/hdf5.h:59,
+                 from /home/cc/src/vfd-gds-nvidia/src/H5FDgds.c:39:
+/home/cc/hdf5-gds/include/H5FDdirect.h:44: note: this is the location of the previous definition
+   44 | #define CBSIZE_DEF (16 * 1024 * 1024)
+      | 
+/home/cc/src/vfd-gds-nvidia/src/H5FDgds.c: In function ‘read_thread_fn’:
+/home/cc/src/vfd-gds-nvidia/src/H5FDgds.c:168:20: warning: variable ‘ret’ set but not used [-Wunused-but-set-variable]
+  168 |     ssize_t        ret;
+      |                    ^~~
+/home/cc/src/vfd-gds-nvidia/src/H5FDgds.c: In function ‘write_thread_fn’:
+/home/cc/src/vfd-gds-nvidia/src/H5FDgds.c:201:20: warning: variable ‘ret’ set but not used [-Wunused-but-set-variable]
+  201 |     ssize_t        ret;
+      |                    ^~~
+/home/cc/src/vfd-gds-nvidia/src/H5FDgds.c: In function ‘H5FD__gds_open’:
+/home/cc/src/vfd-gds-nvidia/src/H5FDgds.c:738:12: warning: assignment discards ‘const’ qualifier from pointer target type [-Wdiscarded-qualifiers]
+  738 |         fa = H5Pget_driver_info(fapl_id);
+      |            ^
+/home/cc/src/vfd-gds-nvidia/src/H5FDgds.c: In function ‘H5FD__gds_read’:
+/home/cc/src/vfd-gds-nvidia/src/H5FDgds.c:1175:19: warning: variable ‘ret’ set but not used [-Wunused-but-set-variable]
+ 1175 |     ssize_t       ret        = -1;
+      |                   ^~~
+/home/cc/src/vfd-gds-nvidia/src/H5FDgds.c: In function ‘H5FD__gds_write’:
+/home/cc/src/vfd-gds-nvidia/src/H5FDgds.c:1447:19: warning: variable ‘ret’ set but not used [-Wunused-but-set-variable]
+ 1447 |     ssize_t       ret        = -1;
+      |                   ^~~
+[100%] Linking C shared library ../bin/libhdf5_vfd_gds.so
+[100%] Built target hdf5_vfd_gds
+[100%] Built target hdf5_vfd_gds
+Install the project...
+-- Install configuration: "Release"
+-- Installing: /home/cc/vfd-gds-nvlegate-cu128/include/H5FDgds.h
+-- Installing: /home/cc/vfd-gds-nvlegate-cu128/lib/libhdf5_vfd_gds.so.1.0.2
+-- Installing: /home/cc/vfd-gds-nvlegate-cu128/lib/libhdf5_vfd_gds.so.1
+-- Set non-toolchain portion of runtime path of "/home/cc/vfd-gds-nvlegate-cu128/lib/libhdf5_vfd_gds.so.1.0.2" to "/home/cc/hdf5-gds/lib:/usr/local/cuda-12.8/lib64"
+-- Installing: /home/cc/vfd-gds-nvlegate-cu128/lib/libhdf5_vfd_gds.so
+-- Installing: /home/cc/vfd-gds-nvlegate-cu128/share/cmake/hdf5_vfd_gds/hdf5_vfd_gds-targets.cmake
+-- Installing: /home/cc/vfd-gds-nvlegate-cu128/share/cmake/hdf5_vfd_gds/hdf5_vfd_gds-targets-release.cmake
+-- Installing: /home/cc/vfd-gds-nvlegate-cu128/share/cmake/hdf5_vfd_gds/hdf5_vfd_gds-config.cmake
+-- Installing: /home/cc/vfd-gds-nvlegate-cu128/share/cmake/hdf5_vfd_gds/hdf5_vfd_gds-config-version.cmake
+-- Installing: /home/cc/vfd-gds-nvlegate-cu128/lib/pkgconfig/hdf5_vfd_gds.pc
+  VFD installed: /home/cc/vfd-gds-nvlegate-cu128/lib/libhdf5_vfd_gds.so
+
+DONE (nv-legate VFD). To use:
+  export HDF5_PLUGIN_PATH=/home/cc/vfd-gds-nvlegate-cu128/lib
+  export LD_LIBRARY_PATH=/home/cc/hdf5-gds/lib:/home/cc/vfd-gds-nvlegate-cu128/lib:$LD_LIBRARY_PATH
+  H5_PREFIX=/home/cc/hdf5-gds  VFD_PREFIX=/home/cc/vfd-gds-nvlegate-cu128

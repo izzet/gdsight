@@ -52,7 +52,9 @@ nv-legate only.
 ## Not tested
 - GDSight itself was not run on hpc-io. These are counters only (nvidia-fs stats, device sectors,
   call counts), not per-operation attribution.
-- The kernel PCI P2PDMA stack (`results/p2pdma/`) was not tested with hpc-io.
+- The kernel PCI P2PDMA transport is covered separately, for both forks with counters and strace, in
+  [`../p2pdma/liqid07/`](../p2pdma/liqid07/README.md): the host staging holds there too, and a plain
+  `pread64` count no longer separates the cases because direct reads are `pread64` calls into GPU memory.
 - Only hpc-io release 1.0.3 was tested, not other hpc-io commits.
 
 Raw outputs remain on `liqid07` under `/mnt/nvme1/gdstrace-smoke/v2` and `/v3`; they are not copied here.

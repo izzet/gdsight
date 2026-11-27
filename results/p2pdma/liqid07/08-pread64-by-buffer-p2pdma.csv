@@ -1,0 +1,6 @@
+hpcio,cache_on,pread64_total=272,on_h5=270,h5_into_gpu_buf=0,h5_into_host_buf=270
+hpcio,cache_off,pread64_total=273,on_h5=271,h5_into_gpu_buf=256,h5_into_host_buf=15
+hpcio,contiguous,pread64_total=79,on_h5=77,h5_into_gpu_buf=68,h5_into_host_buf=9
+nvlegate,cache_on,pread64_total=264,on_h5=262,h5_into_gpu_buf=0,h5_into_host_buf=262
+nvlegate,cache_off,pread64_total=265,on_h5=263,h5_into_gpu_buf=256,h5_into_host_buf=7
+nvlegate,contiguous,pread64_total=75,on_h5=73,h5_into_gpu_buf=72,h5_into_host_buf=1
