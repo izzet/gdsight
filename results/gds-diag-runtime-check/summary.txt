@@ -1,0 +1,10 @@
+gdsio_cpu_only_ktrace        exit=0 nvfs=0    devMiB=1024.0  p2pdma=0     nvfsmap=0     pgcache=19    routes=True/False -> WARN Host-staged reads despite an active direct route
+gdsio_cpu_only_plain         exit=0 nvfs=0    devMiB=1024.0  p2pdma=None  nvfsmap=None  pgcache=None  routes=True/False -> WARN Host-staged reads despite an active direct route
+gdsio_gpu_direct_ktrace      exit=0 nvfs=1024 devMiB=1024.0  p2pdma=0     nvfsmap=1024  pgcache=34    routes=True/False -> PASS Direct GDS in this run
+gdsio_gpu_direct_plain       exit=0 nvfs=1024 devMiB=1024.0  p2pdma=None  nvfsmap=None  pgcache=None  routes=True/False -> PASS Direct GDS in this run
+hdf5_cache_off_ktrace        exit=0 nvfs=256  devMiB=65.1    p2pdma=0     nvfsmap=256   pgcache=40    routes=True/False -> PASS Direct GDS in this run
+hdf5_cache_off_plain         exit=0 nvfs=256  devMiB=65.1    p2pdma=None  nvfsmap=None  pgcache=None  routes=True/False -> PASS Direct GDS in this run
+hdf5_cache_on_ktrace         exit=0 nvfs=0    devMiB=64.1    p2pdma=0     nvfsmap=0     pgcache=296   routes=True/False -> WARN Host-staged reads despite an active direct route
+hdf5_cache_on_plain          exit=0 nvfs=0    devMiB=64.1    p2pdma=None  nvfsmap=None  pgcache=None  routes=True/False -> WARN Host-staged reads despite an active direct route
+hdf5_contiguous_ktrace       exit=0 nvfs=72   devMiB=64.1    p2pdma=0     nvfsmap=72    pgcache=34    routes=True/False -> PASS Direct GDS in this run
+hdf5_contiguous_plain        exit=0 nvfs=72   devMiB=64.1    p2pdma=None  nvfsmap=None  pgcache=None  routes=True/False -> PASS Direct GDS in this run
