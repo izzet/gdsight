@@ -76,12 +76,16 @@ Each diagnosis resolves to a specific layout or configuration change, measured b
 
 | path | what |
 |---|---|
-| `tools/` | offline attribution and scoring, experiment drivers, figure generation |
-| `workloads/` | GDS workload drivers (KvikIO, NIXL, HDF5, DALI, `gdsio` harnesses) |
-| `chameleon/` | bring-up and smoke toolkit for a Chameleon bare-metal GPU node |
-| `results/` | measurement outputs, one directory per experiment family |
-| `results/xlayer/` | the cross-layer attribution evidence trail, one note per experiment |
+| [`tools/`](tools/README.md) | offline attribution and scoring, experiment drivers, figure generation |
+| [`workloads/`](workloads/README.md) | GDS workloads (cuFile C programs; KvikIO, NIXL, HDF5, DALI and other library readers) |
+| [`chameleon/`](chameleon/README.md) | bring-up and smoke toolkit for a Chameleon bare-metal GPU node |
+| `results/xlayer/` | one note per experiment, with its data |
+| `results/figures/` | paper figures and the data behind them |
+| `results/overhead/` | tracer overhead measurements |
+| [`results/p2pdma/`](results/p2pdma/README.md) | GDSight on the kernel PCI P2PDMA transport |
+| `results/chameleon/` | node bring-up checks |
 | `external/` | pinned submodules for the substrate, analyzer and evaluated stacks; see [release manifest](RELEASE-MANIFEST.md) |
+| `website/` | project website source |
 
 ## Reproducing
 

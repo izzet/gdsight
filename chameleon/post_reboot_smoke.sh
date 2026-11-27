@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # post_reboot_smoke.sh — run AFTER `sudo reboot` (with amd_iommu=off in effect).
-# Clears THE GATE and runs Appendix-A smoke tests on the true-GDS path.
+# Checks the GDS gate and runs the smoke tests on the true-GDS path.
 # Safe: never formats; uses a scratch subdir on an existing-ext4 local NVMe.
 REPO=${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}   # repository root (override with REPO=...)
 set -uo pipefail

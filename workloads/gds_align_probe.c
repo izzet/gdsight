@@ -1,5 +1,5 @@
 // gds_align_probe.c — controlled (mis)alignment cuFileRead generator for the
-// cross-layer read-amplification study (Study A, alignment axis). Issues N cuFileReads
+// cross-layer read-amplification study (alignment axis). Issues N cuFileReads
 // with exact control of file_offset misalignment, I/O size, and device-pointer offset,
 // so the tracer can measure per-op A_byte (device bytes / requested bytes). GDS docs say
 // a sub-4K-aligned offset/size/ptr falls to an internal (bounce) path; this quantifies it.

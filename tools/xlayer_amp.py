@@ -8,7 +8,7 @@ corr_id and measure how one application read transforms into device commands+byt
 Also reports the device command-size distribution (effective MDTS), unattributed
 device commands (readahead/other), and the cuFile->nvfs->nvme reach.
 
-This is the *instrument* for Study A/B (cross-layer amplification law): run it over a
+This is the measurement tool for the cross-layer amplification sweep: run it over a
 size×pattern×path sweep; the law is A_cmd(S) ~ ceil(S/MDTS), and the *findings* are the
 deviations (extra cmds, sub-request byte inflation, GDS-vs-bounce stream divergence).
 

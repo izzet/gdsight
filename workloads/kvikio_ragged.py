@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""step3_ragged.py — Step 3 of the GDSight Appendix-A plan.
+"""kvikio_ragged.py — kvikio reads of variable-size records into GPU memory.
 
 Drive kvikio (cuFile/GDS) over a dataset of records (offset,size) read into GPU memory, in three
 modes:

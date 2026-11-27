@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# align_sweep.sh — Study A (alignment axis): trace gds_align_probe across alignment cases,
+# align_sweep.sh — alignment sweep: trace gds_align_probe across alignment cases,
 # measure per-op A_byte (device bytes / requested bytes) to quantify GDS read-amplification
 # from sub-4K / misaligned offset / misaligned device-pointer reads.
 REPO=${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}   # repository root (override with REPO=...)

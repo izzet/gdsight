@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""A3 ablation: what does DEFAULT DataCrumbs see, versus DataCrumbs + our three plugins?
+"""Ablation: what default DataCrumbs sees, versus DataCrumbs with the three GDSight plugins.
 
 Derived by category-filtering traces we already have, so the comparison is within one run rather than
 across two. The default substrate emits cat="custom1" (POSIX syscalls). Our plugins emit cat="cufile",

@@ -35,12 +35,12 @@ demo_gdsio(){  # device-command amplification (4x at 4MiB)
 }
 demo_kvikio(){  # sub-16K POSIX path divergence (gds_stats blind)
   echo "### kvikio bimodal (small<16K -> POSIX, large -> GDS); gds_stats reports posix=0 ###"
-  run_trace "datacrumbs_wrap /opt/gds-venv/bin/python3.12 $(dirname "$0")/../step3/step3_mixed.py --p-small 0.6 --secs 8"
+  run_trace "datacrumbs_wrap /opt/gds-venv/bin/python3.12 $(dirname "$0")/../workloads/kvikio_bimodal.py --p-small 0.6 --secs 8"
   analyze "$(latest_trace)"
 }
 demo_dali(){  # whole-file >MDTS amplification + per-read handle reg
   echo "### DALI numpy GPU reader (expect ~2.5x amplification + per-read handle reg) ###"
-  run_trace "datacrumbs_wrap /opt/gds-venv/bin/python3.12 $(dirname "$0")/../step3/step3_dali.py $NPY 8"
+  run_trace "datacrumbs_wrap /opt/gds-venv/bin/python3.12 $(dirname "$0")/../workloads/dali_npy_read.py $NPY 8"
   analyze "$(latest_trace)"
 }
 demo_espn(){  # batch reader: arg-walk + per-read handle-reg pathology

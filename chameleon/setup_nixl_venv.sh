@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# setup_nixl_venv.sh — reproducible venv for the real end-to-end NIXL GDS keystone.
+# setup_nixl_venv.sh — reproducible venv for the end-to-end NIXL GDS case.
 # Installs the CUDA-12 NIXL wheel (bundles UCX; includes the GDS backend) + cupy as a VRAM
 # allocator. No source build, no etcd, no torch needed for the single-agent GDS path.
 set -euo pipefail
@@ -22,5 +22,5 @@ Notes:
  - import as 'nixl_cu12' (the cu13 default wheel mismatches the 12.6 driver).
  - cupy is used ONLY to allocate/register VRAM buffers; AVOID cupy compute kernels
    (e.g. .sum()) -- they JIT a cubin our driver rejects (CUDA_ERROR_INVALID_IMAGE).
- - run the keystone:  NIXL_PY=$VENV/bin/python bash tools/run_nixl_e2e.sh
+ - run the case:  NIXL_PY=$VENV/bin/python bash tools/run_nixl_e2e.sh
 EOF

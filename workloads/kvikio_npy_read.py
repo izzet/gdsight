@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""step3_npy.py — Step 3 realism: multi-threaded kvikio reads over a REAL .npy dataset.
+"""kvikio_npy_read.py — multi-threaded kvikio reads over a REAL .npy dataset.
 
 Real .npy files store the array data right after a header (\x93NUMPY + version + header), so the data
 region starts at an offset like 128 B — NOT 4K-aligned. A vendor GDS reader therefore hits the

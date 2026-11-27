@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""step3_sizesweep.py — read `count` fixed-size, 4K-aligned reads via kvikio.CuFile into GPU memory.
+"""kvikio_size_sweep.py — read `count` fixed-size, 4K-aligned reads via kvikio.CuFile into GPU memory.
 Used to find the read size at which kvikio stops using GDS and silently falls to POSIX (measured
 externally via the kernel nvidia-fs Reads/readMiB counters). Aligned offsets + (small) fixed sizes
 isolate the *size* variable. Reads-only."""

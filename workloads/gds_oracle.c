@@ -1,6 +1,6 @@
 // gds_oracle.c — generate cuFile reads over UNIQUE non-overlapping slots so the device
 // LBA gives an INDEPENDENT per-op ground truth (slot = file_offset/size) to score corr_id
-// and LBA attribution against (C1 validation). Modes:
+// and LBA attribution against (validation). Modes:
 //   threads <T> : T pthreads each issuing synchronous cuFileRead over its slot partition
 //   batch   <B> : cuFileBatchIOSubmit batches of B reads (decoupled/async regime)
 // Every op reads a distinct slot exactly once -> nvme LBA -> slot is unambiguous truth.

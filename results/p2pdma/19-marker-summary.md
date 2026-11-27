@@ -1,4 +1,4 @@
-# Step 4: a P2P marker for the kernel PCI P2PDMA transport (2026-11-18)
+# A P2P marker for the kernel PCI P2PDMA transport (2026-11-18)
 Method: ftrace function profiler (system-wide, no PID filter), 14 candidate functions, 6 cases, 3 reps (fprof.sh, 18-fprof-p2pdma-3reps.csv).
 HDF5: 64 MiB, 256 KiB chunks. gdsio: 1 GiB, 1 MiB reads, 1 thread. Page cache dropped before each case.
 

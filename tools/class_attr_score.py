@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""keystone_gds_score.py — per-class attribution for a DIRECT-GDS heterogeneous workload
-(all reads via cuFile, no kvikio threshold bypass), e.g. the NIXL-sized keystone from
+"""class_attr_score.py — per-class attribution for a DIRECT-GDS heterogeneous workload
+(all reads via cuFile, no kvikio threshold bypass), e.g. the NIXL-sized workload from
 gds_mixed.c. Class by file region: A < BBASE (1 GiB), B >= BBASE. Reports aggregate vs
 per-class device amplification (LBA) and corr_id reliability on class B. Unlike
 mixed_score.py (built for the kvikio POSIX-bypass case), requested bytes come from the
 cuFile events themselves, since here B does enter cuFile.
-usage: keystone_gds_score.py <trace.pfw.gz> <file>
+usage: class_attr_score.py <trace.pfw.gz> <file>
 """
 import sys, gzip, json, bisect, subprocess, re
 BBASE = 1 << 30; BS = 4096; SEC = 512

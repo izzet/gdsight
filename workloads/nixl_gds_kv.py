@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Real end-to-end NIXL GDS workload for the cross-layer keystone. Drives the ACTUAL
+"""Real end-to-end NIXL GDS workload for the cross-layer NIXL case. Drives the ACTUAL
 nixl_agent + GDS backend (cuFileBatchIOSubmit under the hood) to read file->GPU (true P2P)
 with a heterogeneous, NIXL-derived KV-cache access pattern:
   class A = large page reads  (default 1 MiB, 4K-aligned)   -> file region [0, BBASE)
   class B = small KV reads    (default 2560 B = Llama-3.1-70B PP=8 block-access)  -> [BBASE, .)
 Transfers are issued in BATCHES (NIXL packs each initialize_xfer's descriptors into one
 GDS batch), giving the real async/batched regime. Class is encoded by file region so the
-tracer's LBA attribution (keystone_gds_score.py) can split per class.
+tracer's LBA attribution (class_attr_score.py) can split per class.
 
 Class-B layout knobs (two equivalent interfaces, both supported):
   --layout {scatter,aligned,packed}  (O1/O2 optimization lever): scatter = sub-4K-misaligned naive
@@ -27,7 +27,7 @@ try:
 except ImportError:
     from nixl._api import nixl_agent, nixl_agent_config
 
-BBASE = 1 << 30  # class B region starts at 1 GiB (matches keystone_gds_score.py)
+BBASE = 1 << 30  # class B region starts at 1 GiB (matches class_attr_score.py)
 
 def main():
     ap = argparse.ArgumentParser()

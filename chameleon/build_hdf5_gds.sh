@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # build_hdf5_gds.sh — build HDF5 >=1.14 + the GPUDirect-Storage VFD (hpc-io/vfd-gds) so HDF5 apps
-# can read datasets directly into GPU memory over cuFile/GDS. Needed for the HDF5+GDS keystone
+# can read datasets directly into GPU memory over cuFile/GDS. Needed for the HDF5 case
 # (results/xlayer/hdf5-gds.md). apt's HDF5 is 1.10 (too old); vfd-gds requires >=1.14.
 #
 # Artifacts install OUTSIDE the repo (large binaries): HDF5 -> $H5_PREFIX, VFD -> $VFD_PREFIX.

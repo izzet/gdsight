@@ -13,10 +13,10 @@ P2PDMA transport that GDS supports from CUDA 12.8, and records what GDSight need
    every HDF5 configuration, so true GDS and silent compat look the same (`17-...`).
 2. **`pci_p2pdma_map_segment` replaces the nvidia-fs marker.** Profiled with ftrace over three reps, it is 0 in
    every host-staged case and nonzero only on true P2P, with counts that match `nvfs_get_p2p_dma_mapping` on the
-   same workloads: HDF5 cache off 257, contiguous 72, `gdsio` one per 1 MiB I/O (`18-...`, `19-step4-summary.md`).
+   same workloads: HDF5 cache off 257, contiguous 72, `gdsio` one per 1 MiB I/O (`18-...`, `19-marker-summary.md`).
 3. **The HDF5 finding holds on P2PDMA.** Traced with the new probe, the chunk cache on gives 262 `cuFileRead`
    and 0 P2P mappings; cache off gives 257 and contiguous 72. Every P2PDMA event carries the `corr_id` of a real
-   `cuFileRead`, so per-op attribution works unchanged (`22-...`, `24-step5-summary.md`). Rerun with the shipped
+   `cuFileRead`, so per-op attribution works unchanged (`22-...`, `24-attribution-summary.md`). Rerun with the shipped
    code (separate `p2pdma` plugin, `tools/trace_hdf5_gds_p2pdma.sh`), all 9 runs give the same counts (`28-...`).
 4. **Throughput is the same on both transports on this drive** (1 MiB read 2.93 GiB/s), because the drive is the
    limit. These runs do not compare transport performance.
@@ -66,7 +66,7 @@ P2PDMA transport that GDS supports from CUDA 12.8, and records what GDSight need
 During the run, Ubuntu's `unattended-upgrades` installed kernel `6.8.0-149-generic` in the background. Driver
 570.211.01 does not build for it (`nv-pci.c: too few arguments to function 'pci_resize_resource'`), which left
 dpkg half-configured and made every later `apt-get install` fail. The unbooted kernel was purged, the
-`linux-generic` metapackages held, and the apt upgrade timers disabled (`27-...`). On a long lease, disable them
+`linux-generic` metapackages held, and the apt upgrade timers disabled (`setup-logs/27-...`). On a long lease, disable them
 before starting.
 
 ## Revert to the paper's configuration
@@ -77,8 +77,11 @@ and `/etc/modprobe.d/nvme.conf`, run `update-initramfs -u`, reboot.
 
 ## Files
 
-`00` to `02` stack state before and after the upgrade. `03` to `08` nvidia-fs baseline on CUDA 12.8. `09` to `15`
-P2PDMA enablement and proof. `16` to `19` marker search (`fprof.sh` is the ftrace profiler). `20` NVIDIA
-`gds-diag` (MagnumIO `d49288c`) on this node. `21` to `24` the first version of the probe and its traced runs
-(`run_trace_reps.sh`). `25` and `26` the two tracer installs, `27` the kernel cleanup, `28` the traced runs with
-the shipped code (`run_trace_p2pdma_reps.sh`). Each `*-summary.md` is the readable account of its step.
+- `00` to `02`: stack state before and after the upgrade.
+- `03` to `08`: nvidia-fs baseline on CUDA 12.8 (`08-nvfs-baseline-summary.md`).
+- `09` to `15`: P2PDMA enablement and proof (`15-p2pdma-enable-summary.md`).
+- `16` to `19`: marker search; `fprof.sh` is the ftrace profiler (`19-marker-summary.md`).
+- `20`: NVIDIA `gds-diag` (MagnumIO `d49288c`) on this node.
+- `22` to `24`: the first version of the probe and its traced runs, `run_trace_reps.sh` (`24-attribution-summary.md`).
+- `28`: the traced runs with the shipped code, `run_trace_p2pdma_reps.sh`.
+- `setup-logs/`: install, rebuild and cleanup logs (apt upgrade, initramfs, the two tracer builds, the kernel purge).

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# xlayer_sweep.sh — Study A/B sweep: trace gdsio across I/O size x pattern x path,
+# xlayer_sweep.sh — amplification sweep: trace gdsio across I/O size x pattern x path,
 # then measure per-op cross-layer amplification (tools/xlayer_amp.py) for each cell.
 # Produces the amplification-law table: A_cmd(S), A_byte(S), effective device max-xfer.
 REPO=${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}   # repository root (override with REPO=...)

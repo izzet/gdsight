@@ -1,4 +1,4 @@
-# Step 3: enabling the kernel PCI P2PDMA transport (2026-11-18)
+# Enabling the kernel PCI P2PDMA transport (2026-11-18)
 Stack: CUDA 12.8.2, GDS/libcufile 1.13.1.3, open driver 570.211.01, kernel 6.8.0-1051-nvidia (CONFIG_PCI_P2PDMA=y), A100-PCIE-40GB.
 
 ## Setting use_pci_p2pdma alone is not enough
