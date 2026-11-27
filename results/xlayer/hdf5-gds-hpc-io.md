@@ -53,7 +53,6 @@ nv-legate only.
 - GDSight itself was not run on hpc-io. These are counters only (nvidia-fs stats, device sectors,
   call counts), not per-operation attribution.
 - The kernel PCI P2PDMA stack (`results/p2pdma/`) was not tested with hpc-io.
-- Only hpc-io 1.0.3 was tested. An older hpc-io commit may have behaved as the earlier note claimed
-  (no GDS path).
+- Only hpc-io release 1.0.3 was tested, not other hpc-io commits.
 
 Raw outputs remain on `liqid07` under `/mnt/nvme1/gdstrace-smoke/v2` and `/v3`; they are not copied here.

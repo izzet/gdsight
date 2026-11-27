@@ -104,8 +104,7 @@ supply none of them.
   reads are issued (no `O_DIRECT` on open, every read goes through cuFile), so the bandwidth and CPU
   magnitudes above are nv-legate's: the "~2× throughput for contiguous" ratio does not hold on hpc-io,
   and its host-CPU cost of staging is +16% over cache off (+28% over contiguous) rather than +27%.
-  See [`hdf5-gds-hpc-io.md`](hdf5-gds-hpc-io.md). (An earlier version of this note said hpc-io never
-  takes the GDS path; that is false for 1.0.3 and may only have held for an older commit.)
+  See [`hdf5-gds-hpc-io.md`](hdf5-gds-hpc-io.md).
 
 ## Lineage / novelty
 Ravi et al. (PDSW'20) *enabled* GDS in HDF5 (the VFD); their own microbenchmarks already showed GDS
