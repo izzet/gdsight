@@ -1,0 +1,8 @@
+cufile.json: properties.use_pci_p2pdma = block.nvme.use_pci_p2pdma = true
+options nvidia NVreg_RegistryDwords="RMForceStaticBar1=1;ForceP2P=0;RmForceDisableIomapWC=1;"
+options nvme_core multipath=N
+update-initramfs: Generating /boot/initrd.img-6.8.0-1051-nvidia
+Done. Reboot, then check:
+  grep RegistryDwords: /proc/driver/nvidia/params      # the keys above
+  cat /sys/module/nvme_core/parameters/multipath       # N
+  /usr/local/cuda-12.8/gds/tools/gdscheck -p | grep 'NVMe P2PDMA'   # Supported
