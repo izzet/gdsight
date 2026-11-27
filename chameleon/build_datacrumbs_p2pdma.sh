@@ -2,7 +2,7 @@
 # build_datacrumbs_p2pdma.sh — build a second DataCrumbs install for the kernel PCI P2PDMA transport,
 # next to the paper's (~/dc-prefix is left untouched).
 #
-# Uses host config izzet-gdstrace-node-pcidma from external/datacrumbs (branch feat/p2pdma): the
+# Uses host config izzet-gdstrace-node-pcidma from external/datacrumbs (branch develop): the
 # cuFile plugin against the CUDA 12.8 libcufile, and the p2pdma plugin (pci_p2pdma_map_segment) in
 # place of nvidiafs. Produces ~/dc-prefix-p2pdma, built in external/datacrumbs/build-p2pdma.
 # Reuses ~/dfa-venv; pass SKIP_DFA=0 to rebuild it as well.
