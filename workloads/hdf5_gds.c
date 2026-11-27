@@ -1,7 +1,7 @@
 /* hdf5_gds.c — drive HDF5 reads into GPU memory over the GPUDirect-Storage VFD (nv-legate/vfd-gds),
  * to expose per-op cross-layer GDS behavior under GDSight.
  *
- * The keystone finding this reproduces: HDF5's raw-data CHUNK CACHE silently defeats GDS. A chunked
+ * The finding this reproduces: HDF5's raw-data CHUNK CACHE silently defeats GDS. A chunked
  * dataset (the default layout for compressed/partial-access scientific & ML data) read with the chunk
  * cache ON routes every chunk through host memory (read chunk -> host cache -> copy to GPU), so cuFile
  * falls back to compat (CPU bounce) — no P2P — even though the app issues normal cuFileRead calls.

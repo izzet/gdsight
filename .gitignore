@@ -7,7 +7,7 @@
 __pycache__/
 *.pyc
 
-# local tooling / editor / agent config
+# local tooling and editor config
 .claude/
 .wakatime-project
 
@@ -22,14 +22,15 @@ venv/
 # compiled tracer artifact (build from tools/gds_trace_preload.c)
 *.so
 
-# stray PDFs dropped at the repo root (e.g. papers shared by others) -- never publish
+# PDFs at the repository root
 /*.pdf
 
-# the paper lives in its own repo (codeberg: izzet/paper-gdsight)
+# the paper source is kept in a separate repository
 paper/
 
-# agent orientation, not artifact material
+# local notes
 CLAUDE.md
 
 # P2PDMA run record: the logs are the evidence
 !results/p2pdma/*.log
+!results/p2pdma/setup-logs/*.log

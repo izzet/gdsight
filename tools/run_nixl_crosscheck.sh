@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# THE irreplaceability cross-check: on ONE real-NIXL GDS run (Llama-3.1-70B KV pattern), capture what
-# every AGGREGATE observer sees vs what our per-op cross-layer tool sees. Shows that the per-class
+# NIXL cross-check: on ONE real-NIXL GDS run (Llama-3.1-70B KV pattern), capture what
+# every AGGREGATE observer sees vs what GDSight's per-op cross-layer attribution sees. Shows that the per-class
 # device amplification (small KV reads) is invisible/un-localizable to aggregate tools and
 # un-attributable to timing (batch corr_id collapse) -- only per-NVMe-command LBA recovers it.
 #
@@ -48,7 +48,7 @@ echo "BEFORE sectors=$db  AFTER sectors=$da  -> device read delta = $(( (da-db)*
 
 reqA=$(( NA*SA )); reqB=$(( NB*SB ))
 echo "=== (C) OUR per-op cross-layer view (known reqA=$((reqA/1024/1024))MiB reqB=$(awk "BEGIN{printf \"%.2f\",$reqB/1048576}")MiB) ===" | tee -a "$OUT/nixl_crosscheck.txt"
-python3 $REPO/tools/keystone_gds_score.py "$T" "$F" "$reqA" "$reqB" 2>/dev/null | tee -a "$OUT/nixl_crosscheck.txt"
+python3 $REPO/tools/class_attr_score.py "$T" "$F" "$reqA" "$reqB" 2>/dev/null | tee -a "$OUT/nixl_crosscheck.txt"
 echo "cuFileBatchIOSubmit events (cuFile-API layer): $(zcat "$T" 2>/dev/null | grep -oc cuFileBatchIOSubmit)" | tee -a "$OUT/nixl_crosscheck.txt"
 echo "nvfs_io=$(zcat "$T" 2>/dev/null|grep -oc nvfs_io) p2p=$(zcat "$T" 2>/dev/null|grep -oc nvfs_get_p2p_dma_mapping) nvme=$(zcat "$T" 2>/dev/null|grep -oc nvme_setup_cmd)" | tee -a "$OUT/nixl_crosscheck.txt"
 echo "$T" > /tmp/nixl_last_trace.txt

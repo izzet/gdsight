@@ -1,4 +1,4 @@
-# Step 5: per-op P2P attribution on the kernel PCI P2PDMA transport (2026-11-18)
+# Per-op P2P attribution on the kernel PCI P2PDMA transport (2026-11-18)
 Change: new kprobe on pci_p2pdma_map_segment in the nvidiafs plugin (event 400003), stamped with the active
 cuFileRead corr_id like the nvidia-fs markers (23-datacrumbs.diff). trace_hdf5_gds.sh scores p2pdma_map and
 accepts either marker as true GDS (23-trace_hdf5_gds.diff).

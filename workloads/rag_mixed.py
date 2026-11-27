@@ -25,7 +25,7 @@ def main():
     ap.add_argument("--sa", type=int, default=1<<20)
     ap.add_argument("--nb", type=int, default=2000)  # small embedding/KV reads
     ap.add_argument("--sb", type=int, default=3072)
-    # UC-B fix knob: coalesce class-B reads into contiguous 4K-aligned chunks of this size (>=16 KiB
+    # Fix knob: coalesce class-B reads into contiguous 4K-aligned chunks of this size (>=16 KiB
     # GDS threshold) instead of scattered sub-threshold sb reads. 0 = baseline (silent POSIX bypass).
     ap.add_argument("--coalesce", type=int, default=0)
     a = ap.parse_args()

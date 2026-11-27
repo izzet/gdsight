@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""write_attr.py -- cross-layer scoring for the GDS write keystone.
+"""write_attr.py -- cross-layer scoring for the GDS unaligned-write case.
 
 Reads a DFTracer .pfw.gz and reports, for a write workload: app-level cuFileWrite volume, whether the
 GDS path actually engaged (nvfs_io / p2p mappings), any POSIX fallback, and the device commands split

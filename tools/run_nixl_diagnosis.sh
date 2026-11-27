@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # DIAGNOSIS WALKTHROUGH: a KV-offload pipeline that current tools call "healthy" but wastes 2/3 of its
 # device read bandwidth. Shows the fix a practitioner derives from current tools (add concurrency)
-# is futile, while the fix our per-op attribution prescribes (fix KV read alignment / coalesce) works.
+# is futile, while the fix GDSight's per-op attribution prescribes (fix KV read alignment / coalesce) works.
 # All KV-only (na=0), nb=2000 x 2048B (Llama-3.1-70B FP8). For each arm we report what EACH observer sees:
 #   (current tools) nvidia-fs aggregate GDS MiB + iostat device MiB  -> "healthy / device busy"
 #   (ours)          per-op LBA device bytes for the KV class + A_byte -> the amplification, localized

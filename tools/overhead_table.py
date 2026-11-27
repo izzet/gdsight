@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the final tracer-overhead table (Table C, §5.x) from raw per-iter gdsio
+"""Build the final tracer-overhead table from raw per-iter gdsio
 throughputs. Random rows come from the 256M/N5 run (already tight); sequential rows
 from the 2G/N7 de-noise run. Adds an achieved-IOPS column (from baseline BW & I/O size)
 to make the mechanism — overhead tracks ops/sec, not pattern — visible directly.

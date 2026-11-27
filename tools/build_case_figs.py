@@ -111,9 +111,9 @@ def derive() -> dict:
     d["nixl"] = {"labels": ["baseline", "2$\\times$ batch", "align 4 KiB", "coalesce"],
                  "vals": [float(arm[k]["A_byte"]) for k in keys], "src": "nixl_diagnosis.csv"}
 
-    # Unaligned writes: deterministic, split by direction. Source results/xlayer/write-keystone.md.
+    # Unaligned writes: deterministic, split by direction. Source results/xlayer/unaligned-writes.md.
     d["writes"] = {"labels": ["aligned", "16 KiB\nunaligned", "4 KiB\nunaligned"],
-                   "wr": [1.00, 1.25, 2.00], "rd": [0.00, 0.42, 0.87], "src": "write-keystone.md"}
+                   "wr": [1.00, 1.25, 2.00], "rd": [0.00, 0.42, 0.87], "src": "unaligned-writes.md"}
 
     # Tail p99: rate, n=3 per condition. Source tail_reps.csv.
     rows = read_csv(XL / "tail_reps.csv")
@@ -287,7 +287,7 @@ def save_figure(fig, stem: Path) -> None:
 
     Deliberately no bbox_inches="tight": it trims each panel by a different amount, so panels placed at
     the same LaTeX width end up scaled by different factors and their text comes out at different sizes.
-    Constrained layout already reserves room for labels, so the fixed size is the honest one.
+    Constrained layout already reserves room for labels, so the fixed size is the correct one.
     """
     stem.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(stem.with_suffix(".pdf"))

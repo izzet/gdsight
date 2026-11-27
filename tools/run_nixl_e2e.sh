@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# End-to-end REAL NIXL GDS keystone: trace the actual nixl_agent + GDS backend (unmodified
+# End-to-end NIXL GDS case: trace the actual nixl_agent + GDS backend (unmodified
 # python, via DATACRUMBS trace-all -- no injection) reading file->GPU with NIXL's heterogeneous
 # KV access pattern, then attribute per-class cross-layer. Reproducible: deps in
 # chameleon/setup_nixl_venv.sh; workload in workloads/nixl_gds_kv.py.

@@ -25,7 +25,7 @@ for B in 1 8 32 64 128; do
   datacrumbs_run --app "$APP" >/tmp/bsw_$B.out 2>&1
   sleep 1
   T=$(ls -t "$TRACEDIR"/*/*/*/*.pfw.gz 2>/dev/null | head -1)
-  line=$(python3 $REPO/tools/keystone_gds_score.py "$T" "$F" $((NA*SA)) $((NB*SB)) 2>/dev/null)
+  line=$(python3 $REPO/tools/class_attr_score.py "$T" "$F" $((NA*SA)) $((NB*SB)) 2>/dev/null)
   ab=$(grep -oE 'B=[0-9.]+x' <<<"$line" | tail -1 | tr -dc '0-9.')
   cc=$(grep -oE '[0-9]+% correct' <<<"$line" | tr -dc '0-9')
   un=$(grep -oE '[0-9]+% unattributed' <<<"$line" | tr -dc '0-9')

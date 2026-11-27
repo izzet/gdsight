@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""step3_dali.py — Step 3 realism, 2nd vendor reader: NVIDIA DALI numpy GPU reader over the same
+"""dali_npy_read.py — a second vendor reader: NVIDIA DALI numpy GPU reader over the same
 .npy dataset. device='gpu' + dont_use_mmap=True selects DALI's GDS path. Pair with a live gds_stats
 attach to see whether DALI's reads use the GDS DMA path (n>0) or silently bypass it (n=0)."""
 import sys, time

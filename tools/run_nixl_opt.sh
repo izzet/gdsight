@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# O1 + O2: does better attribution DRIVE a real optimization, and would existing tools have driven it?
+# Does better attribution DRIVE a real optimization, and would existing tools have driven it?
 # One KV-streaming workload on the real NIXL GDS engine, three KV-cache LAYOUTS:
 #   scatter (naive paged KV, sub-4K-misaligned)  -> the status quo
 #   aligned (4K-aligned, one read per entry)      -> the "obvious" fix from partial knowledge (O2)
-#   packed  (entries contiguous, bulk-coalesced)  -> the fix our per-op device attribution points to (O1)
+#   packed  (entries contiguous, bulk-coalesced)  -> the fix the per-op device attribution points to
 # For each we record what EVERY observer reports: nvidia-fs aggregate + health (gds_stats-class),
 # diskstats (iostat), cuFile-API op count, and OUR per-op LBA (device bytes, A_byte, useful GiB/s).
 REPO=${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}   # repository root (override with REPO=...)
@@ -37,7 +37,7 @@ for L in scatter aligned packed; do
   disk_mib=$(( (${disk_a:-0} - ${disk_b:-0}) * 512 / 1024 / 1024 ))
   apiops=$(zcat "$T" 2>/dev/null | grep -oc cuFileBatchIOSubmit); nvme=$(zcat "$T" 2>/dev/null | grep -oc nvme_setup_cmd)
   # OUR per-op view
-  line=$(python3 $REPO/tools/keystone_gds_score.py "$T" "$F" "$reqA" "$reqB" 2>/dev/null)
+  line=$(python3 $REPO/tools/class_attr_score.py "$T" "$F" "$reqA" "$reqB" 2>/dev/null)
   devB=$(grep -oE 'B=[0-9.]+MiB' <<<"$line" | tail -1 | tr -dc '0-9.')
   ab=$(grep -oE 'B=[0-9.]+x' <<<"$line" | tail -1 | tr -dc '0-9.')
   gibps=$(grep -oE 'useful_GiBps=[0-9.]+' <<<"$out" | tr -dc '0-9.')

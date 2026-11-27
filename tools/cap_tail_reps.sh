@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# D4: is raising max_sectors_kb tail-neutral? Re-measures the claim "p99 4080 (cap 1280) vs 4058
+# Is raising max_sectors_kb tail-neutral? Re-measures the claim "p99 4080 (cap 1280) vs 4058
 # (cap 2048)", which came from results/xlayer/interference.md (2026-06-25), a single run whose
 # parameters were never recorded.
 #

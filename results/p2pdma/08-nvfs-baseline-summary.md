@@ -1,4 +1,4 @@
-# Step 2: nvidia-fs baseline on CUDA 12.8 / GDS 1.13.1.3 / driver 570.211.01 (2026-11-18)
+# nvidia-fs baseline on CUDA 12.8 / GDS 1.13.1.3 / driver 570.211.01 (2026-11-18)
 Node liqid05-grc (hostname izzet-gdstrace-node), A100-PCIE-40GB, nvme1n1 ext4 data=ordered, kernel 6.8.0-1051-nvidia.
 libcufile confirmed at runtime: /usr/local/cuda-12.8/lib64/libcufile.so.0 (LD_DEBUG).
 
@@ -15,8 +15,8 @@ BW cache ON 0.909/0.895/0.926, OFF 0.585/0.570/0.587, contiguous 1.598/1.636/1.6
 | cache ON | 262 | 0 | 0 | 283 |
 | cache OFF | 262 | 256 | 256 | 271 |
 | contiguous | 8 | 72 | 72 | 81 |
-CUDA 12.6 reference (2026-11-17): p2p_map 0/258/136, nvme_setup_cmd 288/276/148. Contiguous issues fewer P2P mappings and commands on 1.13; not yet explained.
+CUDA 12.6 reference (2026-11-17): p2p_map 0/258/136, nvme_setup_cmd 288/276/148. Contiguous issues fewer P2P mappings and commands here; README.md ("Not covered") traces this to the file's on-disk layout.
 
 ## Issue found and fixed
 cuFile uprobe path is hardcoded to CUDA 12.6 in external/datacrumbs/etc/datacrumbs/plugins/custom_probes/cufile/{probes.json,cufile.bpf.c}.
-On 12.8 the first traced run (05-...log) showed cuFileRead=0 for all cases. Repointed to cuda-12.8 and rebuilt (06-...log).
+On 12.8 the first traced run (05-...log) showed cuFileRead=0 for all cases. Repointed to cuda-12.8 and rebuilt (setup-logs/06-...log).

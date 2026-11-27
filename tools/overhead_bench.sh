@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# overhead_bench.sh — end-to-end DataCrumbs tracer overhead (Table C, §5.x).
+# overhead_bench.sh — end-to-end DataCrumbs tracer overhead.
 # Matrix: I/O size sweep in x4 steps (4K,16K,64K,256K,1M,4M) x {sequential, random}
 # read, fixed 4 threads, fixed 256 MiB transferred per run. For each cell: N baseline
 # (stock gdsio) vs N traced (datacrumbs_track'd gdsio under datacrumbs_run, full eBPF
@@ -23,7 +23,7 @@ SIZES=(4K 16K 64K 256K 1M 4M) # x4 steps from 4K
 PATTERNS=${PATTERNS:-seq rand} # which patterns to run this invocation
 TAG=${TAG:-}                   # filename suffix to avoid clobbering prior runs
 export PATH="$PREFIX/sbin:$PREFIX/bin:$PATH" LD_LIBRARY_PATH="$PREFIX/lib"
-OUT=$REPO/results/step5-overhead
+OUT=$REPO/results/overhead
 mkdir -p "$OUT"; RAW="$OUT/overhead_raw${TAG}.txt"; TAB="$OUT/overhead${TAG}.txt"; : >"$RAW"
 
 # 2 GiB backing file (room for random spread); recreate if missing/too small

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Curated anti-pattern #2 — the "GDS is healthy" threshold trap (real, documented). kvikio routes reads
+"""The "GDS is healthy" threshold trap (real, documented). kvikio routes reads
 below KVIKIO_GDS_THRESHOLD (default 16 KiB) through its own POSIX path *above* cuFile, silently — so a
 workload with a mix of small and large reads has the large reads on true GDS and the small reads quietly
 on POSIX. gds_stats / nvidia-fs show the large (GDS) reads ("GDS is working"); only per-op attribution

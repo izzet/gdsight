@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run_write_keystone.sh -- the GDS write keystone (results/xlayer/write-keystone.md).
+# run_write_keystone.sh -- the unaligned-write case (results/xlayer/unaligned-writes.md).
 #
 # Traces misaligned cuFileWrite workloads and reports the cross-layer picture the built-in tools cannot
 # produce: app writes vs GDS engagement vs POSIX fallback vs per-direction device commands, with each

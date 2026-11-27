@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""step3_mixed.py — realistic *bimodal* kvikio read workload: a mix of small (<16KiB, sub-GDS-
+"""kvikio_bimodal.py — realistic *bimodal* kvikio read workload: a mix of small (<16KiB, sub-GDS-
 threshold) and large (>=64KiB) reads, like a metadata/embedding-heavy or variable-chunk dataset.
 Small reads silently take kvikio's POSIX path (no GDS DMA, invisible to gds_stats); large reads use
 GDS. Reports the small/large byte split so it can be compared against the kernel nvidia-fs DMA counter

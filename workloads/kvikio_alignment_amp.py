@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""step3_ampl.py — measure GDS I/O *amplification*: issue `count` cuFile reads of `size` into a GPU
+"""kvikio_alignment_amp.py — measure GDS I/O *amplification*: issue `count` cuFile reads of `size` into a GPU
 buffer, with controllable FILE-offset misalignment and GPU-BUFFER misalignment, so the kernel
 nvidia-fs Reads counter (measured externally) reveals how many NVMe/P2P-DMA requests one logical op
 becomes. Reproduces the 64 KiB GPU-page effect (Muradli et al.). Reads-only (safe on this node)."""

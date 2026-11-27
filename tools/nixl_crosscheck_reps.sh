@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# D5 + D10: re-run the NIXL keystone cross-check with REPETITIONS, at the KV size the paper declares.
+# Re-run the NIXL cross-check with REPETITIONS, at the KV size the paper declares.
 #
 # Two problems this fixes:
 #   D5  results/xlayer/nixl-e2e-complete.md claims "3-run mean: 12%+/-2 correct, 87%+/-2 unattributed"
 #       but only ONE crosscheck artifact is committed (nixl_crosscheck.txt: 9% correct, 90% unattr).
-#   D10 Sec V-D declares 2048 B KV reads, but the committed keystone ran at SB=2560, so the
+#   Sec V-D declares 2048 B KV reads, but the committed run used at SB=2560, so the
 #       "35 calls / 2208 device reads / 87%" numbers come from a size the section does not claim.
 #
 # Runs the committed driver tools/run_nixl_crosscheck.sh REPS times at SB=2048, preserving each run's
